@@ -1,0 +1,2397 @@
+<!-- Version: v1.1 | Mise a jour factuelle: 2026-05-29 -->
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Guide pédagogique complet pour comprendre l'IA générative, les LLM, GitHub Copilot, les MCP, les Skills, les Agents et l'écosystème VS Code en 2026.">
+<title>Comprendre l'IA & l'écosystème Copilot — Guide pédagogique</title>
+<style>
+:root{
+  --azure-blue:#0078d4;--azure-dark:#004578;--azure-light:#deecf9;
+  --success:#107c10;--warn:#ff8c00;--danger:#d13438;--purple:#7719aa;
+  --bg:#f8f9fb;--surface:#fff;--text:#1a1f2e;--muted:#5b6478;--border:#e3e6ec;
+  --shadow:0 4px 16px rgba(15,23,42,.08);--radius:12px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,Tahoma,sans-serif;background:var(--bg);color:var(--text);line-height:1.65}
+[id]{scroll-margin-top:20px}
+a{color:var(--azure-blue);text-decoration:none}
+a:hover{text-decoration:underline}
+code{font-family:'Cascadia Code',Consolas,monospace;font-size:.88em;background:#eef1f5;padding:1px 6px;border-radius:3px;color:#0a3d62}
+strong{color:var(--azure-dark)}
+
+/* Layout sidebar + main */
+.layout{display:grid;grid-template-columns:280px 1fr;gap:0;align-items:start;min-height:100vh}
+.sidebar{position:sticky;top:0;height:100vh;overflow-y:auto;padding:20px 14px;background:#fff;border-right:1px solid var(--border)}
+.side-head{display:flex;align-items:center;gap:10px;padding:6px 6px 14px;border-bottom:1px solid var(--border);margin-bottom:14px}
+.side-head .ico{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,#0078d4,#7719aa);display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.2em;flex-shrink:0}
+.side-head .t{font-weight:700;color:var(--azure-dark);font-size:.95em;line-height:1.15}
+.side-head .s{font-size:.72em;color:var(--muted);margin-top:2px}
+.sidebar nav a{display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:6px;font-size:.82em;color:var(--muted);border-left:2px solid transparent;margin-bottom:2px}
+.sidebar nav a:hover{background:var(--bg);color:var(--azure-blue);text-decoration:none}
+.sidebar nav a.head{font-weight:700;color:var(--azure-dark);margin-top:10px;font-size:.74em;text-transform:uppercase;letter-spacing:.5px}
+.sidebar nav a .num{font-size:.7em;color:#9aa2b1;font-variant-numeric:tabular-nums;min-width:22px}
+
+main{min-width:0}
+
+/* HERO */
+.hero{background:linear-gradient(135deg,#003864 0%,#0078d4 50%,#7719aa 100%);color:#fff;padding:60px 36px 50px;text-align:center;position:relative;overflow:hidden}
+.hero::before{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.05) 1px,transparent 1px);background-size:50px 50px;mask-image:radial-gradient(ellipse at center,#000 30%,transparent 75%)}
+.hero-inner{position:relative;max-width:1000px;margin:0 auto}
+.hero .eyebrow{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.14);padding:6px 14px;border-radius:999px;font-size:.82em;font-weight:600;border:1px solid rgba(255,255,255,.2);margin-bottom:18px}
+.hero .eyebrow .dot{width:6px;height:6px;border-radius:50%;background:#7fffa3;box-shadow:0 0 8px #7fffa3}
+.hero h1{font-size:clamp(1.8em,3.6vw,2.8em);font-weight:700;line-height:1.15;margin-bottom:14px;letter-spacing:-.8px}
+.hero .tagline{font-size:1.05em;max-width:720px;margin:0 auto;color:rgba(255,255,255,.9)}
+.hero-meta{margin-top:24px;display:flex;justify-content:center;gap:12px;flex-wrap:wrap;font-size:.82em}
+.hero-meta span{background:rgba(255,255,255,.12);padding:4px 12px;border-radius:6px;border:1px solid rgba(255,255,255,.18)}
+
+/* Container & sections */
+.container{max-width:1100px;margin:0 auto;padding:32px 36px 60px}
+.section{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);padding:30px 34px;margin-bottom:26px}
+.section-head{display:flex;align-items:center;gap:14px;margin-bottom:18px;padding-bottom:14px;border-bottom:2px solid var(--azure-blue)}
+.section-head.purple{border-bottom-color:var(--purple)}
+.section-head.green{border-bottom-color:var(--success)}
+.section-head.orange{border-bottom-color:var(--warn)}
+.section-num{background:var(--azure-blue);color:#fff;width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1.05em;flex-shrink:0}
+.section-num.purple{background:var(--purple)}
+.section-num.green{background:var(--success)}
+.section-num.orange{background:var(--warn)}
+.section-title{font-size:1.4em;color:var(--azure-dark);font-weight:700;line-height:1.2}
+.section-desc{font-size:.88em;color:var(--muted);margin-top:2px}
+
+h3{font-size:1.08em;margin:24px 0 10px;border-left:4px solid var(--azure-blue);padding-left:12px;color:var(--azure-dark)}
+h4{font-size:.98em;margin:16px 0 8px;color:var(--azure-dark);font-weight:600}
+p{margin:0 0 12px}
+ul,ol{margin:8px 0 14px 22px}
+li{margin-bottom:6px}
+
+/* Analogie restaurant */
+.resto{background:linear-gradient(135deg,#fff8e1,#fff3c4);border-left:4px solid #ff8c00;border-radius:10px;padding:16px 20px;margin:16px 0;position:relative}
+.resto::before{content:"🍽️ Analogie restaurant";display:block;font-weight:700;color:#9a5d00;font-size:.82em;margin-bottom:8px;letter-spacing:.3px}
+.resto p:last-child{margin-bottom:0}
+
+/* Alerts */
+.alert{border-radius:10px;padding:14px 18px;margin:14px 0;font-size:.93em;border-left:4px solid}
+.alert-info{background:#e6f2ff;border-color:#0078d4;color:#003864}
+.alert-warn{background:#fff8e1;border-color:#ff8c00;color:#6d4c00}
+.alert-danger{background:#fde7e9;border-color:#d13438;color:#721c24}
+.alert-ok{background:#e8f5e9;border-color:#107c10;color:#1b5e20}
+.alert strong{display:block;margin-bottom:4px}
+
+/* Cards grid */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin:16px 0}
+.card{background:#fff;border:1px solid var(--border);border-radius:10px;padding:16px 18px;transition:all .15s}
+.card:hover{box-shadow:var(--shadow);transform:translateY(-2px)}
+.card .ic{font-size:1.6em;margin-bottom:6px}
+.card h4{margin-top:0;color:var(--azure-dark);font-size:1em}
+.card p{font-size:.85em;color:var(--muted);margin-bottom:0}
+
+/* Tables */
+.tbl{overflow-x:auto;border-radius:10px;margin:14px 0;border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse;font-size:.9em;background:#fff}
+thead th{background:var(--azure-dark);color:#fff;text-align:left;padding:11px 14px;font-size:.82em;text-transform:uppercase;letter-spacing:.3px}
+tbody td{padding:10px 14px;border-bottom:1px solid #edebe9;vertical-align:top}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:nth-child(even){background:#fafbfc}
+
+/* Code blocks */
+.code-block{background:#1e1e1e;border-radius:10px;overflow:hidden;margin:12px 0 18px}
+.code-header{display:flex;justify-content:space-between;align-items:center;padding:8px 14px;background:#2d2d2d;color:#a0a0a0;font-size:.78em}
+.code-block pre{padding:14px 16px;color:#d4d4d4;font-family:'Cascadia Code',Consolas,monospace;font-size:.84em;overflow-x:auto;line-height:1.55}
+.code-block .cm{color:#6a9955}
+.code-block .kw{color:#569cd6}
+.code-block .st{color:#ce9178}
+.code-block .fn{color:#dcdcaa}
+
+/* Mermaid */
+.diagram{background:#fafbfc;border:1px solid var(--border);border-radius:10px;padding:18px;margin:14px 0;text-align:center;overflow-x:auto}
+.diagram .mermaid{display:inline-block;min-width:100%}
+.diag-caption{font-size:.82em;color:var(--muted);margin-top:8px;font-style:italic}
+
+/* Big number stat */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin:18px 0}
+.stat{background:linear-gradient(135deg,#fff,#f8fafd);border:1px solid var(--border);border-radius:10px;padding:18px;text-align:center}
+.stat .n{font-size:2em;font-weight:700;color:var(--azure-blue);line-height:1}
+.stat .l{font-size:.8em;color:var(--muted);margin-top:6px}
+
+/* Comparison columns */
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+.compare>div{padding:16px 18px;border-radius:10px}
+.compare .good{background:#e8f5e9;border-left:4px solid var(--success)}
+.compare .bad{background:#fde7e9;border-left:4px solid var(--danger)}
+.compare h4{margin-top:0}
+
+/* TOC inline */
+.toc-inline{background:var(--azure-light);border-radius:10px;padding:16px 20px;margin:14px 0}
+.toc-inline h4{margin-top:0;color:var(--azure-dark)}
+.toc-inline ol{margin:8px 0 0 20px}
+
+/* Badges */
+.badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:.74em;font-weight:600;margin-left:4px;vertical-align:middle}
+.b-free{background:#e8f5e9;color:#1b5e20}
+.b-paid{background:#fff3cd;color:#6d4c00}
+.b-new{background:#e8d4f0;color:#6b2fa0}
+.b-ms{background:#e6f2ff;color:#004578}
+
+footer{text-align:center;padding:30px;color:var(--muted);font-size:.85em;border-top:1px solid var(--border);background:#fff}
+
+@media(max-width:900px){
+  .layout{grid-template-columns:1fr}
+  .sidebar{position:static;height:auto;border-right:none;border-bottom:1px solid var(--border)}
+  .container{padding:20px}
+  .section{padding:20px}
+  .compare{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<div class="layout">
+
+<!-- ============ SIDEBAR ============ -->
+<aside class="sidebar">
+  <div class="side-head">
+    <div class="ico">🧠</div>
+    <div>
+      <div class="t">Comprendre l'IA</div>
+      <div class="s">Guide pédagogique · 2026</div>
+    </div>
+  </div>
+  <nav>
+    <a class="head">📚 Fondamentaux</a>
+    <a href="#s1"><span class="num">1</span> C'est quoi l'IA ?</a>
+    <a href="#s2"><span class="num">2</span> Comment ça marche</a>
+    <a href="#s3"><span class="num">3</span> Les modèles (GPT, Claude…)</a>
+
+    <a class="head">🧑‍🍳 L'écosystème</a>
+    <a href="#s4"><span class="num">4</span> Chat, Copilot, Agent ?</a>
+    <a href="#s5"><span class="num">5</span> GitHub Copilot dans VS Code</a>
+    <a href="#s6"><span class="num">6</span> Les 3 modes Copilot</a>
+
+    <a class="head">🛠️ Les couches</a>
+    <a href="#s7"><span class="num">7</span> Les outils (tools)</a>
+    <a href="#s8"><span class="num">8</span> MCP</a>
+    <a href="#s9"><span class="num">9</span> Skills</a>
+    <a href="#s10"><span class="num">10</span> Subagents</a>
+    <a href="#s11"><span class="num">11</span> Prompts & mémoire</a>
+
+    <a class="head">🎯 Pratique</a>
+    <a href="#s12"><span class="num">12</span> Quel outil choisir ?</a>
+    <a href="#s13"><span class="num">13</span> Bonnes pratiques</a>
+    <a href="#s14"><span class="num">14</span> Glossaire</a>
+
+    <a class="head">🚀 Aller plus loin</a>
+    <a href="#s15"><span class="num">15</span> RAG & embeddings</a>
+    <a href="#s16"><span class="num">16</span> Coûts & tokens</a>
+    <a href="#s17"><span class="num">17</span> Sécurité & RGPD</a>
+    <a href="#s18"><span class="num">18</span> Copilot vs Cursor vs Cline</a>
+    <a href="#s19"><span class="num">19</span> Workflows avancés</a>
+    <a href="#s20"><span class="num">20</span> Recettes de prompts</a>
+    <a href="#s21"><span class="num">21</span> IA locale (Ollama, Foundry)</a>
+    <a href="#s22"><span class="num">22</span> Évaluation des réponses</a>
+    <a href="#s23"><span class="num">23</span> Tendances 2026-2027</a>
+    <a href="#s24"><span class="num">24</span> FAQ</a>
+
+    <a class="head">📒 Mémo</a>
+    <a href="#s25"><span class="num">25</span> Anatomie d'une session</a>
+    <a href="#s26"><span class="num">26</span> Anti-patterns (avant/après)</a>
+    <a href="#s27"><span class="num">27</span> Cheat sheet imprimable</a>
+    <a href="#s28"><span class="num">28</span> La grande carte mentale</a>
+  </nav>
+</aside>
+
+<!-- ============ MAIN ============ -->
+<main>
+
+<header class="hero">
+  <div class="hero-inner">
+    <div class="eyebrow"><span class="dot"></span> Guide pédagogique · IA générative & VS Code</div>
+    <h1>Comprendre l'IA, GitHub Copilot, MCP, Skills & Agents</h1>
+    <p class="tagline">Un guide en français, pas-à-pas, avec analogies, schémas et exemples concrets — pour arrêter de se perdre dans la jungle de l'IA.</p>
+    <div class="hero-meta">
+      <span>⏱️ Lecture : ~30 min</span>
+      <span>🎯 Niveau : débutant → intermédiaire</span>
+      <span>🛠️ Orienté VS Code / Copilot</span>
+    </div>
+  </div>
+</header>
+
+<div class="container">
+
+<!-- ===== INTRO ===== -->
+<section class="section">
+  <div class="section-head">
+    <div class="section-num">📖</div>
+    <div>
+      <div class="section-title">À qui s'adresse ce guide ?</div>
+      <div class="section-desc">Vous utilisez Copilot dans VS Code et vous voulez enfin comprendre ce qui se passe sous le capot.</div>
+    </div>
+  </div>
+
+  <p>Si vous êtes du genre à entendre <em>« agent, MCP, skill, tool, prompt, RAG, embedding, fine-tuning »</em> et à hocher la tête en pensant « j'ai compris la moitié »… <strong>ce guide est pour vous</strong>.</p>
+
+  <p>Il est organisé en <strong>4 grandes parties</strong> :</p>
+
+  <div class="cards">
+    <div class="card"><div class="ic">📚</div><h4>Fondamentaux</h4><p>C'est quoi un LLM, comment il « pense », pourquoi il se trompe parfois.</p></div>
+    <div class="card"><div class="ic">🧑‍🍳</div><h4>L'écosystème</h4><p>Différence entre ChatGPT, Copilot, Claude, Gemini… et comment ils s'intègrent à VS Code.</p></div>
+    <div class="card"><div class="ic">🛠️</div><h4>Les couches</h4><p>Tools, MCP, Skills, Subagents : qui fait quoi, et pourquoi tout ça coexiste.</p></div>
+    <div class="card"><div class="ic">🎯</div><h4>Pratique</h4><p>Choisir le bon outil, écrire de bons prompts, éviter les pièges.</p></div>
+  </div>
+
+  <div class="alert alert-info">
+    <strong>🍽️ Le fil rouge : le restaurant</strong>
+    Tout au long du guide, on filera la même analogie : <strong>l'IA, c'est un restaurant gastronomique</strong>. Le LLM est le chef, les outils sont les ustensiles, les MCP sont les fournisseurs, les Skills sont les fiches recettes, et vous êtes le client qui passe commande.
+  </div>
+</section>
+
+<!-- ===== S1 : C'EST QUOI L'IA ===== -->
+<section class="section" id="s1">
+  <div class="section-head">
+    <div class="section-num">1</div>
+    <div>
+      <div class="section-title">C'est quoi l'IA dont tout le monde parle ?</div>
+      <div class="section-desc">Spoiler : ce n'est pas Skynet. C'est un perroquet ultra-cultivé.</div>
+    </div>
+  </div>
+
+  <h3>1.1 Le grand malentendu</h3>
+  <p>Quand on dit « IA » aujourd'hui (2026), <strong>on parle quasi toujours d'IA générative</strong>, et plus précisément de <strong>LLM</strong> (<em>Large Language Model</em> — grand modèle de langage). Ce n'est qu'<em>une branche</em> de l'intelligence artificielle, mais c'est celle qui a explosé depuis ChatGPT (fin 2022).</p>
+
+  <div class="diagram">
+    <pre class="mermaid">
+graph TD
+    A[Intelligence Artificielle] --> B[Machine Learning]
+    A --> C[Systèmes experts<br/>règles métier]
+    B --> D[Deep Learning<br/>réseaux de neurones]
+    D --> E[Vision par ordinateur<br/>reconnaissance image]
+    D --> F[Traitement du langage<br/><b>LLM 🌟</b>]
+    D --> G[Audio / Voix]
+    F --> H[GPT-4, Claude, Gemini, Llama…]
+    F --> I[GitHub Copilot]
+    style F fill:#fff8e1,stroke:#ff8c00,stroke-width:3px
+    style H fill:#deecf9,stroke:#0078d4
+    style I fill:#deecf9,stroke:#0078d4
+    </pre>
+    <div class="diag-caption">Schéma 1 — L'IA générative (LLM) n'est qu'une partie de la galaxie IA.</div>
+  </div>
+
+  <h3>1.2 Qu'est-ce qu'un LLM, vraiment ?</h3>
+  <p>Un LLM est un programme qui a <strong>lu énormément de texte</strong> (des milliers de milliards de mots : Wikipédia, GitHub, livres, sites web, forums…) et qui a appris une chose toute simple : <strong>prédire le mot suivant</strong>.</p>
+
+  <div class="resto">
+    <p><strong>Imaginez un serveur qui a passé sa vie dans des milliers de restaurants.</strong> Il a écouté toutes les conversations, lu tous les menus, vu toutes les recettes. Si vous dites « Bonjour, je voudrais un steak… », il sait avec une probabilité énorme que le mot suivant sera « frites », « tartare » ou « saignant ». Pas parce qu'il « comprend » la viande — mais parce qu'il a entendu cette suite des millions de fois.</p>
+    <p>Un LLM, c'est ça, mais avec <em>tout</em> le savoir écrit de l'humanité.</p>
+  </div>
+
+  <h3>1.3 Ce que l'IA n'est PAS</h3>
+  <div class="compare">
+    <div class="bad">
+      <h4>❌ Idées fausses</h4>
+      <ul>
+        <li>« Elle réfléchit comme un humain » → non, elle calcule des probabilités</li>
+        <li>« Elle dit la vérité » → non, elle dit ce qui est <em>probable</em></li>
+        <li>« Elle apprend en continu » → non, son savoir est figé à sa date d'entraînement</li>
+        <li>« Elle est consciente » → non, c'est une fonction mathématique</li>
+      </ul>
+    </div>
+    <div class="good">
+      <h4>✅ Ce qu'elle est</h4>
+      <ul>
+        <li>Un excellent moteur de <strong>complétion de texte</strong></li>
+        <li>Un <strong>résumeur, traducteur, reformulateur</strong> hors-pair</li>
+        <li>Un <strong>générateur de code</strong> (parce que le code est du texte structuré)</li>
+        <li>Un <strong>assistant</strong> qu'il faut superviser et vérifier</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ===== S2 : COMMENT ÇA MARCHE ===== -->
+<section class="section" id="s2">
+  <div class="section-head">
+    <div class="section-num">2</div>
+    <div>
+      <div class="section-title">Comment ça marche sous le capot ?</div>
+      <div class="section-desc">Tokens, contexte, hallucinations — les concepts qui expliquent tous les comportements bizarres.</div>
+    </div>
+  </div>
+
+  <h3>2.1 Les tokens : la « langue » du LLM</h3>
+  <p>Le LLM ne lit pas des mots, il lit des <strong>tokens</strong>. Un token, c'est un fragment de mot. Par exemple :</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Phrase</th><th>Découpage en tokens</th><th>Nb tokens</th></tr></thead>
+    <tbody>
+      <tr><td>Bonjour</td><td><code>Bon</code> + <code>jour</code></td><td>2</td></tr>
+      <tr><td>GitHub Copilot</td><td><code>Git</code> + <code>Hub</code> + <code> Co</code> + <code>pilot</code></td><td>4</td></tr>
+      <tr><td>function getUserById(id) {</td><td><code>function</code> + <code> get</code> + <code>User</code> + <code>ById</code> + <code>(</code> + <code>id</code> + <code>)</code> + <code> {</code></td><td>8</td></tr>
+    </tbody>
+  </table></div>
+  <p>👉 Règle de pouce : <strong>1 token ≈ 4 caractères de texte</strong>. En nombre de mots, le ratio varie selon la langue et le contenu : c'est utile pour estimer, pas pour facturer au centime.</p>
+
+  <h3>2.2 La fenêtre de contexte : la mémoire courte</h3>
+  <p>Chaque modèle a une <strong>fenêtre de contexte</strong> : la quantité maximale de tokens qu'il peut « voir » d'un coup. C'est sa <em>mémoire de travail</em>.</p>
+
+  <div class="stats">
+    <div class="stat"><div class="n">long contexte</div><div class="l">GPT (selon modèle)</div></div>
+    <div class="stat"><div class="n">long contexte</div><div class="l">Claude (selon modèle)</div></div>
+    <div class="stat"><div class="n">long contexte</div><div class="l">Gemini (selon modèle)</div></div>
+    <div class="stat"><div class="n">variable</div><div class="l">Copilot selon mode, modèle et contexte assemblé</div></div>
+  </div>
+
+  <div class="alert alert-info">
+    <strong>🔎 Point de méthode</strong>
+    Les fenêtres de contexte évoluent vite, et l'expérience réelle dans un assistant comme Copilot dépend aussi du mode utilisé, du modèle choisi et de la quantité de contexte injectée par l'outil. Gardez l'ordre de grandeur, puis revalidez les chiffres exacts dans la documentation du fournisseur.
+  </div>
+
+  <div class="resto">
+    <p><strong>Imaginez un chef qui prépare votre plat sur un plan de travail.</strong> Le plan de travail, c'est la fenêtre de contexte : il y pose les ingrédients, la recette, les ustensiles. <strong>Si le plan est trop petit</strong>, il doit ranger des trucs pour faire de la place — et il peut oublier ce qu'il a rangé. C'est exactement ce qui se passe quand votre conversation devient très longue : les vieux messages « sortent » de la fenêtre.</p>
+  </div>
+
+  <h3>2.3 Le prompt : votre commande</h3>
+  <p>Le <strong>prompt</strong>, c'est tout ce que vous envoyez au modèle : votre question, mais aussi (souvent invisible) :</p>
+  <ul>
+    <li>📜 Un <strong>system prompt</strong> qui définit son rôle (« Tu es un assistant Copilot expert… »)</li>
+    <li>📁 Le <strong>contenu des fichiers</strong> ouverts dans VS Code</li>
+    <li>💬 L'<strong>historique</strong> de la conversation</li>
+    <li>🧠 Les <strong>instructions personnalisées</strong> (memory, AGENTS.md, .instructions.md)</li>
+    <li>🛠️ La <strong>liste des outils</strong> disponibles</li>
+  </ul>
+
+  <div class="diagram">
+    <pre class="mermaid">
+flowchart LR
+    A[👤 Votre message] --> Z[🧠 Contexte assemblé]
+    B[📜 System prompt] --> Z
+    C[📁 Fichiers ouverts] --> Z
+    D[💬 Historique] --> Z
+    E[🧠 Memory / AGENTS.md] --> Z
+    F[🛠️ Tools disponibles] --> Z
+    Z --> M[🤖 LLM]
+    M --> R[💬 Réponse + appels d'outils]
+    style M fill:#deecf9,stroke:#0078d4,stroke-width:3px
+    style Z fill:#fff8e1,stroke:#ff8c00
+    </pre>
+    <div class="diag-caption">Schéma 2 — Tout ce que le LLM « voit » à chaque tour de conversation.</div>
+  </div>
+
+  <h3>2.4 Les hallucinations : pourquoi il invente</h3>
+  <div class="alert alert-warn">
+    <strong>⚠️ La règle d'or à ne JAMAIS oublier</strong>
+    Un LLM <strong>ne sait pas qu'il ne sait pas</strong>. Quand il ne connaît pas la réponse, il <em>complète quand même</em> avec ce qui est statistiquement plausible. C'est ce qu'on appelle une <strong>hallucination</strong> : une réponse qui <em>sonne juste</em> mais qui est <em>fausse</em>.
+  </div>
+
+  <p>Exemples typiques :</p>
+  <ul>
+    <li>Inventer un nom de fonction qui n'existe pas dans une librairie</li>
+    <li>Citer un article ou un RFC qui n'a jamais été publié</li>
+    <li>Donner une commande PowerShell avec un paramètre imaginaire</li>
+  </ul>
+
+  <p>👉 <strong>Toujours vérifier</strong> les noms de fonctions, paramètres, URLs, et faits techniques. C'est pour ça que les outils (tools, MCP, recherche web) sont devenus indispensables : ils donnent au LLM accès au <em>réel</em>.</p>
+</section>
+
+<!-- ===== S3 : LES MODÈLES ===== -->
+<section class="section" id="s3">
+  <div class="section-head">
+    <div class="section-num">3</div>
+    <div>
+      <div class="section-title">Les modèles : qui fait quoi aujourd'hui ?</div>
+      <div class="section-desc">GPT, Claude, Gemini, Llama, Mistral, DeepSeek… le paysage actuel.</div>
+    </div>
+  </div>
+
+  <div class="resto">
+    <p><strong>Un modèle, c'est un chef avec une spécialité et un style.</strong> Certains sont rapides et pas chers (cuisine de bistrot), d'autres lents mais incroyables sur les plats complexes (gastronomie 3 étoiles). Vous choisissez en fonction du plat à servir.</p>
+  </div>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Famille</th><th>Éditeur</th><th>Forces</th><th>Où on le croise</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>GPT (familles actuelles)</strong></td>
+        <td>OpenAI</td>
+        <td>Polyvalent, familles large/mini/reasoning, bon function calling, très présent dans les assistants de code</td>
+        <td>ChatGPT, API OpenAI, Copilot selon plan, Azure OpenAI / Foundry selon disponibilité</td>
+      </tr>
+      <tr>
+        <td><strong>Claude (familles actuelles)</strong></td>
+        <td>Anthropic</td>
+        <td>Très bon en code, agentique, long contexte, « thinking » et outillage riche</td>
+        <td>Claude, Copilot selon plan, Cursor, Cline, Bedrock, Vertex, Foundry selon catalogue</td>
+      </tr>
+      <tr>
+        <td><strong>Gemini (familles actuelles)</strong></td>
+        <td>Google</td>
+        <td>Long contexte, multimodal natif, grounding/research, bon écosystème outils</td>
+        <td>Gemini, AI Studio, Vertex AI, Android Studio, parfois Copilot selon plan</td>
+      </tr>
+      <tr>
+        <td><strong>Llama</strong></td>
+        <td>Meta (open weights)</td>
+        <td>Exécutable en local, auto-hébergeable, personnalisable</td>
+        <td>Ollama, LM Studio, Foundry Local</td>
+      </tr>
+      <tr>
+        <td><strong>Mistral</strong></td>
+        <td>Mistral AI 🇫🇷</td>
+        <td>Bon rapport perf/coût, API/cloud et certaines variantes ouvertes</td>
+        <td>Le Chat, Azure AI Foundry</td>
+      </tr>
+      <tr>
+        <td><strong>DeepSeek / Qwen</strong></td>
+        <td>Chine</td>
+        <td>Intéressants en raisonnement ou en rapport coût/perf selon la variante</td>
+        <td>API, exécution locale, catalogues cloud selon disponibilité</td>
+      </tr>
+      <tr>
+        <td><strong>Phi / petits modèles Microsoft</strong></td>
+        <td>Microsoft</td>
+        <td>Petit modèle (SLM), efficace en local</td>
+        <td>Foundry Local, edge devices</td>
+      </tr>
+    </tbody>
+  </table></div>
+
+  <h3>3.1 Modèles « raisonneurs » vs « réactifs »</h3>
+  <p>Depuis 2024, on distingue deux familles :</p>
+  <div class="cards">
+    <div class="card">
+      <div class="ic">⚡</div>
+      <h4>Modèles réactifs</h4>
+      <p>Répondent vite, parfaits pour du code court, des questions simples et de l'itération rapide. Ex : familles <code>mini</code>, <code>haiku</code>, <code>flash</code>, petits modèles locaux.</p>
+    </div>
+    <div class="card">
+      <div class="ic">🧠</div>
+      <h4>Modèles raisonneurs</h4>
+      <p>Prennent un temps pour « réfléchir » avant de répondre. Excellents en math, debug profond, planification et workflows agentiques. Ex : familles <code>GPT frontier/reasoning</code>, <code>Claude Opus</code>, <code>Gemini Pro</code>, <code>DeepSeek-R1</code> selon disponibilité.</p>
+    </div>
+  </div>
+
+  <div class="alert alert-info">
+    <strong>💡 Astuce VS Code</strong>
+    Dans Copilot, la liste exacte des modèles dépend de votre plan et du catalogue actif. Pour une question rapide, choisissez un modèle rapide/mini/flash. Pour un refactoring complexe, prenez un modèle frontier/code/reasoning plus coûteux.
+  </div>
+</section>
+
+<!-- ===== S4 : L'ÉCOSYSTÈME ===== -->
+<section class="section" id="s4">
+  <div class="section-head purple">
+    <div class="section-num purple">4</div>
+    <div>
+      <div class="section-title">Chat, assistant, copilot, agent : c'est quoi la différence ?</div>
+      <div class="section-desc">Trois niveaux d'autonomie qu'il faut savoir distinguer.</div>
+    </div>
+  </div>
+
+  <div class="diagram">
+    <pre class="mermaid">
+graph LR
+    A[💬 Chat<br/>ChatGPT, Claude.ai] --> B[🤝 Assistant<br/>Copilot Ask, Copilot Chat]
+    B --> C[🤖 Agent<br/>Copilot Agent, Cursor Agent]
+    A -.->|"Vous écrivez<br/>tout le code"| A2[Lit ✏️ Écrit]
+    B -.->|"Suggestions inline<br/>+ edits ciblés"| B2[Lit ✏️ Édite]
+    C -.->|"Exécute des outils<br/>en autonomie"| C2[Lit ✏️ Édite 🛠️ Agit]
+    style A fill:#e8f5e9
+    style B fill:#deecf9
+    style C fill:#fff8e1
+    </pre>
+    <div class="diag-caption">Schéma 3 — Les 3 niveaux d'autonomie d'une IA.</div>
+  </div>
+
+  <h3>4.1 Le Chat (niveau 1)</h3>
+  <p><strong>Vous parlez, il répond.</strong> Aucune autonomie. Vous copiez-collez le code. Exemples : <a href="https://chat.openai.com">ChatGPT</a>, <a href="https://claude.ai">Claude.ai</a>, <a href="https://gemini.google.com">Gemini</a>.</p>
+
+  <h3>4.2 L'assistant (niveau 2)</h3>
+  <p><strong>Il a accès à votre code et peut proposer des modifications</strong>, mais c'est vous qui validez chaque changement. Exemple : GitHub Copilot en mode <em>Ask</em> ou <em>Edit</em>.</p>
+
+  <h3>4.3 L'agent (niveau 3)</h3>
+  <p><strong>Il agit pour vous</strong> : lit des fichiers, modifie du code, lance des commandes, appelle des APIs. Vous donnez un objectif, il décompose en sous-tâches et exécute. Exemples : <strong>GitHub Copilot Agent</strong>, Cursor Agent, Cline, Claude Code.</p>
+
+  <div class="resto">
+    <p><strong>Au restaurant :</strong></p>
+    <ul>
+      <li><strong>Chat</strong> = vous appelez le chef au téléphone pour lui demander la recette, vous cuisinez chez vous.</li>
+      <li><strong>Assistant</strong> = le chef vient dans votre cuisine et vous guide étape par étape, mais vous tenez la casserole.</li>
+      <li><strong>Agent</strong> = vous donnez l'objectif (« je veux un menu 3 plats pour 4 personnes »), le chef fait les courses, prépare, dresse, vous appelle quand c'est prêt.</li>
+    </ul>
+  </div>
+
+  <div class="alert alert-danger">
+    <strong>⚠️ Plus d'autonomie = plus de risque</strong>
+    Un agent peut supprimer des fichiers, pousser sur Git, dépenser de l'argent (appels d'API payants). C'est pour ça que VS Code demande confirmation avant les actions destructives, et que vous devez avoir un <strong>AGENTS.md</strong> bien clair qui définit ce qui est interdit.
+  </div>
+</section>
+
+<!-- ===== S5 : COPILOT DANS VS CODE ===== -->
+<section class="section" id="s5">
+  <div class="section-head">
+    <div class="section-num">5</div>
+    <div>
+      <div class="section-title">GitHub Copilot dans VS Code : la vue d'ensemble</div>
+      <div class="section-desc">Tous les morceaux et leur rôle.</div>
+    </div>
+  </div>
+
+  <p>Quand vous utilisez Copilot dans VS Code, il y a en fait <strong>plusieurs composants empilés</strong>. Voici la pile complète :</p>
+
+  <div class="diagram">
+    <pre class="mermaid">
+graph TD
+  U[👤 Vous, dans VS Code] --> CHAT[🪟 Panneau Chat<br/>Ask · Plan · Agent]
+    U --> INL[✨ Complétion inline<br/>« Tab pour accepter »]
+    CHAT --> ORCH[🎯 Orchestrateur Copilot]
+    INL --> ORCH
+    ORCH --> CTX[📦 Assemblage du contexte]
+    CTX --> M[🧠 Modèle<br/>GPT, Claude, …]
+    ORCH --> TOOLS[🛠️ Tools natifs<br/>read_file, edit, terminal…]
+    ORCH --> MCP[🔌 Serveurs MCP<br/>Azure, Graph, GitHub…]
+    ORCH --> SK[📋 Skills<br/>guides spécialisés]
+    ORCH --> SUB[🤖 Subagents<br/>tâches autonomes]
+    ORCH --> MEM[🧠 Memory<br/>AGENTS.md, .instructions.md]
+
+    style U fill:#fff8e1
+    style M fill:#deecf9,stroke:#0078d4,stroke-width:3px
+    style ORCH fill:#e8d4f0,stroke:#7719aa,stroke-width:2px
+    </pre>
+    <div class="diag-caption">Schéma 4 — Architecture complète Copilot dans VS Code.</div>
+  </div>
+
+  <h3>5.1 Les trois surfaces utilisateur</h3>
+  <div class="cards">
+    <div class="card">
+      <div class="ic">✨</div>
+      <h4>Complétion inline</h4>
+      <p>Le texte gris qui apparaît pendant que vous tapez. Appuyez sur <code>Tab</code> pour accepter. C'est le Copilot « historique » de 2021.</p>
+    </div>
+    <div class="card">
+      <div class="ic">🪟</div>
+      <h4>Panneau Chat</h4>
+      <p><code>Ctrl+Alt+I</code>. C'est là que vous discutez, choisissez l'agent/persona, le modèle et, selon le cas, laissez l'IA éditer ou agir.</p>
+    </div>
+    <div class="card">
+      <div class="ic">⚡</div>
+      <h4>Quick Chat</h4>
+      <p><code>Ctrl+Shift+Alt+L</code>. Petite fenêtre flottante pour une question rapide sans ouvrir le panneau.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== S6 : LES 3 MODES ===== -->
+<section class="section" id="s6">
+  <div class="section-head">
+    <div class="section-num">6</div>
+    <div>
+      <div class="section-title">Ask, Edit, Agent : comment les lire en 2026 ?</div>
+      <div class="section-desc">Dans l'IDE, c'est un bon raccourci mental ; dans la doc, la réalité est un peu plus nuancée.</div>
+    </div>
+  </div>
+
+  <div class="alert alert-info">
+    <strong>🔎 Nuance utile</strong>
+    Dans la documentation VS Code 2026, il faut distinguer trois axes : les <strong>surfaces</strong> (Chat view, Inline chat, Quick chat, CLI), l'<strong>agent/persona</strong> choisi dans la session (par exemple Ask, Plan ou Agent), et le <strong>niveau de permissions</strong>. Ici, on garde <strong>Edit</strong> comme raccourci pédagogique pour parler des workflows d'édition pilotés par l'IA.
+  </div>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Mode</th><th>Pour quoi ?</th><th>Autonomie</th><th>Exemple</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>🗣️ Ask</strong></td>
+        <td>Poser une question, comprendre du code, recevoir des explications</td>
+        <td>Aucune — il répond, point.</td>
+        <td>« Explique-moi cette fonction Python »</td>
+      </tr>
+      <tr>
+        <td><strong>✏️ Edit</strong></td>
+        <td>Modifier un ou plusieurs fichiers ciblés depuis le chat ou l'inline chat</td>
+        <td>Limitée — propose un diff, vous validez</td>
+        <td>« Refactorise ces 3 fichiers pour utiliser async/await »</td>
+      </tr>
+      <tr>
+        <td><strong>🤖 Agent</strong></td>
+        <td>Tâche complexe : <em>il décide</em> quels fichiers lire, modifier, et quelles commandes lancer</td>
+        <td>Forte — il enchaîne les outils tout seul</td>
+        <td>« Ajoute une nouvelle commande à mon CLI, avec tests et doc »</td>
+      </tr>
+    </tbody>
+  </table></div>
+
+  <div class="resto">
+    <p><strong>Ask</strong> = vous demandez au chef une recette par téléphone.<br>
+    <strong>Edit</strong> = vous lui pointez 3 ingrédients précis et lui demandez de les transformer.<br>
+    <strong>Agent</strong> = vous lui donnez la carte bancaire et vous dites « fais-moi un dîner pour 4 ».</p>
+  </div>
+
+  <div class="alert alert-info">
+    <strong>💡 Conseil pratique</strong>
+    Démarrez toujours en <strong>Ask</strong> pour cadrer le problème. Passez à <strong>Edit</strong> quand vous savez quels fichiers toucher. Réservez <strong>Agent</strong> aux tâches où vous ne savez pas <em>par où commencer</em> ou qui touchent beaucoup de fichiers.
+  </div>
+</section>
+
+<!-- ===== S7 : LES OUTILS ===== -->
+<section class="section" id="s7">
+  <div class="section-head orange">
+    <div class="section-num orange">7</div>
+    <div>
+      <div class="section-title">Les outils (tools / function calling)</div>
+      <div class="section-desc">Comment l'IA fait des actions concrètes, et pas seulement du texte.</div>
+    </div>
+  </div>
+
+  <p>Par défaut, un LLM <strong>ne sait que générer du texte</strong>. Il ne peut pas vraiment lire un fichier, exécuter une commande, ou appeler une API. Les <strong>tools</strong> (parfois appelés <em>function calling</em>) sont le mécanisme qui change ça.</p>
+
+  <h3>7.1 Le principe</h3>
+  <p>On donne au modèle une <strong>liste de fonctions disponibles</strong> avec leur description. Quand il a besoin de faire une action, il <em>répond en demandant d'appeler une fonction</em>. Le moteur (VS Code) exécute la fonction et lui renvoie le résultat. Puis il continue.</p>
+
+  <div class="diagram">
+    <pre class="mermaid">
+sequenceDiagram
+    participant U as 👤 Vous
+    participant V as 🪟 VS Code
+    participant M as 🧠 Modèle
+    participant FS as 📁 Système fichiers
+
+    U->>V: "Corrige le bug dans audit.py"
+    V->>M: prompt + liste des tools (read_file, edit, ...)
+    M->>V: "Appelle read_file('audit.py')"
+    V->>FS: lit le fichier
+    FS->>V: contenu
+    V->>M: contenu du fichier
+    M->>V: "Appelle edit(audit.py, ligne 42, ...)"
+    V->>FS: applique l'édition
+    V->>M: succès
+    M->>V: "✅ Bug corrigé, voici ce qui a changé…"
+    V->>U: affiche le résultat
+    </pre>
+    <div class="diag-caption">Schéma 5 — Le cycle d'un appel d'outil (tool call).</div>
+  </div>
+
+  <h3>7.2 Les outils natifs de VS Code Copilot</h3>
+  <p>VS Code expose une trentaine d'outils prêts à l'emploi à l'agent :</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Famille</th><th>Outils typiques</th><th>Usage</th></tr></thead>
+    <tbody>
+      <tr><td>📁 Fichiers</td><td><code>read_file</code>, <code>create_file</code>, <code>replace_string_in_file</code>, <code>list_dir</code></td><td>Lire, créer, modifier</td></tr>
+      <tr><td>🔍 Recherche</td><td><code>grep_search</code>, <code>file_search</code>, <code>semantic_search</code></td><td>Trouver du code</td></tr>
+      <tr><td>💻 Terminal</td><td><code>run_in_terminal</code>, <code>get_terminal_output</code></td><td>Lancer des commandes</td></tr>
+      <tr><td>🧠 Mémoire</td><td><code>memory</code></td><td>Notes persistantes</td></tr>
+      <tr><td>📋 Tâches</td><td><code>manage_todo_list</code></td><td>Suivi multi-étapes</td></tr>
+      <tr><td>🌐 Web</td><td><code>fetch_webpage</code>, navigateur intégré</td><td>Consulter une URL</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ===== S8 : MCP ===== -->
+<section class="section" id="s8">
+  <div class="section-head purple">
+    <div class="section-num purple">8</div>
+    <div>
+      <div class="section-title">MCP — Model Context Protocol <span class="badge b-new">★ clé en 2026</span></div>
+      <div class="section-desc">Le standard universel pour brancher des outils externes à n'importe quelle IA.</div>
+    </div>
+  </div>
+
+  <h3>8.1 Le problème que MCP résout</h3>
+  <p>Avant 2024, si OpenAI voulait que GPT puisse lire votre Outlook, il fallait coder un connecteur OpenAI ↔ Outlook. Et si Anthropic voulait la même chose avec Claude, <strong>tout réécrire</strong>. Multipliez par 100 applis et 10 modèles = 1000 connecteurs à maintenir.</p>
+
+  <p>Le <strong>Model Context Protocol</strong> (MCP), proposé par Anthropic fin 2024 puis repris progressivement par l'écosystème, est un <strong>standard ouvert</strong>. Vous écrivez <em>un seul</em> serveur MCP pour votre service, et <em>tous les clients IA qui implémentent MCP</em> peuvent l'utiliser.</p>
+
+  <div class="resto">
+    <p><strong>MCP, c'est la prise électrique standardisée du restaurant.</strong> Avant, chaque fournisseur livrait avec sa propre prise (gaz, 110V, 220V, USB). Maintenant tout le monde livre en « prise MCP ». Le chef branche le fournisseur qu'il veut sans changer son matériel.</p>
+  </div>
+
+  <div class="diagram">
+    <pre class="mermaid">
+graph LR
+    subgraph "Côté IA (clients MCP)"
+        C1[VS Code Copilot]
+        C2[Claude Desktop]
+        C3[Cursor]
+    C4[Autres clients<br/>compatibles]
+    end
+    subgraph "Protocole standard"
+        P[🔌 MCP]
+    end
+    subgraph "Serveurs MCP"
+        S1[Azure MCP]
+        S2[GitHub MCP]
+        S3[Filesystem MCP]
+        S4[Audit Entra<br/>custom]
+        S5[Microsoft Learn]
+    end
+    C1 --> P
+    C2 --> P
+    C3 --> P
+    C4 --> P
+    P --> S1
+    P --> S2
+    P --> S3
+    P --> S4
+    P --> S5
+    style P fill:#fff8e1,stroke:#ff8c00,stroke-width:3px
+    </pre>
+    <div class="diag-caption">Schéma 6 — MCP = la prise universelle entre les IA et les services externes.</div>
+  </div>
+
+  <h3>8.2 Vos MCP actifs (votre cas)</h3>
+  <p>D'après votre configuration <code>mcp.json</code>, vous avez branché :</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Serveur MCP</th><th>À quoi il sert</th><th>Source</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Azure MCP</strong></td><td>Manipuler des ressources Azure (VMs, storage, etc.) en langage naturel</td><td>Microsoft officiel</td></tr>
+      <tr><td><strong>audit-entra-m</strong></td><td>Vos 180+ fonctions d'audit Entra ID / Intune / M365</td><td>Custom (votre repo <code>agent-mcp-audit-entra</code>)</td></tr>
+      <tr><td><strong>Microsoft Learn</strong></td><td>Rechercher dans la doc officielle Microsoft</td><td>Microsoft officiel</td></tr>
+      <tr><td><strong>GitHub</strong></td><td>Issues, PR, recherche dans des repos</td><td>GitHub officiel</td></tr>
+      <tr><td><strong>Context7</strong></td><td>Récupérer la doc à jour de n'importe quelle librairie</td><td>Tiers</td></tr>
+      <tr><td><strong>Filesystem</strong></td><td>Accès fichiers hors workspace</td><td>Officiel MCP</td></tr>
+      <tr><td><strong>Sequential thinking</strong></td><td>Aide à structurer un raisonnement complexe</td><td>Officiel MCP</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="alert alert-ok">
+    <strong>✅ Pourquoi c'est puissant chez vous</strong>
+    Au lieu de demander « écris-moi un script PowerShell qui liste les utilisateurs Entra avec MFA désactivé », vous pouvez juste dire « liste-moi les utilisateurs sans MFA » : le MCP <code>audit-entra-m</code> a déjà la fonction <code>analyze-mfa-users-without</code>. Pas de code à écrire, juste un appel d'outil.
+  </div>
+</section>
+
+<!-- ===== S9 : SKILLS ===== -->
+<section class="section" id="s9">
+  <div class="section-head green">
+    <div class="section-num green">9</div>
+    <div>
+      <div class="section-title">Les Skills</div>
+      <div class="section-desc">Des « fiches recettes » spécialisées que l'IA charge à la demande.</div>
+    </div>
+  </div>
+
+  <h3>9.1 Le concept</h3>
+  <p>Un <strong>Skill</strong> est un <strong>document markdown</strong> qui contient des <em>instructions expertes</em> sur un domaine précis. Quand l'IA détecte que votre demande tombe dans ce domaine, elle charge le skill et suit ses consignes.</p>
+
+  <div class="resto">
+    <p><strong>Un skill, c'est la fiche recette plastifiée du chef.</strong> Le chef connaît plein de plats par cœur, mais pour la blanquette de la grand-mère, il sort la fiche. Idem pour l'IA : pour un cas standard elle improvise, pour « déployer une fonction Azure » elle ouvre la fiche <code>azure-deploy</code>.</p>
+  </div>
+
+  <h3>9.2 Anatomie d'un skill</h3>
+  <p>Chaque skill a deux parties :</p>
+  <ol>
+    <li><strong>Une description</strong> (visible par l'IA) qui dit <em>quand</em> l'utiliser : mots-clés, intentions, contre-exemples.</li>
+    <li><strong>Le contenu</strong> (chargé sur demande) : la procédure détaillée, commandes, pièges.</li>
+  </ol>
+
+  <div class="code-block">
+    <div class="code-header"><span>SKILL.md (extrait simplifié)</span></div>
+    <pre><span class="cm">---</span>
+<span class="kw">name</span>: azure-deploy
+<span class="kw">description</span>: <span class="st">Déploiement Azure avec azd up, terraform apply...
+WHEN: "déployer sur Azure", "azd up", "push prod"
+DO NOT USE WHEN: "créer une app" (utiliser azure-prepare)</span>
+<span class="cm">---</span>
+
+<span class="cm"># Skill : Déploiement Azure</span>
+
+<span class="cm">## Étape 1 — Vérifier la connexion</span>
+az login --tenant <span class="st">$TENANT_ID</span>
+
+<span class="cm">## Étape 2 — Lancer le déploiement</span>
+azd up --no-prompt</pre>
+  </div>
+
+  <h3>9.3 Skills vs MCP : la confusion classique</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>&nbsp;</th><th>Skill</th><th>MCP</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Format</strong></td><td>Document markdown</td><td>Serveur logiciel</td></tr>
+      <tr><td><strong>Apporte</strong></td><td>De la <em>connaissance</em> (savoir-faire)</td><td>Des <em>actions</em> (exécution)</td></tr>
+      <tr><td><strong>Analogie</strong></td><td>📋 Fiche recette</td><td>🔌 Fournisseur d'ingrédients/outils</td></tr>
+      <tr><td><strong>Exemple</strong></td><td><code>azure-deploy</code> = procédure</td><td><code>Azure MCP</code> = exécute des commandes Azure</td></tr>
+      <tr><td><strong>Souvent utilisés…</strong></td><td colspan="2" style="text-align:center"><strong>ensemble</strong> : le skill dit <em>quoi</em> faire, le MCP <em>l'exécute</em></td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>9.4 Vos skills disponibles (extraits)</h3>
+  <p>Votre workspace expose des dizaines de skills. Les plus pertinents pour vous :</p>
+  <ul>
+    <li><code>azure-prepare</code>, <code>azure-deploy</code>, <code>azure-validate</code> — pipeline app Azure</li>
+    <li><code>azure-cost</code>, <code>azure-compliance</code> — FinOps & audit</li>
+    <li><code>entra-app-registration</code>, <code>entra-agent-id</code> — Entra ID</li>
+    <li><code>microsoft-foundry</code> — agents IA managés Azure</li>
+    <li><code>cosmosdb-best-practices</code> — bonnes pratiques NoSQL</li>
+  </ul>
+</section>
+
+<!-- ===== S10 : SUBAGENTS ===== -->
+<section class="section" id="s10">
+  <div class="section-head">
+    <div class="section-num">10</div>
+    <div>
+      <div class="section-title">Les Subagents (agents custom)</div>
+      <div class="section-desc">Déléguer une tâche à un « second couteau » spécialisé.</div>
+    </div>
+  </div>
+
+  <p>Un <strong>subagent</strong>, c'est une instance d'IA <em>lancée par l'agent principal</em> pour traiter une sous-tâche spécifique, avec son propre contexte et ses propres outils.</p>
+
+  <div class="resto">
+    <p><strong>Le chef exécutif (agent principal) ne pèle pas les patates lui-même.</strong> Il appelle le commis « épluche-moi 5 kilos », le commis fait son boulot dans son coin, et revient avec le résultat. Le chef ne s'embarrasse pas des détails — il garde sa tête claire pour le menu global.</p>
+  </div>
+
+  <h3>10.1 À quoi ça sert vraiment ?</h3>
+  <ul>
+    <li><strong>Préserver le contexte principal</strong> : explorer 50 fichiers dans une recherche, c'est 50 fichiers de pollués dans la fenêtre. Un subagent fait le sale boulot et renvoie juste un résumé.</li>
+    <li><strong>Paralléliser</strong> : lancer 3 explorations en même temps.</li>
+    <li><strong>Spécialiser</strong> : un subagent <code>java-modernizer</code> avec ses propres skills, un autre <code>azure-cost-optimizer</code>, etc.</li>
+  </ul>
+
+  <h3>10.2 Vos subagents disponibles (extraits)</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Subagent</th><th>Mission</th></tr></thead>
+    <tbody>
+      <tr><td><code>Explore</code></td><td>Explorer un codebase et répondre à une question sans polluer la conversation principale</td></tr>
+      <tr><td><code>AzureCostOptimizeAgent</code></td><td>Identifier et chiffrer les économies sur une souscription Azure</td></tr>
+      <tr><td><code>DeployToAzure</code></td><td>Spécialiste déploiement Azure de bout en bout</td></tr>
+      <tr><td><code>AIAgentExpert</code></td><td>Création/debug/eval d'agents IA avec Microsoft Agent Framework</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ===== S11 : PROMPTS & MEMORY ===== -->
+<section class="section" id="s11">
+  <div class="section-head">
+    <div class="section-num">11</div>
+    <div>
+      <div class="section-title">Prompts, instructions, mémoire, AGENTS.md</div>
+      <div class="section-desc">Tous les fichiers de configuration et leur rôle.</div>
+    </div>
+  </div>
+
+  <p>Pour personnaliser comment l'IA travaille pour vous, VS Code Copilot supporte plusieurs <strong>couches de configuration</strong> : instructions, prompt files, agent skills, custom agents, hooks et MCP servers. Les surfaces récentes de VS Code les regroupent aussi dans un <strong>Agent Customizations editor</strong>, avec un périmètre qui dépend encore de la version et des fonctionnalités activées.</p>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Fichier</th><th>Portée</th><th>Quand c'est chargé</th><th>Usage typique</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><code>AGENTS.md</code></td>
+        <td>Racine du workspace</td>
+        <td>À chaque conversation</td>
+        <td>Règles du projet, conventions, projets actifs (le vôtre est exemplaire)</td>
+      </tr>
+      <tr>
+        <td><code>.github/instructions/*.instructions.md</code></td>
+        <td>Par type de fichier (<code>applyTo</code>)</td>
+        <td>Quand un fichier matché est touché</td>
+        <td>Conventions Python, PowerShell, tests…</td>
+      </tr>
+      <tr>
+        <td><code>.github/copilot-instructions.md</code></td>
+        <td>Repo entier</td>
+        <td>Toujours</td>
+        <td>Anciennement seul format ; toujours supporté</td>
+      </tr>
+      <tr>
+        <td><code>prompts/*.prompt.md</code></td>
+        <td>Reusables</td>
+        <td>Sur demande (<code>/nom-du-prompt</code>)</td>
+        <td>Workflows répétés : audit-run-full, commit-msg…</td>
+      </tr>
+      <tr>
+        <td><code>.github/agents/*.agent.md</code></td>
+        <td>Repo / workspace</td>
+        <td>Quand vous sélectionnez cet agent</td>
+        <td>Persona spécialisée, outils et workflow dédiés</td>
+      </tr>
+      <tr>
+        <td><code>/memories/</code></td>
+        <td>Utilisateur (tous workspaces)</td>
+        <td>Premières 200 lignes auto-chargées</td>
+        <td>Préférences perso : OS, langue, style</td>
+      </tr>
+      <tr>
+        <td><code>/memories/repo/</code></td>
+        <td>Workspace courant</td>
+        <td>Liste auto-chargée, contenu sur demande</td>
+        <td>Notes verifiées sur ce repo</td>
+      </tr>
+      <tr>
+        <td><code>/memories/session/</code></td>
+        <td>Conversation courante</td>
+        <td>Liste auto-chargée</td>
+        <td>Plans en cours, contexte temporaire</td>
+      </tr>
+    </tbody>
+  </table></div>
+
+  <div class="diagram">
+    <pre class="mermaid">
+graph TD
+    A[🌍 Memory utilisateur<br/>~/coding-prefs.md] -->|toujours| Z[🧠 Contexte du modèle]
+    B[📋 AGENTS.md<br/>du workspace] -->|toujours| Z
+    C[📁 .github/instructions/<br/>python.instructions.md] -->|si fichier .py touché| Z
+    D[💾 memory/repo/*] -->|à la demande| Z
+    E[💬 prompts/*.prompt.md] -->|sur invocation /| Z
+    F[📜 SKILL.md<br/>du skill chargé] -->|si skill déclenché| Z
+    style Z fill:#deecf9,stroke:#0078d4,stroke-width:3px
+    </pre>
+    <div class="diag-caption">Schéma 7 — Les couches d'instructions qui s'empilent.</div>
+  </div>
+
+  <h3>11.1 L'ordre de priorité chez vous</h3>
+  <p>Votre <code>AGENTS.md</code> est un excellent exemple : il définit la priorité des outils (MCP > Skills > CLI > script custom), les règles inviolables (audit lecture seule), et les conventions Python/PowerShell. <strong>C'est souvent le premier fichier de gouvernance qui cadre l'agent dans votre workspace.</strong></p>
+
+  <h3>11.2 Anatomie d'un bon prompt</h3>
+  <div class="code-block">
+    <div class="code-header"><span>Mauvais prompt</span></div>
+    <pre>fais le truc des users</pre>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header"><span>Bon prompt</span></div>
+    <pre><span class="cm"># Contexte</span>
+Je travaille sur Audit_EntraID_Intune, branche master.
+
+<span class="cm"># Objectif</span>
+Ajouter un nouvel export PowerShell pour récupérer les politiques
+de rétention SharePoint depuis Graph.
+
+<span class="cm"># Contraintes</span>
+- Suivre la convention des autres scripts de 01-Exports/
+- PowerShell 7, Microsoft.Graph SDK
+- Sortie JSON dans 01-Exports/output/
+- Pagination -All + retry sur 429
+- Pas d'écriture sur le tenant (lecture seule)
+
+<span class="cm"># Résultat attendu</span>
+- Le script .ps1
+- Un test pytest qui vérifie le format de sortie
+- Une entrée dans CHANGELOG.md</pre>
+  </div>
+
+  <p>👉 <strong>4 ingrédients</strong> : contexte, objectif, contraintes, résultat attendu.</p>
+</section>
+
+<!-- ===== S12 : QUEL OUTIL CHOISIR ===== -->
+<section class="section" id="s12">
+  <div class="section-head orange">
+    <div class="section-num orange">12</div>
+    <div>
+      <div class="section-title">Quel outil choisir ? Arbre de décision</div>
+      <div class="section-desc">Quand utiliser MCP vs Skill vs Subagent vs script custom.</div>
+    </div>
+  </div>
+
+  <div class="diagram">
+    <pre class="mermaid">
+flowchart TD
+    START[J'ai besoin de faire X] --> Q1{Y a-t-il un<br/>MCP officiel<br/>qui le fait ?}
+    Q1 -->|Oui| MCP[✅ Utiliser le MCP<br/>Azure MCP, Graph, Learn…]
+    Q1 -->|Non| Q2{Y a-t-il un Skill<br/>qui couvre<br/>le domaine ?}
+    Q2 -->|Oui| SK[✅ Charger le Skill<br/>+ outils natifs]
+    Q2 -->|Non| Q3{C'est une tâche<br/>longue ou en<br/>parallèle ?}
+    Q3 -->|Oui| SUB[✅ Lancer un Subagent<br/>Explore, etc.]
+    Q3 -->|Non| Q4{Existe-t-il une<br/>CLI officielle ?}
+    Q4 -->|Oui| CLI[✅ Utiliser la CLI<br/>az, gh, Connect-MgGraph]
+    Q4 -->|Non| CUSTOM[⚠️ Écrire un script<br/>custom en dernier recours]
+
+    style MCP fill:#e8f5e9,stroke:#107c10,stroke-width:2px
+    style SK fill:#e8f5e9,stroke:#107c10,stroke-width:2px
+    style SUB fill:#deecf9,stroke:#0078d4
+    style CLI fill:#fff8e1,stroke:#ff8c00
+    style CUSTOM fill:#fde7e9,stroke:#d13438
+    </pre>
+    <div class="diag-caption">Schéma 8 — La règle d'or définie dans votre AGENTS.md.</div>
+  </div>
+
+  <h3>12.1 Exemples concrets</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Demande</th><th>Bon choix</th><th>Pourquoi</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>« Lister mes utilisateurs sans MFA »</td>
+        <td><strong>MCP audit-entra-m</strong></td>
+        <td>Fonction native <code>analyze-mfa-users-without</code></td>
+      </tr>
+      <tr>
+        <td>« Déployer une app Azure Function »</td>
+        <td><strong>Skill <code>azure-prepare</code> + <code>azure-deploy</code></strong></td>
+        <td>Procédure établie, multi-étapes</td>
+      </tr>
+      <tr>
+        <td>« Cherche tous les TODO dans le repo »</td>
+        <td><strong>Subagent <code>Explore</code></strong></td>
+        <td>Lecture massive, résumé attendu</td>
+      </tr>
+      <tr>
+        <td>« Documente l'API de la doc Microsoft pour le Conditional Access »</td>
+        <td><strong>MCP Microsoft Learn</strong></td>
+        <td>Recherche dans la doc officielle</td>
+      </tr>
+      <tr>
+        <td>« Lance les tests pytest »</td>
+        <td><strong>Outil natif <code>run_in_terminal</code></strong></td>
+        <td>Simple commande, pas de skill nécessaire</td>
+      </tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ===== S13 : BONNES PRATIQUES ===== -->
+<section class="section" id="s13">
+  <div class="section-head green">
+    <div class="section-num green">13</div>
+    <div>
+      <div class="section-title">Bonnes pratiques & pièges classiques</div>
+      <div class="section-desc">Ce que j'ai vu marcher (et pas marcher) en 2 ans d'usage intensif.</div>
+    </div>
+  </div>
+
+  <h3>13.1 Les 10 commandements</h3>
+  <div class="cards">
+    <div class="card"><div class="ic">1️⃣</div><h4>Donne le contexte d'abord</h4><p>Ouvre les fichiers concernés, mentionne le repo, la branche, l'objectif. L'IA ne devine pas.</p></div>
+    <div class="card"><div class="ic">2️⃣</div><h4>Une tâche à la fois</h4><p>« Refactore + ajoute des tests + déploie » → divisé en 3 conversations, c'est plus fiable.</p></div>
+    <div class="card"><div class="ic">3️⃣</div><h4>Vérifie les noms</h4><p>Noms de fonctions, paramètres, URLs : toujours suspects. Demande à l'IA de citer ses sources via un MCP.</p></div>
+    <div class="card"><div class="ic">4️⃣</div><h4>Garde l'AGENTS.md à jour</h4><p>Conventions, interdits, projets actifs. C'est ton meilleur ROI.</p></div>
+    <div class="card"><div class="ic">5️⃣</div><h4>Préfère les MCP officiels</h4><p>Comme votre AGENTS.md le rappelle : MCP > Skills > CLI > script custom.</p></div>
+    <div class="card"><div class="ic">6️⃣</div><h4>Lis les diffs</h4><p>En mode Edit/Agent, ne valide jamais aveuglément. Lis le diff.</p></div>
+    <div class="card"><div class="ic">7️⃣</div><h4>Choisis le bon modèle</h4><p>Rapide (4o-mini) pour les questions courtes, raisonneur (Claude Opus) pour du debug profond.</p></div>
+    <div class="card"><div class="ic">8️⃣</div><h4>Reset quand ça part en vrille</h4><p>Si l'IA tourne en rond, ouvre une nouvelle conversation. Le contexte pollué coûte plus cher que de recommencer.</p></div>
+    <div class="card"><div class="ic">9️⃣</div><h4>Ne mets jamais de secret en clair</h4><p>Tokens, mots de passe, clés API : utilise <code>.env</code> + <code>pydantic-settings</code> (votre stack).</p></div>
+    <div class="card"><div class="ic">🔟</div><h4>Mesure le coût</h4><p>Les modèles payants se facturent au token. Surveille ta consommation, surtout en mode Agent.</p></div>
+  </div>
+
+  <h3>13.2 Pièges fréquents</h3>
+  <div class="alert alert-danger">
+    <strong>🚫 Piège 1 : faire confiance aveuglément à un script généré</strong>
+    Surtout en PowerShell avec Microsoft Graph : les paramètres et noms de cmdlets évoluent vite. Toujours tester avec <code>-WhatIf</code> d'abord.
+  </div>
+  <div class="alert alert-warn">
+    <strong>⚠️ Piège 2 : conversation à rallonge</strong>
+    Au-delà de ~30-40 tours, le contexte se dégrade. L'IA oublie le début. Faites un résumé et démarrez une nouvelle session.
+  </div>
+  <div class="alert alert-warn">
+    <strong>⚠️ Piège 3 : mode Agent sans garde-fous</strong>
+    Sans <code>AGENTS.md</code> qui dit « audit = lecture seule », un agent zélé peut tenter de désactiver des comptes. Toujours documenter les interdits.
+  </div>
+  <div class="alert alert-info">
+    <strong>💡 Piège 4 : trop de MCP/skills actifs</strong>
+    Chaque MCP/skill chargé prend des tokens. Désactivez ceux que vous n'utilisez pas dans la session.
+  </div>
+</section>
+
+<!-- ===== S14 : GLOSSAIRE ===== -->
+<section class="section" id="s14">
+  <div class="section-head">
+    <div class="section-num">14</div>
+    <div>
+      <div class="section-title">Glossaire des termes que vous croisez partout</div>
+      <div class="section-desc">Pour décoder les conversations Twitter/LinkedIn/blog tech.</div>
+    </div>
+  </div>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Terme</th><th>Définition courte</th></tr></thead>
+    <tbody>
+      <tr><td><strong>LLM</strong></td><td>Large Language Model — modèle qui prédit du texte (GPT, Claude…)</td></tr>
+      <tr><td><strong>SLM</strong></td><td>Small Language Model — petit LLM exécutable en local (Phi, petits Llama, Gemma compact…)</td></tr>
+      <tr><td><strong>Token</strong></td><td>Fragment de mot, unité de base manipulée et facturée</td></tr>
+      <tr><td><strong>Context window</strong></td><td>Mémoire de travail max du modèle (en tokens)</td></tr>
+      <tr><td><strong>Prompt</strong></td><td>Texte d'entrée envoyé au modèle</td></tr>
+      <tr><td><strong>System prompt</strong></td><td>Prompt initial qui définit le rôle (caché à l'utilisateur)</td></tr>
+      <tr><td><strong>Hallucination</strong></td><td>Réponse fausse mais qui sonne juste</td></tr>
+      <tr><td><strong>RAG</strong></td><td>Retrieval-Augmented Generation — l'IA cherche dans une base avant de répondre</td></tr>
+      <tr><td><strong>Embedding</strong></td><td>Représentation numérique d'un texte, utile pour la recherche sémantique</td></tr>
+      <tr><td><strong>Vector DB</strong></td><td>Base de données pour stocker des embeddings (Pinecone, Qdrant, pgvector…)</td></tr>
+      <tr><td><strong>Fine-tuning</strong></td><td>Ré-entraîner un modèle sur vos données spécifiques</td></tr>
+      <tr><td><strong>Tool / Function calling</strong></td><td>Mécanisme qui permet au modèle d'appeler des fonctions externes</td></tr>
+      <tr><td><strong>MCP</strong></td><td>Model Context Protocol — standard pour brancher des outils à n'importe quel modèle</td></tr>
+      <tr><td><strong>Skill</strong></td><td>Document markdown chargé à la demande qui guide l'IA sur un domaine</td></tr>
+      <tr><td><strong>Agent</strong></td><td>IA autonome qui enchaîne des actions pour atteindre un objectif</td></tr>
+      <tr><td><strong>Subagent</strong></td><td>Agent secondaire lancé pour une sous-tâche</td></tr>
+      <tr><td><strong>Multimodal</strong></td><td>Modèle qui gère plusieurs types d'entrées (texte + image + audio)</td></tr>
+      <tr><td><strong>Reasoning model</strong></td><td>Modèle qui « réfléchit » étape par étape avant de répondre (familles reasoning récentes selon fournisseur)</td></tr>
+      <tr><td><strong>Temperature</strong></td><td>Paramètre 0–2 qui contrôle la créativité/aléa de la réponse</td></tr>
+      <tr><td><strong>Inference</strong></td><td>L'acte de faire répondre un modèle (par opposition à l'entraînement)</td></tr>
+      <tr><td><strong>Foundry</strong></td><td>Plateforme Microsoft pour héberger/évaluer/fine-tuner des modèles dans Azure</td></tr>
+      <tr><td><strong>Agent plugin</strong></td><td>Bundle de customizations et d'outils (skills, agents, hooks, MCP…) installé depuis une marketplace ; différent d'un simple serveur MCP</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ===== S15 : RAG & EMBEDDINGS ===== -->
+<section class="section" id="s15">
+  <div class="section-head purple">
+    <div class="section-num purple">15</div>
+    <div>
+      <div class="section-title">RAG & embeddings — donner de la mémoire à l'IA</div>
+      <div class="section-desc">Comment Copilot trouve « les bons fichiers » dans votre repo de 90 000 lignes.</div>
+    </div>
+  </div>
+
+  <h3>15.1 Le problème</h3>
+  <p>Votre projet <code>Audit_EntraID_Intune</code> fait ~90k lignes. Impossible de tout envoyer au modèle (la fenêtre de contexte explose, et le coût grimpe vite). Comment le modèle sait <em>quels fichiers</em> sont pertinents pour votre question ?</p>
+
+  <p>Réponse : <strong>RAG</strong> = <em>Retrieval-Augmented Generation</em>. Avant d'envoyer la question au modèle, on <strong>cherche les morceaux pertinents</strong> et on les ajoute au prompt.</p>
+
+  <h3>15.2 Les embeddings : transformer le sens en chiffres</h3>
+  <p>Un <strong>embedding</strong>, c'est un vecteur (une liste de ~1500 nombres) qui représente <em>le sens</em> d'un texte. Deux textes proches sémantiquement ont des vecteurs proches géométriquement.</p>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Texte</th><th>Embedding simplifié</th></tr></thead>
+    <tbody>
+      <tr><td>« lister les utilisateurs Entra ID »</td><td><code>[0.12, 0.88, -0.34, ...]</code></td></tr>
+      <tr><td>« afficher les comptes du tenant »</td><td><code>[0.14, 0.86, -0.31, ...]</code> ✅ proche</td></tr>
+      <tr><td>« recette de tarte aux pommes »</td><td><code>[-0.91, 0.02, 0.55, ...]</code> ❌ très loin</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="resto">
+    <p><strong>Imaginez la bibliothèque infinie du restaurant.</strong> Chaque recette est rangée selon ses ingrédients et techniques (température au four, type de viande, durée…). Quand vous demandez « un plat mijoté à base de bœuf », le sommelier ne lit pas les 50 000 recettes : il va dans le rayon « mijoté + bœuf » et en sort 5 candidates. <strong>L'embedding, c'est le système de classement géométrique.</strong></p>
+  </div>
+
+  <h3>15.3 Le cycle RAG complet</h3>
+  <div class="diagram">
+    <pre class="mermaid">
+flowchart LR
+    A[👤 Question] --> B[🔢 Embedding<br/>de la question]
+    B --> C[🔍 Recherche<br/>vecteurs proches]
+    C --> D[(💾 Vector DB<br/>repo indexé)]
+    D --> E[📄 Top 5 chunks<br/>les plus proches]
+    E --> F[📦 Prompt enrichi<br/>question + chunks]
+    F --> G[🧠 LLM]
+    G --> H[💬 Réponse fondée<br/>sur le code réel]
+    style D fill:#fff8e1,stroke:#ff8c00
+    style G fill:#deecf9,stroke:#0078d4,stroke-width:3px
+    </pre>
+    <div class="diag-caption">Schéma 9 — Le cycle RAG : recherche sémantique puis génération.</div>
+  </div>
+
+  <h3>15.4 Où vous rencontrez du RAG sans le savoir</h3>
+  <ul>
+    <li><strong>VS Code Copilot</strong> indexe votre workspace : c'est ce qui alimente <code>semantic_search</code> et la commande <code>#codebase</code></li>
+    <li><strong>Microsoft Learn MCP</strong> = RAG sur toute la doc Microsoft</li>
+    <li><strong>ChatGPT « custom GPTs »</strong> avec fichiers attachés = mini-RAG</li>
+    <li><strong>Copilot dans Word/Outlook</strong> = RAG sur vos documents OneDrive</li>
+    <li><strong>Azure AI Search + vector</strong> = la stack standard pour faire un chatbot d'entreprise</li>
+  </ul>
+
+  <div class="alert alert-info">
+    <strong>💡 Implication pratique</strong>
+    Si vous voulez que Copilot trouve mieux dans votre repo : nommez explicitement vos fichiers, mettez des docstrings/commentaires en haut, et structurez avec des <code>README.md</code> par dossier. Plus le texte est descriptif, mieux l'embedding capture le sens.
+  </div>
+
+  <h3>15.5 RAG vs Fine-tuning : la confusion classique</h3>
+  <div class="compare">
+    <div class="good">
+      <h4>✅ RAG (souvent le bon premier choix)</h4>
+      <ul>
+        <li>Pas de réentraînement : on ajoute du contexte récupéré au moment de la requête</li>
+        <li>Mise à jour plus simple : modifier la base documentaire suffit souvent à changer la réponse</li>
+        <li>Sources citables (« d'après le fichier X ») si le pipeline les remonte</li>
+        <li>Coût : indexation/stockage + appels modèle, à dimensionner selon le volume et la fréquence</li>
+      </ul>
+    </div>
+    <div class="bad">
+      <h4>⚠️ Fine-tuning (cas pointus)</h4>
+      <ul>
+        <li>Réentraîner le modèle sur vos données</li>
+        <li>Connaissance plus « intégrée » au comportement du modèle, mais moins simple à mettre à jour</li>
+        <li>Pas de citation de source native à lui seul</li>
+        <li>Coût : préparation des données, entraînement/évaluation et exploitation</li>
+        <li>Utile pour : style d'écriture, format strict, langage métier rare</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ===== S16 : COÛTS & TOKENS ===== -->
+<section class="section" id="s16">
+  <div class="section-head orange">
+    <div class="section-num orange">16</div>
+    <div>
+      <div class="section-title">Coûts, tokens & économie pratique</div>
+      <div class="section-desc">Pourquoi votre facture peut exploser, et comment éviter ça.</div>
+    </div>
+  </div>
+
+  <h3>16.1 Comment on facture</h3>
+  <p>Les modèles se paient généralement au <strong>token</strong>, avec un prix différent en entrée (input, ce que vous envoyez) et en sortie (output, ce qu'il génère). Mais la facture réelle dépend aussi du cache, des outils, du mode de traitement (batch, flex, priority), du contexte long et parfois du runtime agentique.</p>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Plateforme</th><th>Ce qui est généralement facturé</th><th>Ce qui fait varier la facture</th><th>Réflexe</th></tr></thead>
+    <tbody>
+      <tr><td>OpenAI API</td><td>Input, output, cached input</td><td>Famille de modèle, Batch/Flex/Priority, web search, containers, multimodal</td><td>Vérifier la page API Pricing au moment du budget</td></tr>
+      <tr><td>Anthropic API</td><td>Input, output, prompt caching</td><td>Famille Haiku/Sonnet/Opus, batch, long contexte, tool use, managed agents</td><td>Vérifier la page Pricing et le détail tool use/prompt caching</td></tr>
+      <tr><td>Gemini API</td><td>Input, output, context caching, grounding/outils selon cas</td><td>Tier Free/Paid/Enterprise, Standard/Batch/Flex/Priority, familles Flash/Pro</td><td>Vérifier la page Gemini pricing et les frais d'outils</td></tr>
+      <tr><td>Modèles locaux / open weights</td><td>GPU, CPU, RAM, stockage, ops</td><td>Taille du modèle, vitesse voulue, nombre d'utilisateurs</td><td>Penser coût d'infrastructure plutôt que « gratuit »</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="alert alert-warn">
+    <strong>⚠️ Point de vigilance au 29 mai 2026</strong>
+    Les pages live <a href="https://openai.com/api/pricing/" target="_blank" rel="noopener">OpenAI API Pricing</a>, <a href="https://platform.claude.com/docs/en/docs/about-claude/pricing" target="_blank" rel="noopener">Anthropic Pricing</a> et <a href="https://ai.google.dev/gemini-api/docs/pricing" target="_blank" rel="noopener">Gemini API Pricing</a> publient bien des grilles détaillées, mais elles varient selon le modèle, le mode de traitement, le cache, les outils et parfois le contexte long. Dans un guide pédagogique, mieux vaut expliquer la mécanique de facturation et renvoyer vers les pages officielles au moment du chiffrage.
+  </div>
+
+  <h3>16.2 GitHub Copilot : le forfait masque la complexité</h3>
+  <p>Avec GitHub Copilot, la logique de coût n'est pas la même qu'une API brute : vous partez d'un <strong>plan</strong>, mais les capacités accessibles dépendent du plan, du catalogue de modèles actif et, en 2026, de l'évolution d'une partie de l'offre vers <strong>GitHub AI Credits / usage-based billing</strong>. Revérifiez le statut exact pour votre compte et votre organisation au moment de l'achat.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Plan Copilot</th><th>Ce qui reste vrai</th><th>À vérifier en live</th></tr></thead>
+    <tbody>
+      <tr><td>Free</td><td>Découverte avec complétions et chat limités</td><td>Quota exact, modèles inclus, restrictions agents</td></tr>
+      <tr><td>Student / Pro / Pro+</td><td>Usage individuel, accès à des modèles premium et au cloud agent selon plan</td><td>Prix, allowance premium/usage, modèles disponibles</td></tr>
+      <tr><td>Business</td><td>Gestion centralisée, policies, accès organisation, exclusions de fichiers</td><td>Prix par siège, modèle de facturation premium, catalogue de modèles</td></tr>
+      <tr><td>Enterprise</td><td>Ajoute des capacités enterprise-grade au-dessus de Business</td><td>Grille exacte, usage premium, fonctions avancées et catalogue actif</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="alert alert-info">
+    <strong>🔎 Lecture correcte en 2026</strong>
+    La doc GitHub live mélange encore, selon les pages, quotas inclus, modèles premium et logique de billing à l'usage. Pour rester factuel, ne raisonnez pas avec une simple équation « tel plan = tel nombre figé de requêtes » : revérifiez toujours <a href="https://docs.github.com/en/copilot/get-started/plans" target="_blank" rel="noopener">Plans for GitHub Copilot</a> et la page de billing correspondante.
+  </div>
+
+  <h3>16.3 Pourquoi le mode Agent coûte cher</h3>
+  <p>En mode Agent, à chaque étape l'IA <strong>réinjecte une partie importante de l'historique</strong> et les résultats des outils. Sur une session longue, on atteint vite des volumes de tokens significatifs, surtout avec des recherches web, des sorties terminal volumineuses ou de gros fichiers.</p>
+
+  <div class="diagram">
+    <pre class="mermaid">
+graph LR
+    T1[Tour 1<br/>2k tokens] --> T2[Tour 2<br/>5k tokens]
+    T2 --> T3[Tour 3<br/>12k tokens]
+    T3 --> T4[Tour 4<br/>25k tokens]
+    T4 --> T5[Tour 5<br/>45k tokens]
+    T5 --> T6[Tour 20<br/>200k tokens 💸]
+    style T6 fill:#fde7e9,stroke:#d13438,stroke-width:3px
+    </pre>
+    <div class="diag-caption">Schéma 10 — Croissance exponentielle du contexte en mode Agent.</div>
+  </div>
+
+  <h3>16.4 Les 7 leviers pour réduire la facture</h3>
+  <div class="cards">
+    <div class="card"><div class="ic">1️⃣</div><h4>Modèle adapté</h4><p>Un modèle rapide de type mini / haiku / flash suffit pour la majorité des tâches ; gardez les modèles frontier ou reasoning pour le debug pointu.</p></div>
+    <div class="card"><div class="ic">2️⃣</div><h4>Conversations courtes</h4><p>Reset dès que la tâche change. 5 petites discussions valent mieux qu'une géante.</p></div>
+    <div class="card"><div class="ic">3️⃣</div><h4>Subagents</h4><p>Délègue les explorations massives, ne pollue pas le contexte principal.</p></div>
+    <div class="card"><div class="ic">4️⃣</div><h4>Prompt caching</h4><p>Le caching des prompts longs peut réduire fortement la facture sur les workflows répétitifs.</p></div>
+    <div class="card"><div class="ic">5️⃣</div><h4>Batch API</h4><p>Pour les jobs offline (analyse de masse), les Batch APIs peuvent réduire le coût ; la remise exacte dépend du fournisseur et de la période.</p></div>
+    <div class="card"><div class="ic">6️⃣</div><h4>Modèles locaux</h4><p>Un petit modèle local pour les tâches triviales évite la facture API directe.</p></div>
+    <div class="card"><div class="ic">7️⃣</div><h4>Désactiver les MCP inutiles</h4><p>Chaque MCP injecte la liste de ses tools (~500-2000 tokens). Ne gardez que ceux que vous utilisez.</p></div>
+  </div>
+</section>
+
+<!-- ===== S17 : SÉCURITÉ & RGPD ===== -->
+<section class="section" id="s17">
+  <div class="section-head">
+    <div class="section-num">17</div>
+    <div>
+      <div class="section-title">Sécurité, confidentialité, RGPD</div>
+      <div class="section-desc">Indispensable quand on bosse sur un tenant Microsoft 365 client.</div>
+    </div>
+  </div>
+
+  <h3>17.1 Où partent vraiment vos données ?</h3>
+  <p>Quand vous tapez dans Copilot Chat, votre prompt et le code des fichiers ouverts transitent dans une chaîne de services qui dépend du plan, du modèle choisi, de la région et des réglages admin. Les politiques de rétention et d'entraînement varient donc selon le produit exact :</p>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Service</th><th>Entraînement sur vos données</th><th>Rétention / contrôle</th><th>Réflexe</th></tr></thead>
+    <tbody>
+      <tr><td>Copilot Free</td><td>Vérifier la doc GitHub active pour le plan et les modèles utilisés</td><td>Le modèle de billing et les politiques peuvent évoluer rapidement</td><td>Éviter secrets et code client sensible</td></tr>
+      <tr><td>Copilot Business / Enterprise</td><td>GitHub publie des contrôles et une séparation business ; vérifier la doc active</td><td>Policies, exclusions, logs et régions dépendent de la configuration</td><td>Confirmer le plan, les policies et la région avant usage sensible</td></tr>
+      <tr><td>ChatGPT individuel</td><td>OpenAI indique que les services individuels peuvent servir à l'amélioration des modèles, sauf opt-out ou Temporary Chat</td><td>Historique, mémoire et data controls dépendent des réglages utilisateur</td><td>Utiliser Temporary Chat ou l'opt-out pour réduire l'exposition</td></tr>
+      <tr><td>ChatGPT Business / Enterprise / API</td><td>OpenAI indique ne pas entraîner par défaut sur les données business et API</td><td>Les contrôles de rétention dépendent du plan et du produit</td><td>Vérifier Enterprise Privacy et les réglages d'admin</td></tr>
+      <tr><td>Claude.ai</td><td>Vérifier la politique du plan Claude actif</td><td>Historique, mémoire et connecteurs dépendent du plan</td><td>Contrôler le workspace et les connecteurs avant usage client</td></tr>
+      <tr><td>Azure OpenAI / Azure AI Foundry</td><td>Modèle de service entreprise ; confirmer la politique du service exact utilisé</td><td>Région, journalisation et monitoring varient selon le service et la configuration</td><td>Choisir explicitement la région et relire la doc du service exact</td></tr>
+      <tr><td>Foundry Local / Ollama</td><td>Pas d'envoi automatique vers un fournisseur distant si vous restez en local</td><td>La rétention dépend surtout de votre machine, de vos logs et sauvegardes</td><td>Durcir le poste et surveiller les logs locaux</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>17.2 Les risques concrets</h3>
+  <div class="alert alert-danger">
+    <strong>🔴 Risque 1 : fuite de secrets</strong>
+    Une <code>.env</code>, un token Azure, une chaîne de connexion SQL ouverte dans VS Code peuvent partir dans le prompt. Solution : <code>.gitignore</code> ET exclusion explicite via <code>.copilotignore</code>.
+  </div>
+  <div class="alert alert-danger">
+    <strong>🔴 Risque 2 : code propriétaire client</strong>
+    Si vous bossez pour IB2 sous NDA, vérifiez le plan actif, les policies admin et les engagements contractuels avant d'y mettre du code sensible. Si le cadre n'est pas clair, privilégiez un modèle local ou un service entreprise explicitement gouverné.
+  </div>
+  <div class="alert alert-warn">
+    <strong>🟠 Risque 3 : prompt injection</strong>
+    Un fichier markdown, une page web, un commit message peut contenir des instructions cachées pour l'agent (« supprime tous les fichiers », « envoie ce token quelque part »). C'est rare mais réel. Lisez les diffs.
+  </div>
+  <div class="alert alert-warn">
+    <strong>🟠 Risque 4 : exécution de code non vérifié</strong>
+    En mode Agent, une commande PowerShell générée peut faire des dégâts. Toujours <code>-WhatIf</code> sur des opérations destructives, et lisez avant d'exécuter.
+  </div>
+
+  <h3>17.3 La règle d'or pour les audits clients</h3>
+  <div class="alert alert-ok">
+    <strong>✅ Votre AGENTS.md le formalise déjà :</strong>
+    <ul>
+      <li><strong>Audit = lecture seule</strong> sur le tenant (toute écriture vit dans <code>05-Remediation/</code> avec <code>-WhatIf</code>)</li>
+      <li><strong>Pas de secrets en clair</strong> (<code>.env</code> + <code>pydantic-settings</code>)</li>
+      <li><strong>PII sanitization</strong> obligatoire avant export public</li>
+      <li><strong>Privilégier les MCP officiels</strong> (auditables, gouvernés)</li>
+    </ul>
+  </div>
+
+  <h3>17.4 Conformité RGPD pour les chatbots clients</h3>
+  <p>Si vous déployez un chatbot IA pour un client :</p>
+  <ul>
+    <li><strong>Base légale</strong> : intérêt légitime ou consentement explicite</li>
+    <li><strong>Information</strong> : mention claire « cette conversation utilise une IA »</li>
+    <li><strong>Localisation</strong> : Azure OpenAI EU + Foundry EU > OpenAI direct US</li>
+    <li><strong>Droit à l'oubli</strong> : définir une politique d'effacement et de rétention cohérente avec la finalité, le contrat et les obligations légales</li>
+    <li><strong>DPA</strong> : un <em>Data Processing Agreement</em> signé avec l'éditeur</li>
+    <li><strong>AI Act EU</strong> : obligations progressives selon le cas d'usage ; si « haut risque » (RH, santé, justice…), faites valider le statut réglementaire actuel avec le juridique</li>
+  </ul>
+</section>
+
+<!-- ===== S18 : COPILOT VS CURSOR VS CLINE ===== -->
+<section class="section" id="s18">
+  <div class="section-head">
+    <div class="section-num">18</div>
+    <div>
+      <div class="section-title">Copilot vs Cursor vs Cline vs Claude Code vs Codex</div>
+      <div class="section-desc">Le paysage des assistants IDE & CLI en 2026.</div>
+    </div>
+  </div>
+
+  <div class="alert alert-info">
+    <strong>📅 Sources & fraîcheur</strong>
+    Cette section a été reverifiée le <strong>29 mai 2026</strong> contre les documentations officielles : <a href="https://docs.github.com/en/copilot/get-started/features" target="_blank" rel="noopener">GitHub Copilot features</a>, <a href="https://code.claude.com/docs" target="_blank" rel="noopener">Claude Code</a>, <a href="https://github.com/openai/codex" target="_blank" rel="noopener">openai/codex GitHub</a>. Le secteur évolue très vite : noms de produits, flags, modèles, statuts preview et installations changent fréquemment. Utilisez cette section comme <strong>carte de lecture</strong>, puis revérifiez la doc officielle avant un usage en production.
+  </div>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Outil</th><th>Base</th><th>Modèles</th><th>Forces</th><th>Limites</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>GitHub Copilot</strong> <span class="badge b-ms">votre setup</span></td>
+        <td>Extension VS Code + Copilot cloud agent</td>
+        <td>GPT, Claude, Gemini et autres selon plan/catalogue</td>
+        <td>Intégration native VS Code, MCP, Skills, custom agents (<code>.agent.md</code>), AGENTS.md, écosystème GitHub</td>
+        <td>Coût et usage dépendent désormais du plan et des AI Credits</td>
+      </tr>
+      <tr>
+        <td><strong>Cursor</strong></td>
+        <td>Fork de VS Code</td>
+        <td>GPT-5, Claude, propre <em>cursor-small</em></td>
+        <td>UX agent très soignée, indexation rapide, multi-fichiers fluides</td>
+        <td>Pas votre VS Code habituel, abo séparé</td>
+      </tr>
+      <tr>
+        <td><strong>Cline</strong> (ex-Claude Dev)</td>
+        <td>Extension VS Code open-source</td>
+        <td>Apportez votre clé API</td>
+        <td>Transparent (vous voyez chaque étape), pay-as-you-go, supporte tous LLM</td>
+        <td>Pas de complétion inline, vous payez les tokens</td>
+      </tr>
+      <tr>
+        <td><strong>Claude Code</strong></td>
+        <td>CLI terminal + extension VS Code/JetBrains</td>
+        <td>Claude selon plan et surface</td>
+        <td>Agent CLI puissant, fichier <code>CLAUDE.md</code>, skills (<code>.claude/skills/</code>), sub-agents, hooks, MCP natif</td>
+        <td>Abonnement ou compte Anthropic Console / provider tiers selon surface</td>
+      </tr>
+      <tr>
+        <td><strong>OpenAI Codex CLI</strong></td>
+        <td>CLI terminal open source</td>
+        <td>Codex / GPT selon compte et version</td>
+        <td>Agent local OpenAI, <code>AGENTS.md</code>, complément du Web/IDE Codex</td>
+        <td>Auth et fonctionnalités à vérifier selon compte ChatGPT ou API</td>
+      </tr>
+      <tr>
+        <td><strong>Codex Web</strong> (chatgpt.com/codex)</td>
+        <td>Agent cloud dans le navigateur</td>
+        <td>Codex / GPT selon surface</td>
+        <td>Tâches déléguées en async, avec intégrations et sorties qui dépendent du compte</td>
+        <td>Pas d'accès local, dépend de GitHub</td>
+      </tr>
+      <tr>
+        <td><strong>Codex IDE</strong> (extension)</td>
+        <td>Extension VS Code / Cursor / Windsurf</td>
+        <td>Codex / GPT selon surface</td>
+        <td>Codex directement dans l'IDE, en complément de la CLI/Web</td>
+        <td>Abo ChatGPT requis</td>
+      </tr>
+      <tr>
+        <td><strong>Jules</strong> (Google)</td>
+        <td>Agent web async + outillage annexe</td>
+        <td>Modèles Google selon surface</td>
+        <td>Agent web orienté repo ; disponibilité et automatisations à vérifier en live</td>
+        <td>Statut, intégrations et périmètre à vérifier</td>
+      </tr>
+      <tr>
+        <td><strong>Continue.dev</strong></td>
+        <td>Extension OSS</td>
+        <td>Tous (local ou API)</td>
+        <td>100% open, customisable, local-first</td>
+        <td>Moins poli que Copilot</td>
+      </tr>
+      <tr>
+        <td><strong>Aider</strong></td>
+        <td>CLI Python</td>
+        <td>GPT, Claude</td>
+        <td>Workflow Git-natif (commits par changement)</td>
+        <td>CLI only</td>
+      </tr>
+      <tr>
+        <td><strong>Windsurf</strong> (Codeium)</td>
+        <td>Fork VS Code</td>
+        <td>Propre + GPT/Claude</td>
+        <td>Mode « Cascade » : agent qui modifie + valide</td>
+        <td>Encore jeune</td>
+      </tr>
+    </tbody>
+  </table></div>
+
+  <h3>18.1 Pourquoi rester sur Copilot dans votre cas</h3>
+  <div class="alert alert-info">
+    <strong>💡 Votre setup est cohérent</strong>
+    Vous avez investi dans : un AGENTS.md riche, des skills custom, un MCP <code>audit-entra-m</code>, des prompts réutilisables, une memory bien organisée. <strong>Tout ça est ancré dans l'écosystème VS Code + Copilot</strong>. Changer d'outil a un coût de migration réel ; le gain n'apparaît que si Copilot vous bloque sur un cas précis.
+  </div>
+
+  <h3>18.2 Quand essayer un concurrent ?</h3>
+  <ul>
+    <li><strong>Cline</strong> si vous voulez voir <em>exactement</em> ce que fait l'agent (transparence totale, utile pour apprendre)</li>
+    <li><strong>Claude Code</strong> pour des tâches long-running en background (refactos massifs)</li>
+    <li><strong>OpenAI Codex CLI</strong> si vous préférez l'écosystème OpenAI et voulez un agent terminal rapide côté modèles OpenAI / Codex</li>
+    <li><strong>Les agents cloud async</strong> (Codex Web, Jules, Copilot cloud agent) pour déléguer des tâches en asynchrone selon le plan et les intégrations disponibles</li>
+    <li><strong>Continue + Ollama</strong> sur des données ultra-confidentielles (audit gouvernement, défense)</li>
+    <li><strong>Cursor</strong> si VS Code agent vous frustre sur l'UX multi-fichiers (mais perte des MCP officiels)</li>
+  </ul>
+
+  <h3>18.3 Focus CLI agents : Claude Code vs Codex CLI vs Aider</h3>
+  <p>Ces trois outils s'utilisent au terminal et ont la même philosophie : <strong>un agent qui pilote votre repo localement</strong>. Différences pratiques :</p>
+
+  <div class="alert alert-warn">
+    <strong>⚠️ Lecture prudente</strong>
+    Les commandes d'installation ci-dessous sont officielles au 29 mai 2026, mais les capacités détaillées (MCP, hooks, sub-agents, approval modes) changent vite d'une release à l'autre, surtout côté outils récents. Vérifiez toujours le README ou la doc officielle avant d'automatiser un workflow autour de ces flags.
+  </div>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Critère</th><th>Claude Code</th><th>Codex CLI</th><th>Aider</th></tr></thead>
+    <tbody>
+      <tr><td>Éditeur</td><td>Anthropic</td><td>OpenAI</td><td>Communauté OSS</td></tr>
+      <tr><td>Langage d'implémentation</td><td>Node.js</td><td>Rust (rapide)</td><td>Python</td></tr>
+      <tr><td>Installation (officielle)</td><td><code>npm i -g @anthropic-ai/claude-code</code></td><td><code>curl -fsSL https://chatgpt.com/codex/install.sh | sh</code><br>(Windows : <code>irm install.ps1 | iex</code>, ou <code>npm i -g @openai/codex</code>)</td><td><code>pip install aider-chat</code></td></tr>
+      <tr><td>Modèle par défaut</td><td>Claude selon plan</td><td>Codex / GPT selon compte et version</td><td>GPT / Claude (au choix)</td></tr>
+      <tr><td>Facturation</td><td>Abonnement Anthropic, compte Console ou provider tiers selon setup</td><td>Compte ChatGPT compatible ou API key selon setup</td><td>API au token (votre clé)</td></tr>
+      <tr><td>MCP</td><td>✅ natif</td><td>Voir doc active</td><td>❌</td></tr>
+      <tr><td>Fichier instructions repo</td><td><code>CLAUDE.md</code></td><td><code>AGENTS.md</code></td><td><code>CONVENTIONS.md</code></td></tr>
+      <tr><td>Skills</td><td>✅ <code>.claude/skills/</code></td><td>Voir doc active</td><td>❌</td></tr>
+      <tr><td>Sub-agents</td><td>✅ <code>.claude/agents/</code></td><td>Voir doc active</td><td>❌</td></tr>
+      <tr><td>Hooks pre/post</td><td>✅</td><td>Voir doc active</td><td>❌</td></tr>
+      <tr><td>Workflow Git natif</td><td>commits manuels</td><td>commits manuels</td><td>✅ auto-commit par changement</td></tr>
+      <tr><td>Mode auto-approve</td><td><code>--dangerously-skip-permissions</code></td><td>Approval modes (voir doc)</td><td><code>--yes-always</code></td></tr>
+      <tr><td>Idéal pour</td><td>Refacto, exploration profonde</td><td>Tâches GPT, intégration ChatGPT + Codex Web/IDE</td><td>Workflow Git-first minimaliste</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="alert alert-info">
+    <strong>💡 Pourquoi un CLI agent en plus de Copilot ?</strong>
+    Pour les <em>tâches longues</em> : « refacto tout le module 02-Analyses pour utiliser async httpx ». Vous lancez Claude Code ou Codex CLI dans un terminal, vous partez en pause, vous revenez 30 minutes plus tard, l'agent vous présente un diff complet. Copilot Chat dans VS Code reste meilleur pour l'<em>interactif court</em>.
+  </div>
+
+  <h3>18.4 Table de correspondance — mêmes concepts, noms différents</h3>
+  <p>Tous ces outils ré-implémentent les mêmes briques avec des noms différents. Cette table vous évite la confusion :</p>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Concept</th><th>GitHub Copilot</th><th>Claude Code</th><th>Codex CLI</th><th>Cursor</th></tr></thead>
+    <tbody>
+      <tr><td>Fichier d'instructions repo</td><td><code>AGENTS.md</code> + <code>.github/copilot-instructions.md</code></td><td><code>CLAUDE.md</code></td><td><code>AGENTS.md</code></td><td><code>.cursorrules</code> ou <code>.cursor/rules/</code></td></tr>
+      <tr><td>Skills / Procédures</td><td>Skills (<code>SKILL.md</code>)</td><td>Skills (<code>.claude/skills/</code>)</td><td>Skills</td><td>Rules</td></tr>
+      <tr><td>Prompts réutilisables</td><td><code>.prompt.md</code></td><td>Slash commands (<code>.claude/commands/</code>)</td><td>Slash commands</td><td>@-mentions</td></tr>
+      <tr><td>Memory persistante</td><td>memory tool + <code>/memories/</code></td><td>memory tool</td><td>Voir doc active</td><td>Notepads</td></tr>
+      <tr><td>Sub-agents</td><td><code>runSubagent</code> + <code>.github/agents/</code> ou <code>.claude/agents/</code></td><td>Task tool + <code>.claude/agents/</code></td><td>Voir doc active</td><td>—</td></tr>
+      <tr><td>Custom agents / personas</td><td><code>.agent.md</code> (ex « custom chat modes »)</td><td>Sub-agents</td><td>Voir doc active</td><td>—</td></tr>
+      <tr><td>Mode Ask / lecture seule</td><td>Mode Ask</td><td>Plan mode</td><td>Read-only / approval mode</td><td>Ask</td></tr>
+      <tr><td>Mode Agent / écriture</td><td>Mode Agent</td><td>Mode par défaut</td><td>Mode par défaut</td><td>Composer / Agent</td></tr>
+      <tr><td>Agent autonome cloud</td><td>Copilot cloud agent (@copilot sur issues)</td><td>—</td><td>Codex Web (chatgpt.com/codex)</td><td>Background agents</td></tr>
+      <tr><td>Approbation auto</td><td>Allow-list VS Code</td><td><code>--dangerously-skip-permissions</code></td><td><code>--full-auto</code></td><td>YOLO mode</td></tr>
+      <tr><td>MCP</td><td>✅</td><td>✅</td><td>Voir doc active</td><td>✅</td></tr>
+      <tr><td>Indexation repo (embeddings)</td><td>✅</td><td>via outils</td><td>via outils</td><td>✅ native</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="resto">
+    <p><strong>Vu du restaurant</strong> : Copilot, Cursor, Claude Code, Codex CLI… ce sont les mêmes plats (assistants de code), servis par des chefs différents (Microsoft, Anysphere, Anthropic, OpenAI). Les ingrédients (modèles, MCP, skills) viennent souvent des mêmes fournisseurs. Ce qui change : la déco de la salle (UX), le rythme du service (interactif vs async), et le prix du menu (forfait vs au token).</p>
+  </div>
+
+  <h3>18.5 Agents async dans le navigateur (la vague récente)</h3>
+  <p>Tendance forte du moment : des agents qui tournent <strong>sans IDE</strong>, vous leur donnez une tâche par le web, puis ils reviennent avec un résultat ou une PR selon la surface.</p>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Service</th><th>Éditeur</th><th>Particularités</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Codex Web</strong> (chatgpt.com/codex)</td><td>OpenAI</td><td>Agent cloud pour déléguer des tâches en parallèle ; les intégrations exactes changent vite</td></tr>
+      <tr><td><strong>Jules</strong></td><td>Google</td><td>Agent web orienté repo ; disponibilité, intégrations et automatisations à vérifier en live</td></tr>
+      <tr><td><strong>Copilot cloud agent</strong></td><td>GitHub</td><td>Agent cloud GitHub/Copilot pour déléguer une issue ou une tâche selon le plan et l'organisation</td></tr>
+      <tr><td><strong>Devin</strong> (Cognition)</td><td>Cognition</td><td>Le pionnier, payant à l'usage, pour vraies tâches autonomes</td></tr>
+      <tr><td><strong>Bolt.new</strong>, <strong>v0.dev</strong>, <strong>Lovable</strong></td><td>Divers</td><td>Spécialisés webapps from scratch, déploiement intégré</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="alert alert-warn">
+    <strong>⚠️ Limite des agents async</strong>
+    Ils brillent sur des tâches <em>petites et bien isolées</em> (fixer un bug typo, ajouter un endpoint trivial). Sur des refactorings qui touchent à votre architecture (ex. <code>02-Analyses/</code>), ils restent moins fiables qu'une session interactive en mode Agent avec vous aux commandes.
+  </div>
+</section>
+
+<!-- ===== S19 : WORKFLOWS AVANCÉS ===== -->
+<section class="section" id="s19">
+  <div class="section-head purple">
+    <div class="section-num purple">19</div>
+    <div>
+      <div class="section-title">Workflows avancés : CoT, multi-agent, plan/act</div>
+      <div class="section-desc">Les techniques que les agents utilisent en interne pour mieux raisonner.</div>
+    </div>
+  </div>
+
+  <h3>19.1 Chain-of-Thought (CoT)</h3>
+  <p>Au lieu de répondre directement, le modèle <strong>verbalise son raisonnement</strong> étape par étape. Pour les problèmes math/logique, ça améliore la précision de 20-40 %.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span>Mauvais : réponse directe</span></div>
+    <pre>Q: J'ai 17 utilisateurs. 3 sont admin, 5 ont MFA désactivé,
+   1 est admin sans MFA. Combien d'utilisateurs standards ont MFA ?
+R: 9</pre>
+  </div>
+  <div class="code-block">
+    <div class="code-header"><span>Bon : avec chain-of-thought</span></div>
+    <pre>Q: ... (même question)
+R: Réfléchissons étape par étape.
+   - Total : 17
+   - Admins : 3
+   - Standards : 17 - 3 = 14
+   - Sans MFA total : 5
+   - Admins sans MFA : 1
+   - Standards sans MFA : 5 - 1 = 4
+   - Standards AVEC MFA : 14 - 4 = 10
+   Réponse : 10</pre>
+  </div>
+
+  <p>👉 En 2026, les modèles raisonneurs intègrent souvent cette étape en interne, avec un raisonnement partiellement résumé ou masqué selon la surface.</p>
+
+  <h3>19.2 Plan-Act-Observe (boucle ReAct)</h3>
+  <p>Le pattern de base des agents : <strong>Plan</strong> (décider l'action) → <strong>Act</strong> (appeler un outil) → <strong>Observe</strong> (lire le résultat) → recommencer jusqu'à terminé.</p>
+
+  <div class="diagram">
+    <pre class="mermaid">
+stateDiagram-v2
+    [*] --> Plan
+    Plan --> Act: décide d'appeler<br/>read_file
+    Act --> Observe: résultat<br/>du tool
+    Observe --> Plan: faut-il<br/>autre chose ?
+    Plan --> Done: objectif<br/>atteint
+    Done --> [*]
+    </pre>
+    <div class="diag-caption">Schéma 11 — La boucle ReAct (Reasoning + Action).</div>
+  </div>
+
+  <h3>19.3 Multi-agent (orchestrateur + spécialistes)</h3>
+  <p>Plutôt qu'un seul gros agent qui fait tout, on a <strong>un orchestrateur</strong> qui délègue à des <strong>spécialistes</strong>. C'est exactement la structure de votre stack <code>modernize</code> :</p>
+
+  <div class="diagram">
+    <pre class="mermaid">
+graph TD
+    USER[👤 Utilisateur] --> ORCH[🎯 modernize<br/>orchestrateur]
+    ORCH --> A[assessment-coordinator]
+    ORCH --> P[planning-coordinator]
+    ORCH --> E[execution-coordinator]
+    E --> J[modernize-azure-java]
+    E --> N[modernize-azure-dotnet]
+    E --> S[modernize-java-security]
+    E --> U[modernize-java-upgrade]
+    style ORCH fill:#fff8e1,stroke:#ff8c00,stroke-width:2px
+    style E fill:#deecf9,stroke:#0078d4
+    </pre>
+    <div class="diag-caption">Schéma 12 — Pattern multi-agent (votre stack <code>modernize</code>).</div>
+  </div>
+
+  <h3>19.4 Self-reflection / critique</h3>
+  <p>Le modèle <strong>relit sa propre réponse</strong> et tente de l'améliorer. Très efficace sur le code : « regarde le diff que tu viens de produire, y a-t-il des bugs ? ».</p>
+
+  <h3>19.5 Eval-driven development</h3>
+  <p>Avant d'optimiser un agent, on crée un <strong>dataset d'évaluation</strong> (questions + réponses attendues). Chaque modif est mesurée par un score. C'est la base du skill <code>microsoft-foundry</code> (continuous eval, prompt optimizer).</p>
+
+  <div class="alert alert-info">
+    <strong>💡 Pour vos audits</strong>
+    Vous pourriez créer un dataset « 50 tickets clients types » et mesurer la qualité de réponse de votre MCP <code>audit-entra-m</code> à chaque release. Foundry fait ça nativement.
+  </div>
+</section>
+
+<!-- ===== S20 : RECETTES DE PROMPTS ===== -->
+<section class="section" id="s20">
+  <div class="section-head green">
+    <div class="section-num green">20</div>
+    <div>
+      <div class="section-title">Recettes de prompts par cas d'usage</div>
+      <div class="section-desc">Des templates prêts à copier-coller pour vos tâches récurrentes.</div>
+    </div>
+  </div>
+
+  <h3>20.1 Recette : ajouter une fonctionnalité</h3>
+  <div class="code-block">
+    <div class="code-header"><span>prompt — feature</span></div>
+    <pre><span class="cm"># Contexte</span>
+Repo : <span class="st">{nom_repo}</span>, branche : <span class="st">{branche}</span>
+Module concerné : <span class="st">{chemin/fichier.py}</span>
+
+<span class="cm"># Objectif</span>
+Ajouter la fonctionnalité X qui doit :
+- <span class="st">{comportement 1}</span>
+- <span class="st">{comportement 2}</span>
+
+<span class="cm"># Contraintes</span>
+- Suivre les conventions existantes du fichier
+- Type hints obligatoires (Pydantic v2)
+- Couvrir par au moins 2 tests pytest
+- Mettre à jour CHANGELOG.md et bump version pyproject.toml
+
+<span class="cm"># Livrables</span>
+- Diff des fichiers modifiés
+- Sortie des tests qui passent
+- Résumé en 3 lignes pour le commit</pre>
+  </div>
+
+  <h3>20.2 Recette : débugger une erreur</h3>
+  <div class="code-block">
+    <div class="code-header"><span>prompt — debug</span></div>
+    <pre><span class="cm"># Symptôme</span>
+Quand je lance `<span class="st">{commande}</span>`, j'obtiens cette erreur :
+
+```
+<span class="st">{stack trace complète}</span>
+```
+
+<span class="cm"># Ce que j'ai déjà essayé</span>
+- <span class="st">{tentative 1}</span> → <span class="st">{résultat}</span>
+- <span class="st">{tentative 2}</span> → <span class="st">{résultat}</span>
+
+<span class="cm"># Environnement</span>
+- Python 3.14, venv activé
+- OS Windows 11, pwsh 7
+- Dépendances : voir requirements.txt
+
+<span class="cm"># Demande</span>
+1. Identifier la cause racine (pas juste le symptôme)
+2. Proposer 2 approches de correction
+3. Implémenter la plus robuste</pre>
+  </div>
+
+  <h3>20.3 Recette : refactoring</h3>
+  <div class="code-block">
+    <div class="code-header"><span>prompt — refacto</span></div>
+    <pre><span class="cm"># Périmètre</span>
+Fichiers : <span class="st">{liste précise}</span>
+Ne PAS toucher : <span class="st">{liste à protéger}</span>
+
+<span class="cm"># Objectif du refacto</span>
+<span class="st">{ex. : extraire la logique HTTP dans une classe dédiée}</span>
+
+<span class="cm"># Critères de réussite</span>
+- Aucun changement de comportement externe (API publique identique)
+- Tous les tests existants passent sans modification
+- Réduction du couplage : pas d'import circulaire
+- Avant/après : nombre de lignes, complexité cyclomatique
+
+<span class="cm"># Méthode</span>
+1. Lis d'abord les fichiers concernés
+2. Propose le plan de refacto avant d'écrire du code
+3. Attends ma validation
+4. Applique étape par étape</pre>
+  </div>
+
+  <h3>20.4 Recette : revue de code</h3>
+  <div class="code-block">
+    <div class="code-header"><span>prompt — code review</span></div>
+    <pre>Fais une revue de code de <span class="st">{fichier}</span> selon ces critères :
+
+1. Sécurité (OWASP Top 10, secrets en clair, injections)
+2. Robustesse (gestion d'erreurs, edge cases)
+3. Performance (allocs inutiles, requêtes N+1)
+4. Lisibilité (noms, structure, complexité)
+5. Conformité projet (.github/instructions/python.instructions.md)
+
+Format de sortie :
+- Tableau markdown : ligne | sévérité (🔴🟠🟡🟢) | problème | suggestion
+- Pas de remarques positives, seulement les problèmes
+- Trier par sévérité décroissante</pre>
+  </div>
+
+  <h3>20.5 Recette : audit Entra (votre cas)</h3>
+  <div class="code-block">
+    <div class="code-header"><span>prompt — audit tenant</span></div>
+    <pre>Tenant : <span class="st">9f0fad36-aa51-4631-8530-300d42f66d38</span> (IB2)
+
+Lance ces analyses via le MCP <span class="st">audit-entra-m</span> :
+1. analyze-mfa-users-without
+2. analyze-conditional-access
+3. analyze-pim-roles
+4. analyze-stale-apps (> 180 jours)
+
+Génère un rapport synthétique :
+- Top 5 risques par criticité
+- Recommandations concrètes (lien vers Microsoft Learn si applicable)
+- Estimation de l'effort de remédiation
+
+Aucune action d'écriture sur le tenant.</pre>
+  </div>
+
+  <h3>20.6 Recette : génération de doc</h3>
+  <div class="code-block">
+    <div class="code-header"><span>prompt — doc</span></div>
+    <pre>Génère un guide HTML pour <span class="st">{sujet}</span> dans le style de
+<span class="st">Documentation/guides/copilot-security.html</span> :
+
+- Hero gradient bleu/violet
+- Sidebar sticky avec sections numérotées
+- Sections : intro, concepts, archi (avec diagramme Mermaid),
+  prérequis, étapes, validation, troubleshooting, glossaire
+- Ton : pédagogique, français, analogies concrètes
+- Audience : <span class="st">{débutant | intermédiaire}</span>
+- Longueur cible : ~<span class="st">{nb}</span> mots
+
+Pas de markdown, du HTML direct.</pre>
+  </div>
+</section>
+
+<!-- ===== S21 : IA LOCALE ===== -->
+<section class="section" id="s21">
+  <div class="section-head">
+    <div class="section-num">21</div>
+    <div>
+      <div class="section-title">L'IA en local — Ollama, Foundry Local, LM Studio</div>
+      <div class="section-desc">Quand vous voulez limiter la facture API et mieux maîtriser vos données.</div>
+    </div>
+  </div>
+
+  <h3>21.1 Pourquoi du local ?</h3>
+  <ul>
+    <li><strong>Confidentialité</strong> : meilleure maîtrise des données ; selon l'outil et le setup, rien ne quitte votre poste</li>
+    <li><strong>Coût</strong> : pas de facture API directe, mais un coût matériel et électrique</li>
+    <li><strong>Latence</strong> : souvent plus faible et plus régulière sur des tâches courtes</li>
+    <li><strong>Offline</strong> : ça marche dans l'avion, en intervention sur site sans Internet</li>
+    <li><strong>Apprentissage</strong> : comprendre l'IA en touchant les rouages</li>
+  </ul>
+
+  <h3>21.2 Les options 2026</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Outil</th><th>Force</th><th>Public</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Ollama</strong></td><td>CLI simple, écosystème énorme, intègre VS Code</td><td>Devs</td></tr>
+      <tr><td><strong>LM Studio</strong></td><td>UI graphique, comparaison modèles facile</td><td>Tout le monde</td></tr>
+      <tr><td><strong>Foundry Local</strong> <span class="badge b-ms">Microsoft</span></td><td>SLM optimisés Windows, intégration Azure</td><td>Stack Microsoft</td></tr>
+      <tr><td><strong>vLLM</strong> / <strong>TGI</strong></td><td>Serveur haute perf pour production</td><td>Data engineers</td></tr>
+      <tr><td><strong>llama.cpp</strong></td><td>Le moteur sous le capot, ultra léger</td><td>Hackers</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>21.3 Quelle machine pour quel modèle ?</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Famille de modèle</th><th>RAM/VRAM indicative</th><th>Ce qu'il faut retenir</th><th>Qualité</th></tr></thead>
+    <tbody>
+      <tr><td>Phi class (petits à moyens SLM)</td><td>8-16 Go</td><td>Très bon point d'entrée local pour résumé, extraction, aide légère et petits workflows</td><td>★★★ excellent SLM</td></tr>
+      <tr><td>Petits Llama (1B-3B)</td><td>4-8 Go</td><td>Léger et rapide, mais qualité limitée sur le code complexe</td><td>★★ basique</td></tr>
+      <tr><td>Gemma (4B-27B)</td><td>8-24 Go</td><td>Bonne famille généraliste locale ; tailles et variantes changent vite</td><td>★★★ généraliste</td></tr>
+      <tr><td>Qwen / Qwen Coder (4B-32B+)</td><td>8-32 Go et plus</td><td>Souvent très intéressant pour code, multilingue et raisonnement en local</td><td>★★★★ code / multilingue</td></tr>
+      <tr><td>gpt-oss / grands open weights (20B+)</td><td>24 Go VRAM et plus</td><td>Plus ambitieux en raisonnement, mais exigeant en matériel et en tuning</td><td>★★★★ raisonnement</td></tr>
+      <tr><td>Très grands modèles locaux (70B+)</td><td>Multi-GPU ou GPU très large</td><td>Réservés aux setups lourds ; à traiter comme un mini-projet d'infra</td><td>★★★★ proche frontier</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="alert alert-info">
+    <strong>💡 Pour votre setup</strong>
+    Sur un poste Windows 11 standard sans GPU dédié : un <strong>petit modèle local</strong> (Phi, petit Llama, Gemma compact) via Ollama suffit pour des tâches simples comme le résumé, la traduction ou la complétion légère. Pour du code sérieux ou des agents plus lourds, prévoyez un GPU local adapté ou une VM GPU Azure à la demande.
+  </div>
+
+  <h3>21.4 Brancher du local sur VS Code Copilot</h3>
+  <p>VS Code et son écosystème acceptent des <strong>modèles externes via la « Language Model API »</strong> ou via des extensions comme Continue.dev. En pratique, on branche surtout le local dans ses workflows VS Code via ces surfaces d'extension plutôt que via une promesse unique valable partout.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span>installer Ollama + un modèle local sur Windows (PowerShell 7)</span></div>
+    <pre><span class="cm"># 1. Installer Ollama (méthode officielle au moment de cette mise à jour)</span>
+irm https://ollama.com/install.ps1 | iex
+<span class="cm"># Alternative : winget install Ollama.Ollama</span>
+
+<span class="cm"># 2. Tirer un modèle (exemple)</span>
+ollama pull phi4
+
+<span class="cm"># 3. Tester</span>
+ollama run phi4 "Bonjour, présente-toi en 2 lignes"
+
+<span class="cm"># 4. Dans VS Code : sélecteur de modèle Copilot → "Manage Models" → Ollama</span>
+<span class="cm">#    (ou extension Continue.dev pour plus de contrôle)</span></pre>
+  </div>
+</section>
+
+<!-- ===== S22 : ÉVALUATION DES RÉPONSES ===== -->
+<section class="section" id="s22">
+  <div class="section-head">
+    <div class="section-num">22</div>
+    <div>
+      <div class="section-title">Comment évaluer la qualité d'une réponse IA ?</div>
+      <div class="section-desc">Méthodes pour ne pas vous faire avoir par une jolie hallucination.</div>
+    </div>
+  </div>
+
+  <h3>22.1 Les 5 questions à se poser</h3>
+  <div class="cards">
+    <div class="card"><div class="ic">📎</div><h4>1. Source citée ?</h4><p>Pour un fait technique, demandez la source. Si le modèle ne peut pas la citer → suspect.</p></div>
+    <div class="card"><div class="ic">🔁</div><h4>2. Reproductible ?</h4><p>Posez la même question 2 fois. Si les réponses divergent fortement → faible confiance.</p></div>
+    <div class="card"><div class="ic">🧪</div><h4>3. Testé ?</h4><p>Pour du code : lancez-le. Pour une commande : <code>--dry-run</code> ou <code>-WhatIf</code>.</p></div>
+    <div class="card"><div class="ic">🎯</div><h4>4. Précis ?</h4><p>Une réponse trop vague (« en général », « il se peut que ») cache souvent un manque de certitude.</p></div>
+    <div class="card"><div class="ic">⚖️</div><h4>5. Cohérent ?</h4><p>Demandez au modèle d'expliquer son raisonnement et cherchez les contradictions.</p></div>
+  </div>
+
+  <h3>22.2 Le « second avis »</h3>
+  <p>Sur une réponse importante, demandez à <strong>un autre modèle</strong>. Si Copilot vous dit X et que Claude dit Y, creusez. C'est le principe du <em>LLM-as-a-judge</em> utilisé en production.</p>
+
+  <h3>22.3 Les métriques utilisées en industrie</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Métrique</th><th>Mesure</th><th>Quand</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Groundedness</strong></td><td>La réponse s'appuie-t-elle sur les sources fournies ?</td><td>Chatbot RAG</td></tr>
+      <tr><td><strong>Relevance</strong></td><td>Répond-elle réellement à la question ?</td><td>Tous</td></tr>
+      <tr><td><strong>Coherence</strong></td><td>Structure logique, pas de contradictions internes</td><td>Long-form</td></tr>
+      <tr><td><strong>Fluency</strong></td><td>Lisible, bon français/anglais</td><td>Tous</td></tr>
+      <tr><td><strong>Toxicity / Bias</strong></td><td>Pas de contenu offensant</td><td>Production</td></tr>
+      <tr><td><strong>Pass@1 / Pass@k</strong></td><td>Le code généré passe les tests ?</td><td>Code</td></tr>
+      <tr><td><strong>BLEU / ROUGE</strong></td><td>Similarité texte de référence</td><td>Traduction, résumé</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="alert alert-info">
+    <strong>💡 Microsoft Foundry</strong> automatise ces métriques (skill <code>microsoft-foundry</code> → evaluation_planner). Utile si vous publiez un agent en production.
+  </div>
+</section>
+
+<!-- ===== S23 : TENDANCES 2026-2027 ===== -->
+<section class="section" id="s23">
+  <div class="section-head purple">
+    <div class="section-num purple">23</div>
+    <div>
+      <div class="section-title">Tendances 2026-2027 — où va l'IA ?</div>
+      <div class="section-desc">Ce qui se prépare et ce qu'il faut surveiller.</div>
+    </div>
+  </div>
+
+  <h3>23.1 Ce qui est déjà acté</h3>
+  <ul>
+    <li><strong>MCP s'étend vite</strong> : de plus en plus de clients IA majeurs l'implémentent. C'est une couche d'interop de plus en plus importante, sans être encore universelle partout de la même façon.</li>
+    <li><strong>Les assistants deviennent plus agentiques</strong> : les simples chats restent utiles, mais davantage de produits savent maintenant agir, planifier et itérer.</li>
+    <li><strong>Multimodalité native</strong> : texte, image, audio et parfois vidéo convergent dans les grandes familles actuelles.</li>
+    <li><strong>Contextes très larges</strong> : la limite devient souvent autant économique qu'architecturale.</li>
+    <li><strong>Models on-device</strong> : des SLM comme Phi, Llama, Gemma ou Qwen deviennent plus réalistes en local selon le matériel disponible.</li>
+  </ul>
+
+  <h3>23.2 Ce qui émerge fort</h3>
+  <ul>
+    <li><strong>Computer Use</strong> : l'agent <em>contrôle votre souris/clavier</em> pour piloter n'importe quelle app (Claude Computer Use, Operator d'OpenAI).</li>
+    <li><strong>Voice agents</strong> : conversation vocale temps réel (Realtime API OpenAI, GPT-5 Voice).</li>
+    <li><strong>World models</strong> : modèles qui simulent une réalité physique (Sora, Genie 3).</li>
+    <li><strong>Reasoning chains</strong> plus visibles ou mieux contrôlées : selon la surface, le raisonnement peut être résumé, partiellement exposé ou masqué.</li>
+    <li><strong>Agent identity</strong> : votre skill <code>entra-agent-id</code> est en plein dans cette tendance — chaque agent a sa propre identité Entra avec ses permissions.</li>
+    <li><strong>Marketplace de skills/MCP</strong> : un « npm » pour les capacités d'agents.</li>
+  </ul>
+
+  <h3>23.3 Ce qu'il faut surveiller (sur 12 mois)</h3>
+  <div class="alert alert-warn">
+    <strong>🟠 Côté légal</strong>
+    EU AI Act : obligations déployées progressivement depuis 2024 et encore en train de se concrétiser selon les usages. Si vous déployez de l'IA pour des clients, anticipez la documentation de conformité et faites valider le statut réglementaire actuel.
+  </div>
+  <div class="alert alert-warn">
+    <strong>🟠 Côté sécurité</strong>
+    Prompt injection devient un vrai sujet en entreprise. Microsoft Defender for AI et autres solutions de « AI security posture management » émergent.
+  </div>
+  <div class="alert alert-info">
+    <strong>💡 Côté skills</strong>
+    Le format « skill markdown + frontmatter » se standardise (Claude Skills, GitHub Copilot Skills, AGENTS.md). Investir dans vos skills custom = investissement durable.
+  </div>
+
+  <h3>23.4 Ce qu'il faut <em>arrêter de croire</em></h3>
+  <ul>
+    <li>« L'IA va remplacer les devs » → non, elle les rend 2-5× plus rapides. Le métier évolue, pas disparaît.</li>
+    <li>« Un très bon modèle généraliste suffit, plus besoin de RAG/MCP/skills » → faux. Un contexte explicite + outils restent souvent supérieurs à un modèle « brut ».</li>
+    <li>« Plus le modèle est gros, mieux c'est » → les SLM bien fine-tunés battent les gros modèles sur des tâches précises.</li>
+    <li>« On peut faire confiance aux benchmarks » → la plupart sont contaminés. Ne croyez que <em>vos</em> évaluations sur <em>vos</em> données.</li>
+  </ul>
+</section>
+
+<!-- ===== S24 : FAQ ===== -->
+<section class="section" id="s24">
+  <div class="section-head green">
+    <div class="section-num green">24</div>
+    <div>
+      <div class="section-title">FAQ — les questions qu'on me pose le plus souvent</div>
+      <div class="section-desc">Réponses courtes aux interrogations fréquentes.</div>
+    </div>
+  </div>
+
+  <h3>« Copilot peut-il vraiment lire tout mon repo ? »</h3>
+  <p>Non. Il indexe les fichiers (embeddings) et lit <strong>à la demande</strong> via les outils (read_file, semantic_search). Il n'envoie jamais tout d'un coup. En mode Enterprise, l'index est privé et chiffré.</p>
+
+  <h3>« Si je désactive Copilot, il continue à envoyer mes données ? »</h3>
+  <p>Non. Quand l'extension est désactivée, aucune communication. Ce qui est déjà transité ne peut pas être récupéré, par contre (rétention selon le plan).</p>
+
+  <h3>« Comment savoir si le modèle hallucine ? »</h3>
+  <p>3 réflexes : (1) demandez la source, (2) testez le code/la commande, (3) vérifiez les noms de fonctions dans la doc officielle (via Microsoft Learn MCP par ex.).</p>
+
+  <h3>« Pourquoi Copilot me propose parfois du code obsolète ? »</h3>
+  <p>Les modèles ont une <strong>date de cutoff</strong>, souvent décalée de plusieurs mois par rapport à l'actualité des librairies. Pour les libs qui bougent vite (Azure SDK, React), précisez la version dans le prompt ou utilisez le MCP Microsoft Learn / Context7.</p>
+
+  <h3>« Mon AGENTS.md est trop long, ça pose problème ? »</h3>
+  <p>Oui à partir de ~10-15k tokens (chaque conversation paie ce coût). Le vôtre est bien dimensionné. Au-delà, déportez les détails vers des <code>.instructions.md</code> ciblés via <code>applyTo</code>.</p>
+
+  <h3>« Quelle différence entre Copilot et Microsoft 365 Copilot ? »</h3>
+  <p>GitHub Copilot = dans VS Code, pour le code. Microsoft 365 Copilot = dans Word/Excel/Outlook/Teams, pour les docs et mails. Deux produits, deux licences, deux UX. Ils partagent peu de choses.</p>
+
+  <h3>« Peut-on rendre Copilot déterministe (même réponse à chaque fois) ? »</h3>
+  <p>Quasiment. Avec <code>temperature=0</code> et le même prompt, la réponse est ~stable. Mais Copilot ne vous expose pas ce paramètre. En API directe (Azure OpenAI), oui.</p>
+
+  <h3>« Faut-il apprendre LangChain / LlamaIndex / Semantic Kernel ? »</h3>
+  <p>Si vous voulez <strong>construire</strong> des agents : oui (Semantic Kernel ou Microsoft Agent Framework sont les choix Microsoft). Si vous voulez juste <strong>utiliser</strong> Copilot dans VS Code : non, c'est superflu.</p>
+
+  <h3>« L'IA va-t-elle continuer à progresser à ce rythme ? »</h3>
+  <p>Plus probablement par <strong>améliorations incrémentales</strong> (raisonnement, outils, multimodalité) que par sauts de capacité brute. La course aux paramètres ralentit ; la course à l'usage s'accélère.</p>
+
+  <h3>« Combien de temps avant d'être autonome avec Copilot Agent ? »</h3>
+  <p>~1 semaine pour utiliser, ~1 mois pour bien prompter, ~3 mois pour customiser (skills, MCP, AGENTS.md). Vous êtes déjà au stade 3, d'où ce guide qui consolide.</p>
+</section>
+
+<!-- ===== S25 : ANATOMIE D'UNE SESSION ===== -->
+<section class="section" id="s25">
+  <div class="section-head">
+    <div class="section-num">25</div>
+    <div>
+      <div class="section-title">Anatomie d'une session Copilot Agent — pas à pas</div>
+      <div class="section-desc">Ce qui se passe vraiment entre votre touche Entrée et la réponse.</div>
+    </div>
+  </div>
+
+  <p><strong>Cas pratique</strong> : vous tapez dans Copilot Chat (mode Agent) :</p>
+  <div class="code-block">
+    <div class="code-header"><span>prompt utilisateur</span></div>
+    <pre>Ajoute une commande `audit.py users --inactive 90` qui liste les comptes
+sans connexion depuis 90 jours, et bump la version.</pre>
+  </div>
+
+  <h3>25.1 Ce que VS Code envoie au modèle (tour 1)</h3>
+  <div class="diagram">
+    <pre class="mermaid">
+flowchart TB
+    subgraph PROMPT["📦 Prompt complet envoyé (~25k tokens)"]
+      A1["System prompt Copilot<br/>~6k tokens"]
+      A2["Instructions VS Code<br/>(outils dispo, format)<br/>~3k tokens"]
+      A3["AGENTS.md du workspace<br/>~2k tokens"]
+      A4["User memory<br/>(coding-prefs, env, workflow)<br/>~1.5k tokens"]
+      A5["Liste des skills actifs<br/>~4k tokens"]
+      A6["Liste des MCP tools<br/>~3k tokens"]
+      A7["Repo memory (.md scoped)<br/>~1k tokens"]
+      A8["Contexte de la conversation<br/>(historique)<br/>~3k tokens"]
+      A9["💬 Votre prompt<br/>~30 tokens"]
+    end
+    PROMPT --> LLM[🧠 LLM<br/>Claude Sonnet 4]
+    style A9 fill:#deecf9,stroke:#0078d4,stroke-width:3px
+    style LLM fill:#fff8e1,stroke:#ff8c00
+    </pre>
+    <div class="diag-caption">Schéma 13 — Anatomie du prompt envoyé au premier tour.</div>
+  </div>
+
+  <h3>25.2 La danse Plan-Act-Observe</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Tour</th><th>Pensée du modèle</th><th>Action (tool call)</th><th>Observation</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>« Je dois trouver le CLI principal »</td><td><code>file_search audit.py</code></td><td>Trouvé : <code>Audit_EntraID_Intune/audit.py</code></td></tr>
+      <tr><td>2</td><td>« Voyons comment les commandes sont déclarées »</td><td><code>read_file audit.py</code></td><td>Click groups détectés</td></tr>
+      <tr><td>3</td><td>« Existe-t-il déjà une commande users ? »</td><td><code>grep_search "users"</code></td><td>Sous-commande absente</td></tr>
+      <tr><td>4</td><td>« Où sont les exports Graph users ? »</td><td><code>semantic_search inactive users</code></td><td>Trouvé : <code>02-Analyses/users/inactive.py</code></td></tr>
+      <tr><td>5</td><td>« Je lis le module existant »</td><td><code>read_file inactive.py</code></td><td>Fonction <code>find_inactive(days)</code></td></tr>
+      <tr><td>6</td><td>« Je peux écrire la commande »</td><td><code>replace_string_in_file audit.py</code></td><td>✅ ok</td></tr>
+      <tr><td>7</td><td>« Bump version »</td><td><code>replace_string_in_file pyproject.toml</code></td><td>✅ 6.30.0 → 6.31.0</td></tr>
+      <tr><td>8</td><td>« Et le CHANGELOG »</td><td><code>replace_string_in_file CHANGELOG.md</code></td><td>✅ entrée ajoutée</td></tr>
+      <tr><td>9</td><td>« Validation »</td><td><code>get_errors audit.py</code></td><td>0 erreur</td></tr>
+      <tr><td>10</td><td>« Synthèse »</td><td>(réponse finale)</td><td>→ utilisateur</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>25.3 Ce qui coûte (en tokens)</h3>
+  <div class="compare">
+    <div class="good">
+      <h4>✅ Bonne session</h4>
+      <ul>
+        <li>Ordre de grandeur : quelques centaines de milliers de tokens</li>
+        <li>En API directe : quelques dizaines de centimes à quelques euros selon le modèle, le cache et l'output</li>
+        <li>Sur Copilot : consommation premium ou AI Credits selon le plan</li>
+        <li>Durée : souvent de l'ordre de la minute</li>
+      </ul>
+    </div>
+    <div class="bad">
+      <h4>⚠️ Session pathologique</h4>
+      <ul>
+        <li>Beaucoup trop de tours (le modèle tourne en rond)</li>
+        <li>Plusieurs millions de tokens et plusieurs euros, voire davantage, en API directe</li>
+        <li>Consommation premium ou AI Credits qui grimpe vite</li>
+        <li>Durée : plusieurs minutes</li>
+      </ul>
+      <p><strong>Cause typique</strong> : prompt vague + pas d'AGENTS.md.</p>
+    </div>
+  </div>
+
+  <div class="resto">
+    <p><strong>Vu du restaurant</strong> : le client a commandé « un plat bon ». Le serveur retourne 10 fois en cuisine, demande son avis pour chaque ingrédient, le chef finit par lâcher une assiette quelconque. Avec une commande précise (« filet de bœuf, cuisson saignante, sauce poivre, gratin dauphinois »), le serveur fait <em>un</em> aller-retour. La précision du prompt = le SLA de l'agent.</p>
+  </div>
+</section>
+
+<!-- ===== S26 : ANTI-PATTERNS ===== -->
+<section class="section" id="s26">
+  <div class="section-head orange">
+    <div class="section-num orange">26</div>
+    <div>
+      <div class="section-title">Galerie d'anti-patterns — avant / après</div>
+      <div class="section-desc">Les erreurs de prompt les plus courantes et leur correction.</div>
+    </div>
+  </div>
+
+  <h3>26.1 « Le prompt fourre-tout »</h3>
+  <div class="compare">
+    <div class="bad">
+      <h4>❌ Avant</h4>
+      <pre style="background:#fde7e9;padding:10px;border-radius:6px;font-size:.85em">Refais mon projet pour qu'il soit mieux, ajoute des tests,
+de la doc, des logs, gère les erreurs, optimise et déploie
+sur Azure stp.</pre>
+      <p>L'agent ne sait pas par où commencer, fait n'importe quoi, casse tout.</p>
+    </div>
+    <div class="good">
+      <h4>✅ Après</h4>
+      <pre style="background:#e8f5e9;padding:10px;border-radius:6px;font-size:.85em">Étape 1 uniquement : dans `02-Analyses/users/inactive.py`,
+ajoute la gestion du paramètre `--threshold-days` (défaut 90).
+Ne touche à rien d'autre. Montre-moi le diff avant d'écrire.</pre>
+      <p>1 fichier, 1 changement, 1 validation. Bien.</p>
+    </div>
+  </div>
+
+  <h3>26.2 « Le prompt mythologique »</h3>
+  <div class="compare">
+    <div class="bad">
+      <h4>❌ Avant</h4>
+      <pre style="background:#fde7e9;padding:10px;border-radius:6px;font-size:.85em">Utilise la fonction `graph.getInactiveUsersV2()`
+pour récupérer les comptes inactifs.</pre>
+      <p>Cette fonction n'existe pas. L'agent va halluciner pour vous faire plaisir.</p>
+    </div>
+    <div class="good">
+      <h4>✅ Après</h4>
+      <pre style="background:#e8f5e9;padding:10px;border-radius:6px;font-size:.85em">Récupère les comptes inactifs via Microsoft Graph.
+Cherche d'abord la bonne API dans Microsoft Learn (MCP),
+puis propose le code Python avec httpx.</pre>
+      <p>L'agent vérifie la doc officielle avant de coder.</p>
+    </div>
+  </div>
+
+  <h3>26.3 « Le prompt sans périmètre »</h3>
+  <div class="compare">
+    <div class="bad">
+      <h4>❌ Avant</h4>
+      <pre style="background:#fde7e9;padding:10px;border-radius:6px;font-size:.85em">Renomme la classe UserExporter partout.</pre>
+      <p>Sur 90k LOC, l'agent va faire des matchs faux positifs partout.</p>
+    </div>
+    <div class="good">
+      <h4>✅ Après</h4>
+      <pre style="background:#e8f5e9;padding:10px;border-radius:6px;font-size:.85em">Renomme la classe UserExporter en GraphUserExporter
+uniquement dans `02-Analyses/users/`. Utilise le renommage
+symbolique (pas un simple find/replace texte).</pre>
+    </div>
+  </div>
+
+  <h3>26.4 « La confiance aveugle »</h3>
+  <div class="compare">
+    <div class="bad">
+      <h4>❌ Avant</h4>
+      <pre style="background:#fde7e9;padding:10px;border-radius:6px;font-size:.85em">Génère un script PowerShell qui supprime tous les comptes
+inactifs &gt; 180 jours dans le tenant prod.</pre>
+      <p>Vous lancez sans relire. Catastrophe.</p>
+    </div>
+    <div class="good">
+      <h4>✅ Après</h4>
+      <pre style="background:#e8f5e9;padding:10px;border-radius:6px;font-size:.85em">Génère le script dans `05-Remediation/` avec -WhatIf par
+défaut, paramètre -Confirm, journalisation CSV des actions,
+et un dry-run obligatoire avant l'écriture réelle.
+Ne l'exécute pas, je relis avant.</pre>
+    </div>
+  </div>
+
+  <h3>26.5 « L'historique pollué »</h3>
+  <div class="alert alert-warn">
+    <strong>⚠️ Anti-pattern</strong>
+    Garder la même conversation pour 5 tâches différentes (« et tant qu'on y est, ajoute X, ah et corrige Y, et… »). Le contexte se pollue, le modèle oublie, les coûts explosent.
+    <br><br>
+    <strong>✅ Correction</strong> : <code>Ctrl+L</code> (new chat) entre chaque tâche indépendante. Une conversation = un objectif.
+  </div>
+
+  <h3>26.6 « L'AGENTS.md négligé »</h3>
+  <div class="alert alert-warn">
+    <strong>⚠️ Anti-pattern</strong>
+    Un AGENTS.md générique copié d'un template, jamais relu. L'agent ignore vos vraies conventions.
+    <br><br>
+    <strong>✅ Correction</strong> : votre AGENTS.md actuel est exemplaire — il liste les projets, les règles inviolables, les commandes, les anti-patterns à refuser. <strong>Relisez-le tous les 2-3 mois</strong> pour ajuster.
+  </div>
+</section>
+
+<!-- ===== S27 : CHEAT SHEET ===== -->
+<section class="section" id="s27">
+  <div class="section-head green">
+    <div class="section-num green">27</div>
+    <div>
+      <div class="section-title">Cheat sheet — la fiche à imprimer</div>
+      <div class="section-desc">Tout ce qu'il faut retenir sur une page A4.</div>
+    </div>
+  </div>
+
+  <h3>⌨️ Raccourcis VS Code Copilot</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Raccourci</th><th>Action</th></tr></thead>
+    <tbody>
+      <tr><td><code>Ctrl + I</code></td><td>Inline chat (modification rapide)</td></tr>
+      <tr><td><code>Ctrl + Alt + I</code></td><td>Ouvrir Copilot Chat</td></tr>
+      <tr><td><code>Ctrl + L</code></td><td>Nouvelle conversation</td></tr>
+      <tr><td><code>Tab</code></td><td>Accepter la complétion</td></tr>
+      <tr><td><code>Esc</code></td><td>Refuser la complétion</td></tr>
+      <tr><td><code>Alt + ]</code> / <code>Alt + [</code></td><td>Suggestion suivante / précédente</td></tr>
+      <tr><td><code>@workspace</code></td><td>Contexte = tout le repo</td></tr>
+      <tr><td><code>#file:foo.py</code></td><td>Ajouter un fichier au contexte</td></tr>
+      <tr><td><code>/explain</code> <code>/fix</code> <code>/tests</code></td><td>Commandes intégrées</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>🧪 Choix de modèle express</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Situation</th><th>Modèle recommandé</th></tr></thead>
+    <tbody>
+      <tr><td>Complétion inline (la plupart du temps)</td><td>Un modèle rapide de type mini / haiku / flash selon votre plan</td></tr>
+      <tr><td>Refactoring multi-fichiers</td><td>Un modèle code/frontier de type Sonnet / GPT / Gemini selon disponibilité</td></tr>
+      <tr><td>Bug tordu, raisonnement long</td><td>Un modèle reasoning/frontier plus coûteux</td></tr>
+      <tr><td>Énorme contexte</td><td>Un modèle long-contexte selon le catalogue actif</td></tr>
+      <tr><td>Données confidentielles</td><td>Modèle local ou environnement managé/isolé selon vos contraintes</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>📝 Structure d'un bon prompt</h3>
+  <div class="code-block">
+    <pre><span class="cm"># Rôle</span> (optionnel)
+Tu es un expert PowerShell 7 spécialisé Microsoft Graph.
+
+<span class="cm"># Contexte</span>
+Projet : Audit_EntraID_Intune, fichier : 01-Exports/users.ps1
+
+<span class="cm"># Tâche</span>
+Ajouter la pagination -All sur la requête Get-MgUser.
+
+<span class="cm"># Contraintes</span>
+- PS7 only, verbes approuvés, [CmdletBinding()]
+- Retry exponentiel sur HTTP 429
+- Pas d'alias
+
+<span class="cm"># Format de sortie</span>
+Diff unifié + 1 test Pester.</pre>
+  </div>
+
+  <h3>🚨 Les 5 réflexes anti-désastre</h3>
+  <ol>
+    <li><strong>Toujours <code>-WhatIf</code></strong> sur les scripts générés qui modifient quelque chose</li>
+    <li><strong>Toujours relire le diff</strong> avant d'accepter en mode Agent</li>
+    <li><strong>Toujours bumper version + CHANGELOG</strong> sur changement fonctionnel</li>
+        <li><strong>Toujours new chat</strong> entre 2 tâches indépendantes</li>
+    <li><strong>Toujours privilégier MCP officiels</strong> avant CLI ou code custom</li>
+  </ol>
+
+  <h3>🆘 Quand quelque chose cloche</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Symptôme</th><th>Cause probable</th><th>Action</th></tr></thead>
+    <tbody>
+      <tr><td>Réponses incohérentes</td><td>Contexte pollué</td><td><code>Ctrl + L</code> nouvelle session</td></tr>
+      <tr><td>Le modèle ignore AGENTS.md</td><td>Fichier trop loin ou trop long</td><td>Référencer explicitement</td></tr>
+      <tr><td>Code obsolète généré</td><td>Cutoff modèle</td><td>Forcer recherche Microsoft Learn</td></tr>
+      <tr><td>Quota premium épuisé</td><td>Modèles lourds en boucle</td><td>Switch vers un modèle mini/flash moins coûteux</td></tr>
+      <tr><td>MCP ne répond pas</td><td>Serveur down ou non auth</td><td>Vérifier <code>auth-status</code></td></tr>
+      <tr><td>Agent boucle</td><td>Objectif mal défini</td><td>Stop, reformuler, redémarrer</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ===== S28 : GRANDE CARTE MENTALE ===== -->
+<section class="section" id="s28">
+  <div class="section-head purple">
+    <div class="section-num purple">28</div>
+    <div>
+      <div class="section-title">La grande carte mentale — vue d'ensemble</div>
+      <div class="section-desc">Comment tout s'articule, en un seul schéma.</div>
+    </div>
+  </div>
+
+  <p>Pour fixer définitivement les idées, voici l'écosystème complet vu d'en haut. Imprimez-le si besoin.</p>
+
+  <div class="diagram">
+    <pre class="mermaid">
+mindmap
+  root((🧠 IA<br/>générative))
+    Modèles
+      LLM cloud
+        GPT (selon catalogue)
+        Claude (selon catalogue)
+        Gemini (selon catalogue)
+      SLM locaux
+        Phi / petits modèles
+        Llama / Gemma
+        Qwen / modèles code
+      Paramètres
+        Tokens
+        Contexte
+        Température
+    Surfaces
+      Chat web
+        ChatGPT
+        Claude.ai
+      Assistants IDE
+        GitHub Copilot
+        Cursor
+        Cline
+      API directes
+        Azure OpenAI
+        Anthropic
+    Agents
+      Boucle ReAct
+        Plan
+        Act
+        Observe
+      Outils natifs
+        read file
+        grep search
+        run terminal
+      MCP
+        Officiels MS
+        audit-entra-m
+        Microsoft Learn
+      Subagents
+        Explore
+        Modernize
+    Customisation
+      AGENTS.md
+        Règles workspace
+        Conventions
+      Skills
+        SKILL.md
+        Description claire
+      Prompts
+        Templates
+        Slash commands
+      Memory
+        Préférences
+        Repo facts
+    Pratique
+      RAG
+        Embeddings
+        Vector DB
+      Évaluation
+        Tests
+        LLM-as-judge
+      Sécurité
+        Pas de secrets
+        WhatIf par défaut
+      Coûts
+        Bon modèle au bon moment
+        Conversations courtes
+    </pre>
+    <div class="diag-caption">Schéma 14 — Carte mentale complète de l'écosystème IA.</div>
+  </div>
+
+  <h3>28.1 Le parcours d'apprentissage suggéré</h3>
+  <div class="diagram">
+    <pre class="mermaid">
+journey
+    title Votre montée en compétence IA
+    section Découverte (semaine 1)
+      Comprendre tokens/contexte: 4: Quentin
+      Utiliser Copilot Chat basique: 5: Quentin
+    section Maîtrise (mois 1)
+      Prompts structurés: 4: Quentin
+      Mode Agent + tools: 5: Quentin
+      AGENTS.md du workspace: 5: Quentin
+    section Customisation (mois 3)
+      Skills custom: 5: Quentin
+      MCP officiels: 5: Quentin
+      Memory organisée: 5: Quentin
+    section Expert (mois 6+)
+      MCP custom (audit-entra-m): 5: Quentin
+      Multi-agent orchestration: 4: Quentin
+      Eval-driven dev: 3: Quentin
+    </pre>
+    <div class="diag-caption">Schéma 15 — Parcours typique pour devenir autonome avec l'écosystème.</div>
+  </div>
+
+  <div class="alert alert-ok">
+    <strong>🎓 Vous êtes ici</strong>
+    Vu votre stack (Audit_EntraID_Intune v6.30+, MCP <code>audit-entra-m</code> custom, AGENTS.md riche, prompts réutilisables, memory organisée), vous êtes au stade <strong>Expert</strong>. Ce guide consolide ce que vous savez déjà intuitivement et formalise les zones de progression : eval-driven et multi-agent.
+  </div>
+</section>
+
+<!-- ===== CONCLUSION ===== -->
+<section class="section">
+  <div class="section-head green">
+    <div class="section-num green">🎯</div>
+    <div>
+      <div class="section-title">À retenir en 30 secondes</div>
+      <div class="section-desc">Si vous ne retenez que ça, ça suffira dans la plupart des cas.</div>
+    </div>
+  </div>
+
+  <div class="resto">
+    <p><strong>Le restaurant Copilot dans VS Code :</strong></p>
+    <ul>
+      <li>🧠 <strong>Le LLM</strong> = le chef qui « comprend » votre commande</li>
+      <li>🛠️ <strong>Les tools natifs</strong> = ses ustensiles de base (couteau, poêle)</li>
+      <li>🔌 <strong>Les MCP</strong> = ses fournisseurs spécialisés (poissonnier, primeur, cave)</li>
+      <li>📋 <strong>Les skills</strong> = ses fiches recettes pour les plats compliqués</li>
+      <li>👨‍🍳 <strong>Les subagents</strong> = ses commis pour les tâches longues</li>
+      <li>📜 <strong>AGENTS.md</strong> = la charte de la maison (règles, interdits)</li>
+      <li>🧠 <strong>Memory</strong> = le carnet de bord du chef</li>
+      <li>💬 <strong>Le prompt</strong> = votre commande à la table</li>
+    </ul>
+    <p>Si la commande est claire, si les bons fournisseurs sont branchés, et si la charte est respectée → le service se passe bien.</p>
+  </div>
+
+  <h3>Pour aller plus loin</h3>
+  <ul>
+    <li>📚 <a href="https://code.visualstudio.com/docs/copilot/overview">Documentation officielle VS Code Copilot</a></li>
+    <li>🔌 <a href="https://modelcontextprotocol.io/">Spécification MCP</a></li>
+    <li>🧪 <a href="https://learn.microsoft.com/en-us/azure/ai-foundry/">Microsoft AI Foundry</a></li>
+    <li>🤖 <a href="https://github.com/features/copilot">GitHub Copilot</a></li>
+    <li>📖 <a href="https://www.anthropic.com/research">Anthropic Research</a> (créateurs de Claude et MCP)</li>
+  </ul>
+</section>
+
+</div>
+
+<footer>
+  <p>Documentation pédagogique — IA & GitHub Copilot · 2026</p>
+  <p>Pour Quentin LEJARD · Workspace <code>c:\VSCode\</code></p>
+</footer>
+
+</main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'base',
+    themeVariables: {
+      primaryColor: '#deecf9',
+      primaryTextColor: '#1a1f2e',
+      primaryBorderColor: '#0078d4',
+      lineColor: '#5b6478',
+      fontFamily: 'Segoe UI, sans-serif'
+    },
+    flowchart: { curve: 'basis', padding: 18 },
+    sequence: { actorMargin: 60 }
+  });
+</script>
+
+</body>
+</html>

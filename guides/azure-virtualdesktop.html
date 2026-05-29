@@ -1,0 +1,2191 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Azure Virtual Desktop &mdash; Sécurité VDI, Hardening des Sessions &amp; Contrôle d'Accès</title>
+    <style>
+        :root {
+            --azure-blue: #0078d4;
+            --azure-dark: #004578;
+            --azure-light: #deecf9;
+            --success-green: #107c10;
+            --warning-orange: #ff8c00;
+            --danger-red: #d13438;
+            --neutral-bg: #f3f2f1;
+            --neutral-dark: #323130;
+            --neutral-medium: #605e5c;
+            --white: #ffffff;
+            --shadow: 0 2px 8px rgba(0,0,0,0.12);
+            --shadow-hover: 0 4px 16px rgba(0,0,0,0.18);
+            --radius: 8px;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--neutral-bg); color: var(--neutral-dark); line-height: 1.6; }
+        a { color: var(--azure-blue); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        code { font-family: 'Cascadia Code', Consolas, 'Courier New', monospace; font-size: 0.88em; background: #e8e6e4; padding: 1px 6px; border-radius: 3px; }
+        .hero { background: var(--white); border-bottom: 3px solid var(--azure-blue); padding: 40px 40px 32px; text-align: center; max-width: 1400px; margin: 0 auto; }
+        .hero h1 { font-size: 1.7em; font-weight: 700; color: var(--azure-dark); margin-bottom: 6px; letter-spacing: -0.3px; }
+        .hero .subtitle { font-size: 0.95em; color: var(--neutral-medium); max-width: 800px; margin: 0 auto; }
+        .hero .badge-row { margin-top: 16px; display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; }
+        .hero .badge { background: var(--neutral-bg); border: 1px solid #e1dfdd; color: var(--neutral-dark); padding: 4px 12px; border-radius: 4px; font-size: 0.78em; }
+        .hero .meta-row { margin-top: 14px; display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; font-size: 0.8em; color: var(--neutral-medium); }
+        .nav-container { max-width: 1400px; margin: 0 auto; border-bottom: 1px solid #e1dfdd; position: sticky; top: 0; z-index: 100; background: var(--neutral-bg); }
+        .nav-container nav { display: flex; justify-content: center; gap: 0; overflow-x: auto; padding: 0; }
+        .nav-container nav a { text-decoration: none; color: var(--neutral-medium); padding: 10px 14px; font-size: 0.78em; font-weight: 500; white-space: nowrap; border-bottom: 2px solid transparent; transition: all 0.2s; }
+        .nav-container nav a:hover { color: var(--azure-blue); border-bottom-color: var(--azure-blue); text-decoration: none; }
+        .container { max-width: 1400px; margin: 0 auto; padding: 30px 40px; }
+        .section { background: var(--white); border-radius: var(--radius); box-shadow: var(--shadow); padding: 28px 32px; margin-bottom: 28px; transition: box-shadow 0.2s; }
+        .section:hover { box-shadow: var(--shadow-hover); }
+        .section-header { display: flex; align-items: center; gap: 15px; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid var(--neutral-bg); }
+        .section-header.blue { border-bottom-color: var(--azure-blue); }
+        .section-header.red { border-bottom-color: var(--danger-red); }
+        .section-header.orange { border-bottom-color: var(--warning-orange); }
+        .section-header.green { border-bottom-color: var(--success-green); }
+        .section-number { background: var(--azure-blue); color: white; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.1em; flex-shrink: 0; }
+        .section-number.red { background: var(--danger-red); }
+        .section-number.orange { background: var(--warning-orange); }
+        .section-number.green { background: var(--success-green); }
+        .section-title { font-size: 1.4em; color: var(--azure-dark); font-weight: 700; }
+        .section-desc { font-size: 0.92em; color: var(--neutral-medium); margin-top: 2px; }
+        h3 { font-size: 1.05em; font-weight: 600; margin: 24px 0 10px 0; padding-left: 12px; border-left: 3px solid var(--azure-blue); }
+        .badge-sm { font-size: 0.7em; padding: 2px 8px; border-radius: 3px; font-weight: 600; vertical-align: middle; }
+        .badge-critical { background: #fde7e9; color: var(--danger-red); }
+        .badge-high { background: #fff0e0; color: #d83b01; }
+        .badge-medium { background: #fff8e1; color: #6d4c00; }
+        .badge-low { background: #e8f5e9; color: var(--success-green); }
+        .lic { display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 0.72em; font-weight: 600; vertical-align: middle; margin-left: 4px; }
+        .lic-base { background: #e8e6e4; color: #605e5c; }
+        .lic-m365-e3 { background: var(--azure-light); color: var(--azure-blue); }
+        .lic-m365-e5 { background: #e8d4f0; color: #6b2fa0; }
+        .lic-azure-pay { background: #fff3cd; color: #6d4c00; }
+        .lic-intune { background: #dff6dd; color: var(--success-green); }
+        .alert { border-radius: var(--radius); padding: 16px 20px; margin: 15px 0; font-size: 0.93em; line-height: 1.6; }
+        .alert { display: flex; gap: 12px; align-items: flex-start; }
+        .alert-icon { font-size: 1.2em; flex-shrink: 0; margin-top: 2px; }
+        .alert-info { background: #e6f2ff; border: 1px solid #b3d7ff; color: #004578; }
+        .alert-warn { background: #fff8e1; border: 1px solid #ffe082; color: #6d4c00; }
+        .alert-error { background: #fde7e9; border: 1px solid #f5c6cb; color: #721c24; }
+        .alert-ok { background: #e8f5e9; border: 1px solid #a5d6a7; color: #1b5e20; }
+        .table-container { overflow-x: auto; border-radius: var(--radius); box-shadow: 0 1px 4px rgba(0,0,0,0.08); margin: 12px 0 18px 0; }
+        table { width: 100%; border-collapse: collapse; background: var(--white); font-size: 0.9em; }
+        thead th { background: var(--azure-dark); color: white; padding: 12px 14px; text-align: left; font-weight: 600; font-size: 0.85em; text-transform: uppercase; letter-spacing: .3px; }
+        tbody td { padding: 10px 14px; border-bottom: 1px solid #edebe9; vertical-align: top; }
+        tbody tr:hover { background: #f8f7f6; }
+        tbody tr:last-child td { border-bottom: none; }
+        tr.row-ok { background: #f0fff0; }
+        tr.row-ko { background: #fff5f5; }
+        tr.row-warn { background: #fffdf0; }
+        .code-block { background: #1e1e1e; border-radius: var(--radius); overflow: hidden; margin: 12px 0 18px 0; }
+        .code-header { display: flex; justify-content: space-between; align-items: center; padding: 8px 14px; background: #2d2d2d; font-size: 0.78em; color: #a0a0a0; }
+        .copy-btn { background: var(--azure-blue); color: white; border: none; padding: 4px 12px; border-radius: 4px; cursor: pointer; font-size: 0.85em; transition: background 0.2s; }
+        .copy-btn:hover { background: #106EBE; }
+        .code-block pre { padding: 16px 18px; color: #d4d4d4; font-family: 'Cascadia Code', Consolas, monospace; font-size: 0.85em; overflow-x: auto; white-space: pre; line-height: 1.55; }
+        .code-block pre .comment { color: #6a9955; }
+        .code-block pre .keyword { color: #569cd6; }
+        .code-block pre .string { color: #ce9178; }
+        .code-block pre .param { color: #9cdcfe; }
+        .code-block pre .var { color: #4ec9b0; }
+        .step { display: flex; gap: 12px; margin-bottom: 10px; padding: 14px 16px; background: #faf9f8; border-radius: var(--radius); border-left: 3px solid var(--azure-blue); font-size: 0.93em; }
+        .step.step-red { border-left-color: var(--danger-red); }
+        .step.step-orange { border-left-color: var(--warning-orange); }
+        .step.step-green { border-left-color: var(--success-green); }
+        .step-n { min-width: 28px; height: 28px; border-radius: 50%; background: var(--azure-blue); color: white; display: flex; align-items: center; justify-content: center; font-size: 0.8em; font-weight: 700; flex-shrink: 0; }
+        .step-n.red { background: var(--danger-red); }
+        .step-n.orange { background: var(--warning-orange); }
+        .step-n.green { background: var(--success-green); }
+        .step-c { flex: 1; }
+        .hl { background: #fff3cd; padding: 1px 6px; border-radius: 3px; font-weight: 600; }
+        .hl-blue { background: var(--azure-light); padding: 1px 6px; border-radius: 3px; font-weight: 600; color: var(--azure-dark); }
+        .hl-green { background: #dff6dd; padding: 1px 6px; border-radius: 3px; font-weight: 600; color: var(--success-green); }
+        .hl-red { background: #fde7e9; padding: 1px 6px; border-radius: 3px; font-weight: 600; color: var(--danger-red); }
+        .hl-orange { background: #fff4ce; padding: 1px 6px; border-radius: 3px; font-weight: 600; color: var(--warning-orange); }
+        .hl-yellow { background: #fffacd; padding: 1px 6px; border-radius: 3px; font-weight: 600; color: #8a6000; }
+        .level-title { font-size: 1.05rem; font-weight: 700; margin-bottom: 6px; }
+        .progress-bar { background: #e1dfdd; border-radius: 10px; height: 24px; overflow: hidden; margin: 12px 0; position: relative; }
+        .progress-fill { height: 100%; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 0.78em; font-weight: 700; color: white; }
+        .progress-fill.red { background: linear-gradient(90deg, #a01020, #d13438); }
+        .progress-fill.orange { background: linear-gradient(90deg, #d83b01, #ff8c00); }
+        .progress-fill.yellow { background: linear-gradient(90deg, #8a6000, #f0c000); }
+        .progress-fill.green { background: linear-gradient(90deg, #107c10, #2ea72e); }
+        .progress-fill.blue { background: linear-gradient(90deg, #004578, #0078d4); }
+        .checklist-item { display: flex; align-items: flex-start; gap: 10px; padding: 8px 0; border-bottom: 1px solid #f3f2f1; }
+        .checklist-item:last-child { border-bottom: none; }
+        .checklist-item input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--azure-blue); flex-shrink: 0; margin-top: 3px; }
+        .level-comparison { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 16px 0; }
+        .level-card { border-radius: var(--radius); padding: 16px; text-align: center; }
+        .level-card.default { background: #f3f2f1; border: 2px solid #e1dfdd; }
+        .level-card.standard { background: #e6f2ff; border: 2px solid #b3d7ff; }
+        .level-card.strict { background: #e8f5e9; border: 2px solid #a5d6a7; }
+        .level-card.custom { background: #fff8e1; border: 2px solid #ffe082; }
+        .level-card h4 { font-size: 1em; margin-bottom: 4px; }
+        .level-card .level-score { font-size: 2em; font-weight: 700; }
+        .level-card .level-desc { font-size: 0.8em; color: var(--neutral-medium); margin-top: 4px; }
+        .diagram-block { background: #1e1e1e; color: #d4d4d4; border-radius: var(--radius); padding: 24px; margin: 16px 0; overflow-x: auto; font-family: 'Cascadia Code', Consolas, monospace; font-size: 0.78em; line-height: 1.35; white-space: pre; }
+        .diagram-block .d-ok { color: #4ec9b0; }
+        .diagram-block .d-ko { color: #f44747; }
+        .diagram-block .d-warn { color: #dcdcaa; }
+        .diagram-block .d-line { color: #808080; }
+        .diagram-block .d-label { color: #569cd6; }
+        footer { background: #faf9f8; color: var(--neutral-medium); text-align: center; padding: 24px; margin-top: 40px; font-size: 0.8em; border-top: 1px solid #e1dfdd; }
+        @media print {
+            body { background: white; font-size: 11px; }
+            .hero { padding: 16px; border-bottom-width: 2px; }
+            .nav-container { display: none; }
+            .container { max-width: 100%; padding: 0 16px; }
+            .section { box-shadow: none; border: 1px solid #ccc; break-inside: avoid; }
+            .code-block pre { font-size: 0.75em; }
+        }
+        @media (max-width: 768px) {
+            .hero { padding: 24px 16px 20px; }
+            .hero h1 { font-size: 1.3em; }
+            .container { padding: 16px; }
+            .section { padding: 20px; }
+            .level-comparison { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+<style id="v1a-overlay">
+:root{--c:#0078d4;--azure-dark:#004578;--light:#deecf9;--bg:#f8f9fb;--surface:#fff;--border:#e3e6ec;--muted:#5b6478;--radius:14px}
+.nav-container,.back-to-index{display:none!important}
+body{background:var(--bg)}
+.v1a-layout{display:grid;grid-template-columns:280px 1fr;gap:0;align-items:start}
+.v1a-sidebar{position:sticky;top:0;height:100vh;overflow-y:auto;padding:18px 14px 24px;background:#fff;border-right:1px solid var(--border)}
+.v1a-main{min-width:0}
+.v1a-main .hero{max-width:none;margin:0;border-radius:0}
+.v1a-main .container{max-width:1200px}
+.back-index{display:inline-flex;align-items:center;gap:6px;margin:0 0 16px;padding:6px 10px;background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--muted);font-size:.78em;font-weight:500;text-decoration:none;transition:all .15s}
+.back-index:hover{background:transparent;border-color:var(--c);color:var(--azure-dark);text-decoration:none}
+.back-index .arr{font-size:1em;line-height:1;opacity:.85}
+.side-head{display:flex;align-items:center;gap:10px;padding:6px 6px 14px;border-bottom:1px solid var(--border);margin-bottom:12px}
+.side-head .ico{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--c),#50a4f0);display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.1em;flex-shrink:0}
+.side-head .t{font-weight:700;color:var(--azure-dark);font-size:.95em;line-height:1.15}
+.side-head .s{font-size:.72em;color:var(--muted);margin-top:2px;line-height:1.3}
+.acc{margin-bottom:6px;border-radius:10px;overflow:hidden}
+.acc>summary{list-style:none;cursor:pointer;padding:8px 10px;display:flex;align-items:center;gap:8px;color:var(--azure-dark);font-weight:600;font-size:.82em;border-radius:8px;user-select:none}
+.acc>summary::-webkit-details-marker{display:none}
+.acc>summary:hover{background:var(--bg)}
+.acc>summary .chev{margin-left:auto;font-size:.7em;transition:transform .15s;color:var(--muted)}
+.acc[open]>summary{background:var(--light);color:var(--c)}
+.acc[open]>summary .chev{transform:rotate(90deg)}
+.acc-body{padding:4px 0 6px 6px;display:flex;flex-direction:column;gap:2px}
+.acc-body a{display:flex;align-items:center;gap:8px;padding:6px 10px 6px 18px;border-radius:6px;font-size:.8em;color:var(--muted);text-decoration:none;border-left:2px solid transparent;transition:all .12s}
+.acc-body a:hover{color:var(--c);background:var(--bg);text-decoration:none}
+.acc-body a.active{color:var(--c);background:var(--light);border-left-color:var(--c);font-weight:600}
+.acc-body a .num{font-size:.7em;color:#9aa2b1;font-variant-numeric:tabular-nums;min-width:22px}
+.acc-body a.active .num{color:var(--c)}
+.side-foot{margin-top:14px;padding-top:12px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:4px}
+.side-foot a{display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:6px;font-size:.78em;color:var(--muted);text-decoration:none}
+.side-foot a:hover{color:var(--c);background:var(--bg);text-decoration:none}
+@media (max-width:900px){
+  .v1a-layout{grid-template-columns:1fr}
+  .v1a-sidebar{position:static;height:auto;border-right:none;border-bottom:1px solid var(--border)}
+}
+</style>
+</head>
+<body>
+<div class="v1a-layout">
+<aside class="v1a-sidebar">
+    <a href="index.html" class="back-index" title="Revenir à l'index"><span class="arr" aria-hidden="true">&#127968;</span> Index</a>
+  <div class="side-head">
+    <div class="ico">&#x1F4D8;</div>
+    <div>
+      <div class="t">Azure Virtual Desktop</div>
+      <div class="s">Guide de Configuration &amp; Audit &mdash; Host Pools, FSLogix, Conditional Access, Ses&hellip;</div>
+    </div>
+  </div>
+  <details class="acc" open>
+    <summary>Introduction <span class="chev">&rsaquo;</span></summary>
+    <div class="acc-body">
+      <a href="#guide"><span class="num">&bull;</span> Mode d'emploi</a>
+      <a href="#licences"><span class="num">&bull;</span> Licences</a>
+      <a href="#perimetre"><span class="num">&bull;</span> P&eacute;rim&egrave;tre</a>
+    </div>
+  </details>
+  <details class="acc">
+    <summary>Sections <span class="chev">&rsaquo;</span></summary>
+    <div class="acc-body">
+      <a href="#s1"><span class="num">S1</span> Architecture</a>
+      <a href="#s2"><span class="num">S2</span> Acc&egrave;s Conditionnel</a>
+      <a href="#s3"><span class="num">S3</span> Network</a>
+      <a href="#s4"><span class="num">S4</span> Hardening</a>
+      <a href="#s5"><span class="num">S5</span> FSLogix</a>
+      <a href="#s6"><span class="num">S6</span> MSIX/AppLocker</a>
+      <a href="#s7"><span class="num">S7</span> Monitoring</a>
+      <a href="#s8"><span class="num">S8</span> Images</a>
+      <a href="#s9"><span class="num">S9</span> Conformit&eacute;</a>
+      <a href="#s10"><span class="num">S10</span> DR</a>
+    </div>
+  </details>
+  <details class="acc">
+    <summary>Annexes <span class="chev">&rsaquo;</span></summary>
+    <div class="acc-body">
+      <a href="#matrice"><span class="num">&bull;</span> Matrice</a>
+      <a href="#scores"><span class="num">&bull;</span> Scores</a>
+      <a href="#script"><span class="num">&bull;</span> &#x1F4DC; Script</a>
+      <a href="#checklist"><span class="num">&bull;</span> Checklist</a>
+      <a href="#glossaire"><span class="num">&bull;</span> Glossaire</a>
+    </div>
+  </details>
+  <div class="side-foot">
+    <a href="#top">&uarr; Retour en haut</a>
+    <a href="#" onclick="window.print();return false;">&#x2B07; Imprimer / PDF</a>
+    <a href="#" onclick="navigator.clipboard.writeText(location.href);this.textContent='&#x2713; Lien copié';return false;">&#x2398; Copier le lien</a>
+  </div>
+</aside>
+<main class="v1a-main">
+
+
+
+<!-- ═══════════════════════ BACK TO INDEX ═══════════════════════ -->
+<a href="index.html" class="back-to-index" style="position:fixed;top:16px;left:16px;z-index:1000;display:inline-flex;align-items:center;gap:6px;padding:8px 14px;background:#0078d4;color:#fff;text-decoration:none;border-radius:8px;font:600 14px/1 'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;box-shadow:0 2px 8px rgba(0,0,0,0.15);transition:background .2s" onmouseover="this.style.background='#004578'" onmouseout="this.style.background='#0078d4'" aria-label="Retour à l'index">&larr;&nbsp;Index</a>
+<!-- azure-virtualdesktop.html — Version 1.1 — Mai 2026 -->
+<!-- HEADER -->
+<header class="hero" id="top">
+    <h1>Azure Virtual Desktop &mdash; S&eacute;curit&eacute; VDI, Hardening des Sessions &amp; Contr&ocirc;le d'Acc&egrave;s</h1>
+    <p class="subtitle">Guide de Configuration &amp; Audit &mdash; Host Pools, FSLogix, Conditional Access, Session Host Hardening, Monitoring</p>
+    <div class="badge-row">
+        <span class="badge">portal.azure.com &gt; Azure Virtual Desktop</span>
+        <span class="badge">Windows 10/11 Enterprise Multi-Session</span>
+        <span class="badge">FSLogix Profile Container</span>
+        <span class="badge">RDP Shortpath / Reverse Connect</span>
+    </div>
+    <div class="meta-row">
+        <span>Version : <strong>1.1</strong></span>
+        <span>Derni&egrave;re MAJ : <strong>Mai 2026</strong></span>
+        <span>R&eacute;f. : <a href="https://learn.microsoft.com/fr-fr/azure/virtual-desktop/overview" target="_blank">Microsoft Learn — Azure Virtual Desktop</a></span>
+    </div>
+</header>
+
+<!-- NAV -->
+<div class="nav-container">
+    <nav>
+        <a href="#guide">Mode d'emploi</a>
+        <a href="#licences">Licences</a>
+        <a href="#perimetre">P&eacute;rim&egrave;tre</a>
+        <a href="#s1">S1 Architecture</a>
+        <a href="#s2">S2 Acc&egrave;s Conditionnel</a>
+        <a href="#s3">S3 Network</a>
+        <a href="#s4">S4 Hardening</a>
+        <a href="#s5">S5 FSLogix</a>
+        <a href="#s6">S6 MSIX/AppLocker</a>
+        <a href="#s7">S7 Monitoring</a>
+        <a href="#s8">S8 Images</a>
+        <a href="#s9">S9 Conformit&eacute;</a>
+        <a href="#s10">S10 DR</a>
+        <a href="#matrice">Matrice</a>
+        <a href="#scores">Scores</a>
+        <a href="#script">&#x1F4DC; Script</a>
+        <a href="#checklist">Checklist</a>
+        <a href="#glossaire">Glossaire</a>
+    </nav>
+</div>
+
+<div class="container">
+
+<!-- MODE D'EMPLOI -->
+<div class="section" id="guide">
+    <div class="section-header blue">
+        <div class="section-number">&#x1F4D6;</div>
+        <div>
+            <div class="section-title">Mode d'emploi de ce guide</div>
+            <div class="section-desc">Strat&eacute;gie de lecture et de d&eacute;ploiement — 3 audiences, 4 niveaux de maturit&eacute;</div>
+        </div>
+    </div>
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x1F4CB;</span>
+        <div>Ce guide couvre l'int&eacute;gralit&eacute; de la s&eacute;curisation d'un environnement <strong>Azure Virtual Desktop (AVD)</strong> : de l'architecture de r&eacute;f&eacute;rence au hardening des session hosts, en passant par FSLogix, le Conditional Access, la gestion des images et la reprise d'activit&eacute;. Il est utilisable tel quel en pr&eacute;sentation client ou comme r&eacute;f&eacute;rentiel interne.</div>
+    </div>
+    <h3>Convention des colonnes</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr><th>Colonne</th><th>Signification</th><th>Effort</th></tr></thead>
+        <tbody>
+            <tr><td><strong>D&eacute;faut Azure</strong></td><td>Valeur appliqu&eacute;e &agrave; la cr&eacute;ation — aucune action requise</td><td>0 min</td></tr>
+            <tr><td><strong>&#x26A1; Quick Win</strong></td><td>Actions prioritaires, gains rapides &mdash; <span class="hl-green">+20 pts minimum en &lt;15 min</span></td><td>~10-15 min</td></tr>
+            <tr><td><strong>&#x1F512; Avanc&eacute;</strong></td><td>Configuration interm&eacute;diaire — Intune MDM, MDE, FSLogix chiffr&eacute;</td><td>~2-4h</td></tr>
+            <tr><td><strong>&#x1F3AF; Optimal</strong></td><td>Posture compl&egrave;te — CMK, Cloud Cache, MSIX App Attach, DR actif</td><td>Variable</td></tr>
+        </tbody>
+    </table>
+    </div>
+    <h3>Convention des badges de licence</h3>
+    <p>
+        <span class="lic lic-m365-e3">M365 E3</span> Rep&egrave;re pour un <strong>socle &eacute;ligible AVD</strong> (M365 E3/E5, M365 F3, Business Premium, A3/A5, Windows Enterprise E3/E5, Education A3/A5, VDA per user selon le sc&eacute;nario)<br>
+        <span class="lic lic-m365-e5">M365 E5</span> Rep&egrave;re pour les <strong>capacit&eacute;s avanc&eacute;es</strong> souvent port&eacute;es par Entra ID P2, Defender for Endpoint P2 ou des bundles E5/EMS E5<br>
+        <span class="lic lic-azure-pay">Azure Pay</span> Co&ucirc;t infrastructure Azure (VMs, stockage, r&eacute;seau) &mdash; tarification &agrave; l'usage<br>
+        <span class="lic lic-intune">Intune</span> N&eacute;cessite Intune Plan 1 ou un bundle l'incluant (ex. M365 E3/E5, Business Premium)
+    </p>
+    <h3>Strat&eacute;gie de d&eacute;ploiement recommand&eacute;e</h3>
+    <div class="step step-green">
+        <div class="step-n green">1</div>
+        <div class="step-c"><strong>Quick Win</strong> — Activer MFA + Conditional Access AVD, MDE sur session hosts, FSLogix de base (~15 min, +25 pts)</div>
+    </div>
+    <div class="step step-orange">
+        <div class="step-n orange">2</div>
+        <div class="step-c"><strong>Avanc&eacute;</strong> — Enrollment Intune, chiffrement FSLogix CMK, NSG + RDP Shortpath, Private Endpoint (~4h)</div>
+    </div>
+    <div class="step">
+        <div class="step-n">3</div>
+        <div class="step-c"><strong>Optimal</strong> — MSIX App Attach, Azure Image Builder, DR secondaire, WDAC/AppLocker (~1-2 jours)</div>
+    </div>
+    <div class="step">
+        <div class="step-n">4</div>
+        <div class="step-c"><strong>V&eacute;rification</strong> — Audit complet via script All-in-One, Secure Score MDC, KQL Log Analytics</div>
+    </div>
+</div>
+
+<!-- LICENCES -->
+<div class="section" id="licences">
+    <div class="section-header blue">
+        <div class="section-number">&#x1F4B3;</div>
+        <div>
+            <div class="section-title">Matrice des Licences AVD</div>
+            <div class="section-desc">Ce qui est inclus selon le niveau de licence Microsoft 365 / Azure</div>
+        </div>
+    </div>
+    <div class="table-container">
+    <table>
+        <thead><tr>
+            <th>Fonctionnalit&eacute;</th>
+            <th>Licences d'acc&egrave;s AVD &eacute;ligibles</th>
+            <th>Capacit&eacute;s avanc&eacute;es / add-ons</th>
+            <th>Azure Pay-as-you-go<br><small>(infrastructure)</small></th>
+        </tr></thead>
+        <tbody>
+            <tr class="row-ok"><td>AVD Control Plane (Host Pools, App Groups, Workspaces)</td><td>&#x2705; Accessible avec une licence AVD &eacute;ligible</td><td>Ajouter Entra/Defender/Intune selon la posture vis&eacute;e</td><td>Compute, stockage et r&eacute;seau Azure restent factur&eacute;s</td></tr>
+            <tr class="row-ok"><td>Windows 10/11 Enterprise Multi-Session</td><td>&#x2705; Autoris&eacute; avec une licence AVD &eacute;ligible document&eacute;e par Microsoft</td><td>P2 non requis pour le droit d'acc&egrave;s</td><td>VM Windows ex&eacute;cut&eacute;e dans Azure &agrave; chiffrer s&eacute;par&eacute;ment</td></tr>
+            <tr class="row-ok"><td>FSLogix Profile Container</td><td>&#x2705; Accessible avec les licences &eacute;ligibles document&eacute;es</td><td>Durcissement/chiffrement selon le design retenu</td><td>Stockage Azure Files ou ANF factur&eacute; selon capacit&eacute;, transactions et tier</td></tr>
+            <tr class="row-warn"><td>Intune Enrollment (MDM session hosts)</td><td>Optionnel</td><td>&#x2705; Intune Plan 1 ou bundle l'incluant</td><td>&#x274C;</td></tr>
+            <tr class="row-warn"><td>Conditional Access avanc&eacute; (Entra ID P1)</td><td>Optionnel</td><td>&#x2705; Entra ID P1</td><td>&#x274C;</td></tr>
+            <tr class="row-ko"><td>PIM (Privileged Identity Management) pour admins AVD</td><td>&#x274C;</td><td>&#x2705; Entra ID P2</td><td>&#x274C;</td></tr>
+            <tr class="row-ko"><td>Microsoft Defender for Endpoint (MDE P2) sur session hosts</td><td>&#x274C; Pas dans le simple droit d'acc&egrave;s AVD</td><td>&#x2705; Defender for Endpoint Plan 2 ou bundle l'incluant</td><td>&#x274C;</td></tr>
+            <tr class="row-warn"><td>Azure Files (stockage FSLogix)</td><td>&#x274C;</td><td>&#x274C;</td><td>&#x2705; Pricing variable selon tier, redondance, capacit&eacute; et transactions</td></tr>
+            <tr class="row-warn"><td>VMs Session Hosts</td><td>&#x274C;</td><td>&#x274C;</td><td>&#x2705; Variable selon taille VM, disques, r&eacute;servation/savings plan et autoscale</td></tr>
+            <tr class="row-ko"><td>Azure NetApp Files (FSLogix haute perf.)</td><td>&#x274C;</td><td>&#x274C;</td><td>&#x2705; Pricing variable selon service level, pool de capacit&eacute; et r&eacute;gion</td></tr>
+        </tbody>
+    </table>
+    </div>
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x1F4A1;</span>
+        <div>
+            <strong>Les droits d'acc&egrave;s AVD BYOL document&eacute;s en 2026 sont plus larges que le seul trio E3/E5/Business Premium :</strong> Microsoft cite aussi M365 F3, M365 A3/A5/Student Use Benefits, Windows Enterprise/Education E3/E5 et Windows VDA per user selon le sc&eacute;nario.
+            Le co&ucirc;t r&eacute;el porte ensuite sur <strong>l'infrastructure Azure</strong> : VMs, stockage de profils, r&eacute;seau, logs et services optionnels. Ne pas figer un budget type dans le guide : utiliser le calculateur Azure et la page pricing live pour le chiffrage.
+        </div>
+    </div>
+    <h3>Licences fr&eacute;quentes par taille d'entreprise</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr><th>Taille</th><th>Licence courante</th><th>Niveau AVD</th><th>MFA + CA</th><th>MDE sur session hosts</th></tr></thead>
+        <tbody>
+            <tr><td>TPE (1-50)</td><td>M365 Business Premium</td><td><span class="lic lic-m365-e3">E3-like</span></td><td>&#x2705; Entra ID P1</td><td>&#x26A0;&#xFE0F; MDE P1 seulement</td></tr>
+            <tr><td>PME (50-300)</td><td>M365 E3 + EMS E5</td><td><span class="lic lic-m365-e3">E3</span></td><td>&#x2705; Entra ID P2 (EMS E5)</td><td>&#x26A0;&#xFE0F; Standalone MDE P2 n&eacute;cessaire</td></tr>
+            <tr><td>ETI/GC (300+)</td><td>M365 E5</td><td><span class="lic lic-m365-e5">E5</span></td><td>&#x2705; Complet + PIM</td><td>&#x2705; MDE P2 inclus</td></tr>
+        </tbody>
+    </table>
+    </div>
+</div>
+
+<!-- PERIMETRE -->
+<div class="section" id="perimetre">
+    <div class="section-header blue">
+        <div class="section-number">&#x1F4CD;</div>
+        <div>
+            <div class="section-title">P&eacute;rim&egrave;tre &amp; Hors-P&eacute;rim&egrave;tre</div>
+            <div class="section-desc">Ce que ce guide couvre — et ce qu'il ne couvre pas</div>
+        </div>
+    </div>
+    <h3>Dans le p&eacute;rim&egrave;tre</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr><th>Section</th><th>#</th><th>Criticité</th><th>Contenu principal</th></tr></thead>
+        <tbody>
+            <tr><td>Architecture &amp; Composants</td><td>S1</td><td><span class="badge-sm badge-critical">&#x1F534; Critique</span></td><td>Host Pools Personal/Pooled, Application Groups, Workspaces, Reverse Connect, RDP Shortpath</td></tr>
+            <tr><td>Acc&egrave;s Conditionnel &amp; MFA</td><td>S2</td><td><span class="badge-sm badge-critical">&#x1F534; Critique</span></td><td>Conditional Access AVD, MFA obligatoire, device compliance, PIM admins, sign-in frequency selon l'app cibl&eacute;e</td></tr>
+            <tr><td>Network Security</td><td>S3</td><td><span class="badge-sm badge-critical">&#x1F534; Critique</span></td><td>Reverse Connect, RDP Shortpath public/managed, NSG, Private Link AVD/Azure Files, Azure Firewall, p&eacute;rim&egrave;tre session hosts</td></tr>
+            <tr><td>Session Host Hardening</td><td>S4</td><td><span class="badge-sm badge-high">&#x1F7E0; Élevé</span></td><td>CIS Windows, Intune MDM, MDE, WDAC, AppLocker, ASR rules, antivirus exclusions AVD</td></tr>
+            <tr><td>FSLogix &amp; Profile Security</td><td>S5</td><td><span class="badge-sm badge-high">&#x1F7E0; Élevé</span></td><td>FSLogix Profile Container, chiffrement CMK, Azure Files/NetApp, NTFS ACLs, Cloud Cache</td></tr>
+            <tr><td>MSIX App Attach &amp; AppLocker</td><td>S6</td><td><span class="badge-sm badge-high">&#x1F7E0; Élevé</span></td><td>MSIX App Attach, AppLocker, application control, staging/registration, audit apps</td></tr>
+            <tr><td>Monitoring &amp; Logging</td><td>S7</td><td><span class="badge-sm badge-medium">&#x1F7E1; Moyen</span></td><td>Diagnostic Settings, Log Analytics, KQL sessions, Azure Monitor Insights for AVD, MDE alerts</td></tr>
+            <tr><td>Image Management &amp; Golden Image</td><td>S8</td><td><span class="badge-sm badge-medium">&#x1F7E1; Moyen</span></td><td>Azure Image Builder, Compute Gallery, patching, snapshots, versioning</td></tr>
+            <tr><td>Conformit&eacute; &amp; Gouvernance</td><td>S9</td><td><span class="badge-sm badge-low">&#x1F535; Standard</span></td><td>Azure Policy AVD, MDC recommendations, RBAC granulaire, naming, tagging, cost management</td></tr>
+            <tr><td>Disaster Recovery &amp; R&eacute;silience</td><td>S10</td><td><span class="badge-sm badge-low">&#x1F535; Standard</span></td><td>AVD DR multi-r&eacute;gion, host pool secondaire, FSLogix Cloud Cache multi-site, SIG cross-r&eacute;gion, runbook basculement</td></tr>
+        </tbody>
+    </table>
+    </div>
+    <h3>Hors-p&eacute;rim&egrave;tre</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr><th>Sujet exclu</th><th>Raison</th><th>Guide dédié</th></tr></thead>
+        <tbody>
+            <tr><td>Intune — MDM policies d&eacute;taill&eacute;es</td><td>Gestion g&eacute;n&eacute;rale des devices, compl&eacute;mentaire &agrave; AVD</td><td><a href="m365-intune.html">m365-intune.html</a></td></tr>
+            <tr><td>Microsoft Defender for Endpoint — d&eacute;tail complet</td><td>MDE sur session hosts r&eacute;f&eacute;renc&eacute;, guide d&eacute;di&eacute; pour la configuration compl&egrave;te</td><td><a href="defender-endpoint.html">defender-endpoint.html</a></td></tr>
+            <tr><td>Azure Networking (VNet, ExpressRoute, DNS)</td><td>Infrastructure r&eacute;seau sous-jacente</td><td><a href="azure-networking.html">azure-networking.html</a></td></tr>
+            <tr><td>Windows 365 (Cloud PC)</td><td>Architecture diff&eacute;rente d'AVD — managed service Microsoft</td><td>Documentation Windows 365</td></tr>
+            <tr><td>Entra ID — configuration compl&egrave;te identit&eacute;</td><td>Conditional Access d&eacute;taill&eacute;, politiques MFA g&eacute;n&eacute;rales</td><td><a href="entra-id.html">entra-id.html</a></td></tr>
+        </tbody>
+    </table>
+    </div>
+    <h3>Solutions &eacute;cart&eacute;es</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr><th>Alternative</th><th>Pourquoi &eacute;cart&eacute;e</th><th>Cas o&ugrave; elle reste pertinente</th></tr></thead>
+        <tbody>
+            <tr><td><strong>RDS on-prem (RDSH)</strong></td><td>Gestion infra lourde, pas de scaling automatique, pas d'int&eacute;gration native Entra ID CA, co&ucirc;t TCO sup&eacute;rieur &agrave; horizon 3 ans</td><td>Environnements air-gapped ou conformit&eacute; n&eacute;cessitant on-prem absolu</td></tr>
+            <tr><td><strong>Citrix DaaS</strong></td><td>Licences suppl&eacute;mentaires significatives, complexit&eacute; d&eacute;ploiement, d&eacute;pendance &eacute;diteur — AVD natif Azure couvre 90% des cas avec un TCO inf&eacute;rieur</td><td>Migrations depuis Citrix existant avec politiques Citrix complexes ou fonctions HDX avanc&eacute;es requises</td></tr>
+            <tr><td><strong>VMware Horizon Cloud</strong></td><td>Acquisition VMware par Broadcom — incertitude roadmap, co&ucirc;t licences en hausse, int&eacute;gration Azure moins native que AVD</td><td>Environnements VMware existants importants avec vSphere on-prem en parall&egrave;le</td></tr>
+            <tr><td><strong>Windows 365 (Cloud PC)</strong></td><td>Tarification fixe par utilisateur sans flexibilit&eacute; de scaling, pas d'acc&egrave;s GPU, contr&ocirc;le r&eacute;seau limit&eacute; — AVD pr&eacute;f&eacute;r&eacute; pour charges variables ou s&eacute;curit&eacute; avanc&eacute;e</td><td>Petites structures, utilisateurs mobiles sans besoins GPU, d&eacute;ploiement simplifi&eacute; sans &eacute;quipe infra d&eacute;di&eacute;e</td></tr>
+        </tbody>
+    </table>
+    </div>
+</div>
+<div class="section" id="s1">
+    <div class="section-header red">
+        <div class="section-number red">S1</div>
+        <div>
+            <div class="section-title">Architecture &amp; Composants AVD <span class="lic lic-m365-e3">M365 E3</span> <span class="lic lic-azure-pay">Azure Pay</span></div>
+            <div class="section-desc">Host Pools, Application Groups, Workspaces, Reverse Connect, RDP Shortpath — architecture de r&eacute;f&eacute;rence Hub-Spoke + AVD</div>
+        </div>
+    </div>
+
+    <div class="alert alert-error">
+        <span class="alert-icon">&#x1F6A8;</span>
+        <div>
+            <strong>Sc&eacute;nario d'attaque :</strong> Un attaquant exploite un port RDP ouvert (3389) directement sur une VM de session host accessible depuis Internet. Sans Reverse Connect, sans NSG stricte, la VM est compromise en quelques secondes via bruteforce ou une vuln&eacute;rabilit&eacute; RDP (BlueKeep, DejaBlue). <strong>Analogie :</strong> AVD = "bureau portable s&eacute;curis&eacute; dans le cloud" — tu te connectes depuis n'importe o&ugrave; mais le bureau reste chez Microsoft. Reverse Connect = "appel sortant s&eacute;curis&eacute;" — c'est la VM qui appelle ton client, jamais l'inverse. <strong>Z&eacute;ro port entrant ouvert.</strong>
+        </div>
+    </div>
+
+    <h3>S1.1 — Composants de l'architecture AVD</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr>
+            <th>Composant</th>
+            <th>D&eacute;faut Azure</th>
+            <th>&#x26A1; Quick Win</th>
+            <th>&#x1F512; Avanc&eacute;</th>
+            <th>&#x1F3AF; Optimal</th>
+            <th>Licence</th>
+        </tr></thead>
+        <tbody>
+            <tr class="row-warn">
+                <td><strong>Type de Host Pool</strong><br><small>Personal vs Pooled</small></td>
+                <td>Personal (1 user = 1 VM)</td>
+                <td><span class="hl-green">Pooled multi-session</span> (co&ucirc;t ÷4)</td>
+                <td>Pooled + load balancing Breadth-First</td>
+                <td>Pooled + autoscaling (Scaling Plan)</td>
+                <td><span class="lic lic-m365-e3">M365 E3</span></td>
+            </tr>
+            <tr class="row-ko">
+                <td><strong>Reverse Connect (pas de port entrant)</strong><br><small>Activ&eacute; par d&eacute;faut dans AVD</small></td>
+                <td><span class="hl-green">Activ&eacute;</span> (port 443 sortant uniquement)</td>
+                <td>Activ&eacute;</td>
+                <td>Activ&eacute; + RDP Shortpath public/managed selon le r&eacute;seau</td>
+                <td>Activ&eacute; + RDP Shortpath + NSG restrictive + validation du transport UDP</td>
+                <td><span class="lic lic-m365-e3">M365 E3</span></td>
+            </tr>
+            <tr class="row-warn">
+                <td><strong>RDP Shortpath (UDP)</strong><br><small>R&eacute;duit la latence, am&eacute;liore l'exp&eacute;rience</small></td>
+                <td><span class="hl-green">Disponible par d&eacute;faut</span> si le host pool, l'OS et le r&eacute;seau autorisent l'UDP</td>
+                <td><span class="hl-green">Choisir le mode retenu : public (STUN/TURN) ou managed (3390/UDP)</span></td>
+                <td>Managed + listener 3390/UDP ou public + TURN conserv&eacute;</td>
+                <td>Plage UDP ma&icirc;tris&eacute;e + QoS DSCP (managed) + monitoring latence</td>
+                <td><span class="lic lic-m365-e3">M365 E3</span></td>
+            </tr>
+            <tr class="row-warn">
+                <td><strong>Application Group Type</strong><br><small>Desktop vs RemoteApp</small></td>
+                <td>Desktop (bureau complet)</td>
+                <td>Desktop pour cas g&eacute;n&eacute;raux</td>
+                <td>RemoteApp pour apps sp&eacute;cifiques</td>
+                <td>Mix Desktop + RemoteApp selon usage</td>
+                <td><span class="lic lic-m365-e3">M365 E3</span></td>
+            </tr>
+            <tr class="row-ko">
+                <td><strong>Workspace</strong><br><small>Regroupement des App Groups</small></td>
+                <td>Non configur&eacute; explicitement</td>
+                <td><span class="hl-green">1 Workspace par environnement</span></td>
+                <td>Workspaces s&eacute;par&eacute;s prod/dev</td>
+                <td>+ tagging + RBAC granulaire par workspace</td>
+                <td><span class="lic lic-m365-e3">M365 E3</span></td>
+            </tr>
+            <tr class="row-ko">
+                <td><strong>M&eacute;tadonn&eacute;es Control Plane</strong><br><small>R&eacute;gion de stockage m&eacute;tadonn&eacute;es</small></td>
+                <td>East US (par d&eacute;faut)</td>
+                <td><span class="hl-green">West Europe ou France Central</span> (RGPD)</td>
+                <td>France Central pour donn&eacute;es UE</td>
+                <td>France Central + backup region</td>
+                <td><span class="lic lic-m365-e3">M365 E3</span></td>
+            </tr>
+            <tr class="row-warn">
+                <td><strong>VM Size (session hosts)</strong><br><small>D-series recommend&eacute; pour multi-session</small></td>
+                <td>Variable selon choix initial</td>
+                <td>D4s_v3 (4 vCPU, 16 Go) pour bureaux l&eacute;gers</td>
+                <td>D8s_v3 pour 8-10 users/VM</td>
+                <td>D16s_v4 + Ephemeral OS disk (perf)</td>
+                <td><span class="lic lic-azure-pay">Azure Pay</span></td>
+            </tr>
+            <tr class="row-ko">
+                <td><strong>Validation d'enregistrement session host</strong><br><small>Token d'enregistrement expiration</small></td>
+                <td><span class="hl-red">Non configur&eacute;</span> — token permanent possible</td>
+                <td><span class="hl-green">Expiration 24-48h max</span></td>
+                <td>Rotation via Key Vault</td>
+                <td>Rotation automatique pipeline Azure DevOps</td>
+                <td><span class="lic lic-m365-e3">M365 E3</span></td>
+            </tr>
+        </tbody>
+    </table>
+    </div>
+
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x1F4A1;</span>
+        <div>
+            <strong>Pourquoi chaque param&egrave;tre compte :</strong><br>
+            <strong>Host Pool Pooled :</strong> sans Pooled multi-session, chaque utilisateur utilise une VM d&eacute;di&eacute;e — co&ucirc;t x4. Windows 10/11 Enterprise Multi-Session est exclusif &agrave; AVD et permet 4-10 sessions simultan&eacute;es (source : Microsoft Learn, "Session host sizing guidance").<br>
+            <strong>Reverse Connect :</strong> en mode AVD natif, z&eacute;ro port entrant. La connexion est &eacute;tablie sortante depuis l'hôte (Microsoft Cloud Security Benchmark NS-1 &mdash; AVD non couvert nominativement par CIS Azure Foundations v6.0.0) depuis la VM vers le broker Microsoft via HTTPS 443. Toute architecture ouvrant RDP 3389 entrant contourne cette protection (CIS Microsoft Azure Foundations Benchmark v2.0, section 9.3).<br>
+            <strong>RDP Shortpath UDP :</strong> r&eacute;duit la latence de 20-50ms sur des connexions &agrave; haute latence — am&eacute;liore l'exp&eacute;rience utilisateur pour les applications graphiques. Sans UDP, on reste sur TCP relay via broker Microsoft.<br>
+            <strong>M&eacute;tadonn&eacute;es West Europe / France Central :</strong> les m&eacute;tadonn&eacute;es AVD (noms utilisateurs, noms sessions) stockées en East US posent un probl&egrave;me RGPD Art. 44 (transfert hors UE). France Central = r&eacute;sidence donn&eacute;es UE.
+        </div>
+    </div>
+
+    <div class="alert alert-warn">
+        <span class="alert-icon">&#x26A0;&#xFE0F;</span>
+        <div>
+            <strong>Pi&egrave;ge fr&eacute;quent :</strong> activer RDP Shortpath sans ouvrir le port UDP 3478 <em>sortant</em> (STUN/TURN) dans le NSG des session hosts vers le service tag <code>WindowsVirtualDesktop</code>. R&eacute;sultat : fallback silencieux sur TCP 443 sans avertissement. V&eacute;rifier via : <code>Get-NetConnectionProfile</code> + Event Viewer &gt; Microsoft-Windows-RemoteDesktopServices-RdpCoreTS/Operational.
+        </div>
+    </div>
+
+    <h3>S1.2 — Architecture de r&eacute;f&eacute;rence : Hub-Spoke + AVD + FSLogix</h3>
+    <div class="diagram-block">
+<span class="d-label">┌─────────────────────────────────────────────────────────────────────────┐</span>
+<span class="d-label">│  ARCHITECTURE DE RÉFÉRENCE AVD — Hub-Spoke + FSLogix + AD DS           │</span>
+<span class="d-label">└─────────────────────────────────────────────────────────────────────────┘</span>
+
+<span class="d-line">Internet ──── Client AVD (Windows/Mac/Web/iOS/Android)</span>
+                    <span class="d-line">│ HTTPS 443 sortant uniquement (Reverse Connect)</span>
+                    <span class="d-line">▼</span>
+<span class="d-ok">┌──────────────────────────────────┐</span>
+<span class="d-ok">│  AVD Control Plane (Microsoft)   │</span>  <span class="d-warn">← Méta : France Central (RGPD)</span>
+<span class="d-ok">│  Broker / Gateway / Diagnostics  │</span>
+<span class="d-ok">└──────────────┬───────────────────┘</span>
+               <span class="d-line">│ Reverse Connect (TCP 443 + UDP 3478 STUN shortpath)</span>
+               <span class="d-line">▼</span>
+<span class="d-ok">┌──────────────────────────────────────────────────────────────┐</span>
+<span class="d-ok">│  HUB VNet  (10.0.0.0/16)                                    │</span>
+<span class="d-ok">│  ┌──────────────────┐  ┌──────────────────────────────────┐ │</span>
+<span class="d-ok">│  │  Azure Firewall  │  │  AD DS / Entra ID Connect        │ │</span>
+<span class="d-ok">│  │  (egress control)│  │  (authentification Kerberos)     │ │</span>
+<span class="d-ok">│  └──────────────────┘  └──────────────────────────────────┘ │</span>
+<span class="d-ok">└──────────────────────────────────────────────────────────────┘</span>
+               <span class="d-line">│ VNet Peering</span>
+               <span class="d-line">▼</span>
+<span class="d-ok">┌──────────────────────────────────────────────────────────────┐</span>
+<span class="d-ok">│  SPOKE VNet AVD (10.1.0.0/16)                               │</span>
+<span class="d-ok">│                                                              │</span>
+<span class="d-ok">│  ┌────────────────────────────────────────────────────────┐  │</span>
+<span class="d-ok">│  │  Host Pool — Pooled (Windows 11 Multi-Session)         │  │</span>
+<span class="d-ok">│  │  VM1: D8s_v3  VM2: D8s_v3  VM3: D8s_v3  ...           │  │</span>
+<span class="d-ok">│  │  ┌─────────────────────────────────────────────────┐   │  │</span>
+<span class="d-ok">│  │  │ MDE (Defender for Endpoint) — chaque session host│   │  │</span>
+<span class="d-ok">│  │  │ FSLogix Agent — montage profil au login          │   │  │</span>
+<span class="d-ok">│  │  │ Intune MDM — policies appliquées                 │   │  │</span>
+<span class="d-ok">│  │  └─────────────────────────────────────────────────┘   │  │</span>
+<span class="d-ok">│  └─────────────────────────┬──────────────────────────────┘  │</span>
+<span class="d-ok">│                            │ Private Endpoint                 │</span>
+<span class="d-ok">│                            ▼                                  │</span>
+<span class="d-ok">│  ┌─────────────────────────────────────────────────────────┐  │</span>
+<span class="d-ok">│  │  Azure Files (SMB 3.x Kerberos)                        │  │</span>
+<span class="d-ok">│  │  \\storageaccount.file.core.windows.net\fslogix-profiles│  │</span>
+<span class="d-ok">│  │  Chiffrement CMK (Customer-Managed Keys — Key Vault)   │  │</span>
+<span class="d-ok">│  └─────────────────────────────────────────────────────────┘  │</span>
+<span class="d-ok">└──────────────────────────────────────────────────────────────┘</span>
+
+<span class="d-label">Flux de connexion utilisateur :</span>
+<span class="d-ok">  [1] User → entra.microsoft.com → MFA + Conditional Access</span>
+<span class="d-ok">  [2] Token validé → AVD Gateway → Reverse Connect → Session Host</span>
+<span class="d-ok">  [3] Session Host → Azure Files → Montage profil FSLogix (VHD)</span>
+<span class="d-ok">  [4] Session ouverte — bureau Windows 11 multi-session</span>
+    </div>
+
+    <h3>S1.3 — Configuration : cr&eacute;ation Host Pool Pooled</h3>
+    <div class="code-block">
+        <div class="code-header"><span>Azure CLI — Cr&eacute;ation Host Pool + Application Group + Workspace</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div>
+<pre><span class="comment"># Variables</span>
+<span class="var">RG</span>=<span class="string">"rg-avd-prod"</span>
+<span class="var">LOCATION</span>=<span class="string">"westeurope"</span>
+<span class="var">HOSTPOOL</span>=<span class="string">"hp-avd-prod-pooled"</span>
+<span class="var">APPGROUP</span>=<span class="string">"ag-avd-prod-desktop"</span>
+<span class="var">WORKSPACE</span>=<span class="string">"ws-avd-prod"</span>
+
+<span class="comment"># Créer le Resource Group</span>
+az group create --name <span class="var">$RG</span> --location <span class="var">$LOCATION</span>
+
+<span class="comment"># Créer le Host Pool Pooled (Breadth-First load balancing)</span>
+az desktopvirtualization hostpool create \
+  --name <span class="var">$HOSTPOOL</span> \
+  --resource-group <span class="var">$RG</span> \
+  --location <span class="var">$LOCATION</span> \
+  --host-pool-type <span class="string">"Pooled"</span> \
+  --load-balancer-type <span class="string">"BreadthFirst"</span> \
+  --max-session-limit <span class="string">10</span> \
+  --preferred-app-group-type <span class="string">"Desktop"</span> \
+  --registration-info expiration-time=<span class="string">"$(date -u -d '+24 hours' '+%Y-%m-%dT%H:%M:%S.000Z')"</span> registration-token-operation=<span class="string">"Update"</span>
+
+<span class="comment"># Créer l'Application Group Desktop</span>
+az desktopvirtualization applicationgroup create \
+  --name <span class="var">$APPGROUP</span> \
+  --resource-group <span class="var">$RG</span> \
+  --location <span class="var">$LOCATION</span> \
+  --application-group-type <span class="string">"Desktop"</span> \
+  --host-pool-arm-path $(az desktopvirtualization hostpool show \
+      --name <span class="var">$HOSTPOOL</span> --resource-group <span class="var">$RG</span> --query id -o tsv)
+
+<span class="comment"># Créer le Workspace et associer l'Application Group</span>
+az desktopvirtualization workspace create \
+  --name <span class="var">$WORKSPACE</span> \
+  --resource-group <span class="var">$RG</span> \
+  --location <span class="var">$LOCATION</span> \
+  --application-group-references $(az desktopvirtualization applicationgroup show \
+      --name <span class="var">$APPGROUP</span> --resource-group <span class="var">$RG</span> --query id -o tsv)</pre>
+    </div>
+
+    <div class="code-block">
+        <div class="code-header"><span>PowerShell — Cr&eacute;ation Host Pool via Az.DesktopVirtualization</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div>
+<pre><span class="comment"># Installer le module si absent</span>
+<span class="keyword">Install-Module</span> <span class="param">-Name</span> Az.DesktopVirtualization <span class="param">-Force</span>
+<span class="keyword">Connect-AzAccount</span>
+
+<span class="var">$rg</span>       = <span class="string">"rg-avd-prod"</span>
+<span class="var">$location</span> = <span class="string">"westeurope"</span>
+
+<span class="comment"># Créer le Host Pool Pooled avec expiration token 24h</span>
+<span class="var">$expiry</span> = (Get-Date).AddHours(24).ToUniversalTime().ToString(<span class="string">"yyyy-MM-ddTHH:mm:ss.fffZ"</span>)
+<span class="keyword">New-AzWvdHostPool</span> `
+    <span class="param">-ResourceGroupName</span> <span class="var">$rg</span> `
+    <span class="param">-Name</span>              <span class="string">"hp-avd-prod-pooled"</span> `
+    <span class="param">-Location</span>          <span class="var">$location</span> `
+    <span class="param">-HostPoolType</span>      <span class="string">"Pooled"</span> `
+    <span class="param">-LoadBalancerType</span>  <span class="string">"BreadthFirst"</span> `
+    <span class="param">-MaxSessionLimit</span>   10 `
+    <span class="param">-RegistrationTokenOperation</span> <span class="string">"Update"</span> `
+    <span class="param">-ExpirationTime</span>    <span class="var">$expiry</span> `
+    <span class="param">-PreferredAppGroupType</span> <span class="string">"Desktop"</span></pre>
+    </div>
+
+    <h3>S1.4 — V&eacute;rification</h3>
+    <div class="code-block">
+        <div class="code-header"><span>Azure CLI + PowerShell — V&eacute;rification Host Pool</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div>
+<pre><span class="comment"># Azure CLI — vérifier la configuration du Host Pool</span>
+az desktopvirtualization hostpool show \
+  --name <span class="string">"hp-avd-prod-pooled"</span> \
+  --resource-group <span class="string">"rg-avd-prod"</span> \
+  --query <span class="string">"{Type:hostPoolType, LB:loadBalancerType, MaxSessions:maxSessionLimit, Location:location}"</span>
+
+<span class="comment"># PowerShell — lister les session hosts et leur état</span>
+<span class="keyword">Get-AzWvdSessionHost</span> <span class="param">-HostPoolName</span> <span class="string">"hp-avd-prod-pooled"</span> <span class="param">-ResourceGroupName</span> <span class="string">"rg-avd-prod"</span> |
+    <span class="keyword">Select-Object</span> Name, Status, LastHeartBeat, VirtualMachineId, AgentVersion |
+    <span class="keyword">Format-Table</span> <span class="param">-AutoSize</span>
+
+<span class="comment"># Vérifier les sessions actives</span>
+<span class="keyword">Get-AzWvdUserSession</span> <span class="param">-HostPoolName</span> <span class="string">"hp-avd-prod-pooled"</span> <span class="param">-ResourceGroupName</span> <span class="string">"rg-avd-prod"</span> |
+    <span class="keyword">Select-Object</span> UserPrincipalName, SessionState, CreateTime |
+    <span class="keyword">Format-Table</span> <span class="param">-AutoSize</span></pre>
+    </div>
+
+    <h3>S1.5 — Checklist Architecture</h3>
+    <div class="checklist-item"><input type="checkbox"><span><strong>Host Pool Pooled configur&eacute;</strong> avec <code>BreadthFirst</code> load balancing et <code>MaxSessionLimit</code> adapt&eacute; aux VMs</span></div>
+    <div class="checklist-item"><input type="checkbox"><span><strong>M&eacute;tadonn&eacute;es AVD</strong> : r&eacute;gion Control Plane = <code>westeurope</code> ou <code>francecentral</code> (pas East US pour RGPD)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span><strong>Token d'enregistrement</strong> : expiration configur&eacute;e &agrave; 24-48h maximum, jamais permanent</span></div>
+    <div class="checklist-item"><input type="checkbox"><span><strong>Reverse Connect actif</strong> : aucun port 3389 entrant ouvert sur les NSG des session hosts</span></div>
+    <div class="checklist-item"><input type="checkbox"><span><strong>RDP Shortpath</strong> : UDP 3478 sortant (STUN/TURN) autoris&eacute; dans le NSG + Group Policy configur&eacute;e</span></div>
+    <div class="checklist-item"><input type="checkbox"><span><strong>Windows 11 Enterprise Multi-Session</strong> (ou Windows 10) — image &agrave; jour, pas d'image custom obsol&egrave;te</span></div>
+    <div class="checklist-item"><input type="checkbox"><span><strong>Workspace</strong> cr&eacute;er et associer les Application Groups correctement</span></div>
+    <div class="checklist-item"><input type="checkbox"><span><strong>RBAC</strong> : seuls les utilisateurs assign&eacute;s aux Application Groups peuvent acc&eacute;der aux sessions</span></div>
+</div>
+<!-- S2 ACCÈS CONDITIONNEL & MFA -->
+<div class="section" id="s2">
+    <div class="section-header red">
+        <div class="section-number red">S2</div>
+        <div>
+            <div class="section-title">Acc&egrave;s Conditionnel &amp; MFA <span class="lic lic-m365-e3">M365 E3</span> <span class="lic lic-m365-e5">E5/P2</span></div>
+            <div class="section-desc">Conditional Access AVD, MFA obligatoire, device compliance, PIM admins, sign-in frequency selon l'app cibl&eacute;e</div>
+        </div>
+    </div>
+
+    <div class="alert alert-error">
+        <span class="alert-icon">&#x1F6A8;</span>
+        <div>
+            <strong>Sc&eacute;nario d'attaque :</strong> Credential stuffing sur un compte AVD sans MFA. L'attaquant r&eacute;cup&egrave;re 10 000 couples login/mot de passe (dark web) et en obtient 50 valides. Sans Conditional Access, il se connecte directement aux sessions AVD, acc&egrave;de aux fichiers partag&eacute;s via FSLogix, pivote vers le r&eacute;seau interne. <strong>Analogie :</strong> le Conditional Access = "portail de s&eacute;curit&eacute; &agrave; l'entr&eacute;e du b&acirc;timent" — m&ecirc;me avec la cl&eacute;, tu dois montrer ton badge (MFA) + prouver que ton appareil est autoris&eacute; (device compliance).
+        </div>
+    </div>
+
+    <h3>S2.1 — Politiques Conditional Access pour AVD</h3>
+    <p style="font-size:0.9em;color:#605e5c;margin-bottom:10px;">Les App IDs CA &agrave; cibler : <code>9cdead84-a844-4324-93f2-b2e6bb768d07</code> (Azure Virtual Desktop) et, si le SSO est activ&eacute; sur les session hosts, <code>270efc09-cd0d-444b-a71f-39af4910ec45</code> (Windows Cloud Login).</p>
+    <div class="table-container">
+    <table>
+        <thead><tr>
+            <th>Politique CA</th><th>D&eacute;faut Azure</th><th>&#x26A1; Quick Win</th><th>&#x1F512; Avanc&eacute;</th><th>&#x1F3AF; Optimal</th><th>Licence</th>
+        </tr></thead>
+        <tbody>
+            <tr class="row-ko"><td><strong>MFA obligatoire (tous utilisateurs AVD)</strong></td><td><span class="hl-red">Non configur&eacute;</span></td><td><span class="hl-green">MFA pour TOUS sur app AVD</span></td><td>MFA + alignement Windows Cloud Login si SSO</td><td>MFA + FIDO2 / Passkey sans mot de passe</td><td><span class="lic lic-m365-e3">Entra ID P1</span></td></tr>
+            <tr class="row-ko"><td><strong>Device Compliance requis</strong></td><td><span class="hl-red">Non configur&eacute;</span></td><td>Bloquer appareils non-conformes Intune</td><td>Hybrid Entra ID Join + Compliant</td><td>Compliant uniquement + exception appareils perso</td><td><span class="lic lic-intune">Intune</span></td></tr>
+            <tr class="row-ko"><td><strong>Bloquer hors pays autoris&eacute;s</strong></td><td><span class="hl-red">Non configur&eacute;</span></td><td>Bloquer hors France/UE (Named Locations)</td><td>Bloquer + alert Sentinel</td><td>Bloquer + Continuous Access Evaluation</td><td><span class="lic lic-m365-e3">Entra ID P1</span></td></tr>
+            <tr class="row-ko"><td><strong>Bloquer legacy auth (NTLM/basic)</strong></td><td><span class="hl-red">Non configur&eacute;</span></td><td><span class="hl-green">Bloquer tous legacy auth protocols</span></td><td>Bloquer + monitoring dans Entra Sign-in Logs</td><td>Bloquer + SSPR d&eacute;sactiv&eacute; comptes privil&eacute;gi&eacute;s</td><td><span class="lic lic-m365-e3">Entra ID P1</span></td></tr>
+            <tr class="row-warn"><td><strong>Sign-in frequency</strong></td><td>Non configur&eacute;e</td><td><span class="hl-green">P&eacute;riodique (ex. 1h) sur Azure Virtual Desktop selon le risque</span></td><td>Politique d&eacute;di&eacute;e Windows Cloud Login si SSO activ&eacute;</td><td>&laquo; Every time &raquo; uniquement sur Windows Cloud Login quand le SSO AVD est activ&eacute;</td><td><span class="lic lic-m365-e3">Entra ID P1</span></td></tr>
+            <tr class="row-ko"><td><strong>PIM pour admins AVD</strong><br><small>(acc&egrave;s Host Pool Admin juste-&agrave;-temps)</small></td><td><span class="hl-red">Non configur&eacute;</span></td><td>Activer PIM pour r&ocirc;les AVD</td><td>PIM + approbation manager requis</td><td>PIM + alert + Access Review trimestriel</td><td><span class="lic lic-m365-e5">Entra ID P2</span></td></tr>
+        </tbody>
+    </table>
+    </div>
+
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x1F4A1;</span>
+        <div>
+            <strong>Pourquoi cibler les bonnes apps AVD :</strong> une politique CA ciblant uniquement &laquo; Microsoft Azure Management &raquo; ne couvre <em>pas</em> les connexions utilisateurs aux sessions AVD. Il faut cibler <strong>Azure Virtual Desktop</strong> (<code>9cdead84-a844-4324-93f2-b2e6bb768d07</code>) et, si le SSO sur session host est activ&eacute;, <strong>Windows Cloud Login</strong> (<code>270efc09-cd0d-444b-a71f-39af4910ec45</code>). Si l'app s'affiche encore comme <em>Windows Virtual Desktop</em> dans le portail, c'est le <strong>m&ecirc;me app ID 9cdead84...</strong>, pas un deuxi&egrave;me identifiant legacy &agrave; ajouter. Ne pas cibler l'app <strong>Azure Virtual Desktop Azure Resource Manager Provider</strong> (<code>50e95039-b200-4007-bc97-8d5790743a63</code>) pour le MFA utilisateur.<br><br>
+            <strong>Sign-in frequency :</strong> la r&eacute;authentification ne coupe pas une session active ; elle s'applique lorsqu'un nouvel access token est requis, par exemple lors d'une nouvelle connexion, d'un refresh de feed ou d'un rebinding de session. L'option <em>Every time</em> n'est document&eacute;e que pour <strong>Windows Cloud Login</strong> quand le SSO est activ&eacute;.
+        </div>
+    </div>
+
+    <div class="alert alert-warn">
+        <span class="alert-icon">&#x26A0;&#xFE0F;</span>
+        <div>
+            <strong>Pi&egrave;ges fr&eacute;quents :</strong><br>
+            1. <strong>Exclure les comptes de service de MFA</strong> sans workload identity protection — utiliser des Managed Identities, pas des user accounts.<br>
+            2. <strong>Oublier Windows Cloud Login</strong> quand le SSO AVD est activ&eacute; : l'utilisateur passe alors la passerelle AVD mais pas la connexion au session host avec le m&ecirc;me niveau d'exigence CA.<br>
+            3. <strong>Cibler l'app ARM Provider</strong> pour le MFA utilisateur : elle sert au feed et pas &agrave; l'authentification utilisateur interactive &agrave; la session.<br>
+            4. <strong>PIM sans Access Review</strong> : &eacute;l&eacute;vation accord&eacute;e une fois, jamais retir&eacute;e si la personne change de r&ocirc;le.
+        </div>
+    </div>
+
+    <h3>S2.2 — Configuration : Politique CA MFA + Sign-in Frequency</h3>
+    <div class="code-block">
+        <div class="code-header"><span>Microsoft Graph PowerShell — CA Policy MFA obligatoire pour AVD</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div>
+<pre><span class="comment"># Prérequis : module Microsoft.Graph</span>
+<span class="keyword">Connect-MgGraph</span> <span class="param">-Scopes</span> <span class="string">"Policy.ReadWrite.ConditionalAccess"</span>
+
+<span class="var">$avdAppId</span> = <span class="string">"9cdead84-a844-4324-93f2-b2e6bb768d07"</span>  <span class="comment"># Azure Virtual Desktop</span>
+<span class="var">$windowsCloudLoginAppId</span> = <span class="string">"270efc09-cd0d-444b-a71f-39af4910ec45"</span>  <span class="comment"># Ajouter si SSO activé sur les session hosts</span>
+
+<span class="var">$includeApps</span> = @(<span class="var">$avdAppId</span>)
+<span class="comment"># Si le SSO AVD est activé, décommentez la ligne suivante :</span>
+<span class="comment"># $includeApps += $windowsCloudLoginAppId</span>
+
+<span class="var">$caPolicy</span> = @{
+    displayName = <span class="string">"[AVD] MFA obligatoire — Tous utilisateurs"</span>
+    state       = <span class="string">"enabledForReportingButNotEnforced"</span>  <span class="comment"># Commencer en mode audit !</span>
+    conditions  = @{
+        users        = @{ includeUsers = @(<span class="string">"All"</span>) }
+        applications = @{ includeApplications = <span class="var">$includeApps</span> }
+        clientAppTypes = @(<span class="string">"all"</span>)
+    }
+    grantControls = @{
+        operator        = <span class="string">"OR"</span>
+        builtInControls = @(<span class="string">"mfa"</span>)
+    }
+    sessionControls = @{
+        signInFrequency   = @{ value = 1; <span class="keyword">type</span> = <span class="string">"hours"</span>; isEnabled = <span class="var">$true</span> }
+        persistentBrowser = @{ mode = <span class="string">"never"</span>; isEnabled = <span class="var">$true</span> }
+    }
+}
+<span class="keyword">New-MgIdentityConditionalAccessPolicy</span> <span class="param">-BodyParameter</span> <span class="var">$caPolicy</span>
+<span class="keyword">Write-Host</span> <span class="string">"Politique CA AVD créée en mode audit — basculer vers 'enabled' après validation"</span></pre>
+    </div>
+
+    <h3>S2.3 — V&eacute;rification Conditional Access</h3>
+    <div class="code-block">
+        <div class="code-header"><span>PowerShell — Audit des politiques CA ciblant AVD</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div>
+<pre><span class="keyword">Connect-MgGraph</span> <span class="param">-Scopes</span> <span class="string">"Policy.Read.ConditionalAccess"</span>
+
+<span class="var">$avdAppId</span> = <span class="string">"9cdead84-a844-4324-93f2-b2e6bb768d07"</span>
+<span class="var">$windowsCloudLoginAppId</span> = <span class="string">"270efc09-cd0d-444b-a71f-39af4910ec45"</span>
+<span class="var">$policies</span> = <span class="keyword">Get-MgIdentityConditionalAccessPolicy</span>
+
+<span class="var">$avdPolicies</span> = <span class="var">$policies</span> | <span class="keyword">Where-Object</span> {
+    ((<span class="var">$_</span>.Conditions.Applications.IncludeApplications <span class="param">-contains</span> <span class="var">$avdAppId</span>) <span class="param">-or</span>
+     (<span class="var">$_</span>.Conditions.Applications.IncludeApplications <span class="param">-contains</span> <span class="var">$windowsCloudLoginAppId</span>)) <span class="param">-and</span>
+    <span class="var">$_</span>.State <span class="param">-eq</span> <span class="string">"enabled"</span>
+}
+<span class="keyword">Write-Host</span> <span class="string">"Politiques CA actives ciblant AVD : $($avdPolicies.Count)"</span>
+<span class="var">$avdPolicies</span> | <span class="keyword">Select-Object</span> DisplayName, State, @{N=<span class="string">'MFA'</span>;E={
+    <span class="var">$_</span>.GrantControls.BuiltInControls <span class="param">-contains</span> <span class="string">'mfa'</span>
+}}, @{N=<span class="string">'SignInFreqH'</span>;E={
+    <span class="var">$_</span>.SessionControls.SignInFrequency.Value
+}} | <span class="keyword">Format-Table</span> <span class="param">-AutoSize</span></pre>
+    </div>
+
+    <h3>S2.4 — Checklist Acc&egrave;s Conditionnel &amp; MFA</h3>
+    <div class="checklist-item"><input type="checkbox"><span>Politique CA MFA ciblant App ID AVD <code>9cdead84-a844-4324-93f2-b2e6bb768d07</code> — state: enabled</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Windows Cloud Login <code>270efc09-cd0d-444b-a71f-39af4910ec45</code> couvert si le SSO AVD est activ&eacute;</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Sign-in frequency adapt&eacute;e au risque et &agrave; l'app cibl&eacute;e ; ne pas supposer qu'une session active sera interrompue</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Legacy auth bloqu&eacute; : client app types <code>exchangeActiveSync + other</code> bloqués</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Device compliance : politique CA exigeant Compliant ou Hybrid AADJ pour acc&egrave;s AVD</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>PIM configur&eacute; pour r&ocirc;les Desktop Virtualization Contributor/Administrator (Entra ID P2)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Access Review trimestriel configur&eacute; pour les &eacute;ligibilit&eacute;s PIM AVD</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Continuous Access Evaluation activ&eacute; (Entra ID &gt; Security &gt; Continuous Access Evaluation)</span></div>
+</div>
+<!-- S3 NETWORK SECURITY -->
+<div class="section" id="s3">
+    <div class="section-header red">
+        <div class="section-number red">S3</div>
+        <div>
+            <div class="section-title">Network Security <span class="lic lic-azure-pay">Azure Pay</span></div>
+            <div class="section-desc">Reverse Connect TCP 443, RDP Shortpath public/managed, Private Link AVD/Azure Files, filtrage egress</div>
+        </div>
+    </div>
+
+    <div class="alert alert-error">
+        <span class="alert-icon">&#x1F6A8;</span>
+        <div>
+            <strong>Sc&eacute;nario d'attaque :</strong> Un session host compromise peut initier des connexions sortantes vers des C2 (Command &amp; Control) si le trafic &eacute;gress n'est pas filtr&eacute;. Sans Azure Firewall ou NSG strict, le malware exfiltre les donn&eacute;es via HTTPS 443 vers n'importe quelle adresse. <strong>Analogie :</strong> le NSG = "liste des sorties autoris&eacute;es du b&acirc;timent" — sans elle, n'importe quel employ&eacute; (ou malware) peut sortir par n'importe quelle porte.
+        </div>
+    </div>
+
+    <h3>S3.1 — R&egrave;gles NSG recommand&eacute;es pour les session hosts</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr>
+            <th>R&egrave;gle NSG</th><th>Direction</th><th>Port/Proto</th><th>Source/Dest</th><th>Action</th><th>Priorit&eacute;</th>
+        </tr></thead>
+        <tbody>
+            <tr class="row-ok"><td>AVD Reverse Connect</td><td>Sortant</td><td>TCP 443</td><td>Vers <code>WindowsVirtualDesktop</code> Service Tag</td><td>&#x2705; Allow</td><td>100</td></tr>
+            <tr class="row-ok"><td>RDP Shortpath public (STUN direct)</td><td>Sortant</td><td>UDP 1024-65535<br><small>(par d&eacute;faut 49152-65535)</small></td><td>Vers Internet / IP publiques n&eacute;goci&eacute;es</td><td>&#x2705; Allow si mode public retenu</td><td>110</td></tr>
+            <tr class="row-ok"><td>RDP Shortpath public (TURN relay)</td><td>Sortant</td><td>UDP 3478</td><td>Vers <code>51.5.0.0/16</code></td><td>&#x2705; Allow si mode public retenu</td><td>115</td></tr>
+            <tr class="row-ok"><td>RDP Shortpath managed</td><td>Entrant</td><td>UDP 3390<br><small>(port par d&eacute;faut)</small></td><td>Depuis r&eacute;seaux manag&eacute;s / VPN / ExpressRoute</td><td>&#x2705; Allow si listener activ&eacute;</td><td>118</td></tr>
+            <tr class="row-ok"><td>Azure Monitor / Diagnostics</td><td>Sortant</td><td>TCP 443</td><td>Vers <code>AzureMonitor</code> Service Tag</td><td>&#x2705; Allow</td><td>120</td></tr>
+            <tr class="row-ok"><td>Azure Files (FSLogix SMB)</td><td>Sortant</td><td>TCP 445</td><td>Vers Storage Account (Private Endpoint)</td><td>&#x2705; Allow</td><td>130</td></tr>
+            <tr class="row-ok"><td>AD DS (DNS + Kerberos)</td><td>Sortant</td><td>TCP/UDP 53, 88, 389, 636</td><td>Vers Domain Controllers</td><td>&#x2705; Allow</td><td>140</td></tr>
+            <tr class="row-ko"><td><strong>RDP entrant 3389</strong></td><td>Entrant</td><td>TCP 3389</td><td>Any</td><td><span class="hl-red">&#x274C; DENY</span></td><td>200</td></tr>
+            <tr class="row-ko"><td>Tout trafic entrant</td><td>Entrant</td><td>Any</td><td>Internet</td><td><span class="hl-red">&#x274C; DENY ALL</span></td><td>4000</td></tr>
+            <tr class="row-warn"><td>Trafic sortant Internet g&eacute;n&eacute;ral</td><td>Sortant</td><td>Any</td><td>Internet</td><td>&#x26A0;&#xFE0F; Route vers Azure Firewall</td><td>4000</td></tr>
+        </tbody>
+    </table>
+    </div>
+
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x1F4A1;</span>
+        <div>
+            <strong>Reverse Connect et Shortpath ne sont pas le m&ecirc;me chemin :</strong> AVD commence toujours par un transport <strong>Reverse Connect</strong> en TCP 443 vers la passerelle AVD, puis tente un transport UDP si RDP Shortpath est disponible. Si UDP &eacute;choue, la session continue automatiquement en TCP. Pour le mode <strong>public</strong>, Microsoft documente un direct STUN sur ports UDP dynamiques et un relay TURN sur <code>51.5.0.0/16:3478</code>. Pour le mode <strong>managed</strong>, il faut activer le listener RDP Shortpath sur les session hosts et autoriser le port entrant <code>3390/UDP</code> par d&eacute;faut.<br><br>
+            <strong>Private Link AVD n'est pas le Private Endpoint Azure Files :</strong> pour privatiser le service AVD lui-m&ecirc;me, Microsoft utilise des private endpoints distincts <code>global</code>, <code>feed</code> et <code>connection</code>. Si vous activez l'UDP via Private Link, il faut cocher l'opt-in UDP sur le host pool, d&eacute;sactiver les options RDP Shortpath public (STUN/TURN), et, si vous filtrez finement les ports, autoriser la plage TCP dynamique <code>1-65535</code> vers le private endpoint <code>connection</code>. Le Private Endpoint Azure Files reste, lui, la bonne pratique pour FSLogix sur SMB 445.
+        </div>
+    </div>
+
+    <div class="alert alert-warn">
+        <span class="alert-icon">&#x26A0;&#xFE0F;</span>
+        <div>
+            <strong>Pi&egrave;ges fr&eacute;quents :</strong><br>
+            1. <strong>R&eacute;duire RDP Shortpath &agrave; UDP 3478</strong> : ce port concerne TURN ; le direct STUN utilise des ports UDP dynamiques et le mode managed utilise le listener 3390/UDP.<br>
+            2. <strong>Activer Private Link AVD sans opt-in UDP</strong> puis esp&eacute;rer Shortpath : sans opt-in explicite, l'UDP via Private Link est bloqu&eacute;.<br>
+            3. <strong>Laisser STUN/TURN public activ&eacute;s</strong> apr&egrave;s activation de l'UDP sur Private Link : le portail demande de les d&eacute;sactiver avant sauvegarde.<br>
+            4. <strong>D&eacute;sactiver le pare-feu Windows</strong> sur les session hosts &laquo; pour &eacute;viter les conflits &raquo; avec le NSG. Le NSG filtre au niveau r&eacute;seau, le Windows Firewall au niveau h&ocirc;te — ils sont compl&eacute;mentaires.
+        </div>
+    </div>
+
+    <h3>S3.2 — Configuration : NSG + Private Endpoint</h3>
+    <div class="code-block">
+        <div class="code-header"><span>Azure CLI — Cr&eacute;ation NSG pour session hosts AVD</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div>
+<pre><span class="var">RG</span>=<span class="string">"rg-avd-prod"</span>
+<span class="var">LOCATION</span>=<span class="string">"westeurope"</span>
+<span class="var">NSG_NAME</span>=<span class="string">"nsg-avd-sessionhosts"</span>
+<span class="var">MANAGED_SOURCE_PREFIX</span>=<span class="string">"10.0.0.0/8"</span>  <span class="comment"># VPN / ExpressRoute / hub-spoke autorisé à joindre les session hosts</span>
+
+az network nsg create --name <span class="var">$NSG_NAME</span> --resource-group <span class="var">$RG</span> --location <span class="var">$LOCATION</span>
+
+<span class="comment"># Reverse Connect AVD : toujours requis</span>
+az network nsg rule create --nsg-name <span class="var">$NSG_NAME</span> --resource-group <span class="var">$RG</span> \
+    --name Allow-AVD-ReverseConnect --priority 100 --direction Outbound \
+    --protocol Tcp --source-port-ranges '*' --destination-port-ranges 443 \
+    --destination-address-prefixes WindowsVirtualDesktop --access Allow
+
+<span class="comment"># RDP Shortpath public via TURN : UDP 3478 vers le range Microsoft documenté</span>
+az network nsg rule create --nsg-name <span class="var">$NSG_NAME</span> --resource-group <span class="var">$RG</span> \
+    --name Allow-AVD-RDPShortpath-TURN --priority 115 --direction Outbound \
+  --protocol Udp --source-port-ranges '*' --destination-port-ranges 3478 \
+    --destination-address-prefixes 51.5.0.0/16 --access Allow
+
+<span class="comment"># RDP Shortpath managed : listener UDP 3390 sur les session hosts</span>
+az network nsg rule create --nsg-name <span class="var">$NSG_NAME</span> --resource-group <span class="var">$RG</span> \
+    --name Allow-AVD-RDPShortpath-Managed --priority 118 --direction Inbound \
+    --protocol Udp --source-port-ranges '*' --destination-port-ranges 3390 \
+    --source-address-prefixes <span class="var">$MANAGED_SOURCE_PREFIX</span> --destination-address-prefixes '*' --access Allow
+
+<span class="comment"># Pour le direct STUN public, prévoir aussi l'UDP sortant sur la plage utilisée</span>
+<span class="comment"># (par défaut 49152-65535, ou plage réduite si vous l'avez configurée).</span>
+
+<span class="comment"># Bloquer RDP entrant 3389 (redondant avec Reverse Connect mais explicite)</span>
+az network nsg rule create --nsg-name <span class="var">$NSG_NAME</span> --resource-group <span class="var">$RG</span> \
+  --name Deny-RDP-Inbound --priority 200 --direction Inbound \
+  --protocol Tcp --source-port-ranges '*' --destination-port-ranges 3389 \
+  --source-address-prefixes '*' --destination-address-prefixes '*' --access Deny
+
+<span class="comment"># Appliquer le NSG au subnet des session hosts</span>
+az network vnet subnet update \
+  --vnet-name <span class="string">"vnet-avd-spoke"</span> --name <span class="string">"snet-avd-sessionhosts"</span> \
+  --resource-group <span class="var">$RG</span> --network-security-group <span class="var">$NSG_NAME</span>
+
+<span class="comment"># Créer Private Endpoint pour Azure Files (FSLogix)</span>
+az network private-endpoint create \
+  --name <span class="string">"pe-avd-azurefiles"</span> --resource-group <span class="var">$RG</span> --location <span class="var">$LOCATION</span> \
+  --vnet-name <span class="string">"vnet-avd-spoke"</span> --subnet <span class="string">"snet-avd-sessionhosts"</span> \
+  --private-connection-resource-id $(az storage account show \
+      --name <span class="string">"stavdfslogixprod"</span> --resource-group <span class="var">$RG</span> --query id -o tsv) \
+  --group-id file --connection-name <span class="string">"conn-azurefiles-avd"</span></pre>
+    </div>
+
+    <h3>S3.3 — V&eacute;rification NSG</h3>
+    <div class="code-block">
+        <div class="code-header"><span>Azure CLI — Audit r&egrave;gles NSG session hosts</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div>
+<pre><span class="comment"># Vérifier les règles NSG</span>
+az network nsg rule list --nsg-name <span class="string">"nsg-avd-sessionhosts"</span> \
+  --resource-group <span class="string">"rg-avd-prod"</span> \
+  --query <span class="string">"[].{Name:name, Dir:direction, Proto:protocol, Ports:destinationPortRange, Access:access, Priority:priority}"</span> \
+  --output table
+
+<span class="comment"># Vérifier que le port 3389 entrant est bien DENY</span>
+az network nsg rule list --nsg-name <span class="string">"nsg-avd-sessionhosts"</span> \
+  --resource-group <span class="string">"rg-avd-prod"</span> \
+  --query <span class="string">"[?direction=='Inbound' && destinationPortRange=='3389'] | [0].{Access:access}"</span></pre>
+    </div>
+
+    <h3>S3.4 — Checklist Network Security</h3>
+    <div class="checklist-item"><input type="checkbox"><span>NSG appliqu&eacute; au subnet des session hosts — port 3389 entrant explicitement DENY</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Service Tags <code>WindowsVirtualDesktop</code> utilis&eacute;s (pas d'IPs manuelles)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Mode RDP Shortpath document&eacute; explicitement : public (UDP dynamique + TURN 3478) et/ou managed (listener 3390/UDP)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Private Endpoint configur&eacute; pour Azure Files — SMB 445 ne passe pas par Internet</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Si AVD Private Link est utilis&eacute; : private endpoints <code>global</code>/<code>feed</code>/<code>connection</code> planifi&eacute;s, opt-in UDP activ&eacute; si besoin, STUN/TURN public d&eacute;sactiv&eacute;s</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Azure Firewall (ou NVA) filtre le trafic sortant des session hosts vers Internet</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Pare-feu Windows <strong>actif</strong> sur tous les session hosts (Group Policy)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Flow Logs NSG activ&eacute;s — envoy&eacute;s vers Log Analytics pour audit</span></div>
+</div>
+<!-- S4 SESSION HOST HARDENING -->
+<div class="section" id="s4">
+    <div class="section-header orange">
+        <div class="section-number orange">S4</div>
+        <div>
+            <div class="section-title">Session Host Hardening <span class="lic lic-m365-e3">M365 E3</span> <span class="lic lic-intune">Intune</span> <span class="lic lic-m365-e5">E5 (MDE P2)</span></div>
+            <div class="section-desc">CIS Windows, Intune MDM enrollment, MDE, WDAC/AppLocker, ASR rules, antivirus exclusions AVD sp&eacute;cifiques</div>
+        </div>
+    </div>
+
+    <div class="alert alert-error">
+        <span class="alert-icon">&#x1F6A8;</span>
+        <div>
+            <strong>Sc&eacute;nario d'attaque :</strong> Lateral movement depuis un session host compromis. Un utilisateur lance un document Word malveillant — macro PowerShell t&eacute;l&eacute;charge un payload. Sans ASR (Attack Surface Reduction) rules et sans WDAC, le malware s'ex&eacute;cute librement. <strong>Analogie :</strong> le hardening = "rendre les portes de secours inaccessibles au grand public" — m&ecirc;me si un attaquant p&eacute;n&egrave;tre dans la salle, il ne peut pas acc&eacute;der aux zones sensibles.
+        </div>
+    </div>
+
+    <h3>S4.1 — Param&egrave;tres de hardening session hosts</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr>
+            <th>Param&egrave;tre</th><th>D&eacute;faut Azure</th><th>&#x26A1; Quick Win</th><th>&#x1F512; Avanc&eacute;</th><th>&#x1F3AF; Optimal</th><th>Licence</th>
+        </tr></thead>
+        <tbody>
+            <tr class="row-ko"><td><strong>Intune MDM Enrollment</strong></td><td><span class="hl-red">Non enroll&eacute;</span></td><td><span class="hl-green">Enrollement Intune — Hybrid AADJ</span></td><td>Intune + baseline security profiles</td><td>Intune + CIS Benchmark Level 2 policies</td><td><span class="lic lic-intune">Intune Plan 1</span></td></tr>
+            <tr class="row-ko"><td><strong>Microsoft Defender for Endpoint</strong></td><td><span class="hl-red">Non d&eacute;ploy&eacute;</span></td><td><span class="hl-green">Onboard MDE sur tous les session hosts</span></td><td>MDE + Tamper Protection + Cloud Block</td><td>MDE P2 + EDR + Threat &amp; Vulnerability Mgmt</td><td><span class="lic lic-m365-e5">MDE P2 (E5)</span></td></tr>
+            <tr class="row-ko"><td><strong>ASR Rules (Attack Surface Reduction)</strong></td><td><span class="hl-red">D&eacute;sactiv&eacute;es</span></td><td>ASR audit mode en premier</td><td>ASR rules en mode block (top 5)</td><td>Toutes les ASR rules en block + monitoring</td><td><span class="lic lic-m365-e5">MDE P1+</span></td></tr>
+            <tr class="row-warn"><td><strong>Antivirus exclusions AVD</strong></td><td>Aucune exclusion sp&eacute;cifique</td><td><span class="hl-green">Exclusions FSLogix obligatoires</span></td><td>Exclusions AVD + FSLogix compl&egrave;tes</td><td>Exclusions + monitoring exclure abus</td><td><span class="lic lic-m365-e3">M365 E3</span></td></tr>
+            <tr class="row-ko"><td><strong>WDAC (Windows Defender Application Control)</strong></td><td><span class="hl-red">D&eacute;sactiv&eacute;</span></td><td>WDAC audit mode</td><td>WDAC Managed Installer policy</td><td>WDAC + Allowlist strict + MSIX App Attach</td><td><span class="lic lic-m365-e3">M365 E3</span></td></tr>
+            <tr class="row-ko"><td><strong>Local Admin Accounts</strong></td><td><span class="hl-red">Administrateur local actif</span></td><td><span class="hl-green">Renommer + d&eacute;sactiver built-in Administrator</span></td><td>LAPS (Local Admin Password Solution)</td><td>LAPS + Microsoft Entra LAPS int&eacute;gr&eacute; + rotation 30j</td><td><span class="lic lic-intune">Intune</span></td></tr>
+            <tr class="row-warn"><td><strong>Patching OS</strong></td><td>Windows Update manuel ou automatique basique</td><td>Azure Update Manager activ&eacute;</td><td>Maintenance window programm&eacute;e</td><td>Update Manager + restart programm&eacute; hors heures ouvrables</td><td><span class="lic lic-azure-pay">Azure Pay</span></td></tr>
+            <tr class="row-ko"><td><strong>Disk Encryption (OS disk)</strong></td><td><span class="hl-red">Chiffrement Azure g&eacute;r&eacute; (PMK)</span></td><td>Azure Disk Encryption activ&eacute;</td><td>ADE + cl&eacute;s dans Key Vault</td><td>ADE + CMK + Key Vault HSM</td><td><span class="lic lic-azure-pay">Azure Pay</span></td></tr>
+        </tbody>
+    </table>
+    </div>
+
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x1F4A1;</span>
+        <div>
+            <strong>Exclusions antivirus FSLogix obligatoires</strong> (Microsoft recommande ces exclusions pour &eacute;viter des d&eacute;lais de connexion ou des profils corrompus) :<br>
+            &bull; Processus : <code>%ProgramFiles%\FSLogix\apps\frxccds.exe</code>, <code>frxsvc.exe</code>, <code>frxrobocopy.exe</code><br>
+            &bull; Dossiers : <code>%ProgramFiles%\FSLogix\</code>, <code>%Temp%\*\FSLogix\</code><br>
+            &bull; Extensions disques : <code>*.VHD</code>, <code>*.VHDX</code>, <code>*.VMDK</code>, <code>*.CIM</code><br>
+            Source : <a href="https://learn.microsoft.com/fr-fr/fslogix/overview-prerequisites#antivirus-exclusions" target="_blank">Microsoft Learn — FSLogix antivirus exclusions</a>
+        </div>
+    </div>
+
+    <div class="alert alert-warn">
+        <span class="alert-icon">&#x26A0;&#xFE0F;</span>
+        <div>
+            <strong>Pi&egrave;ge ASR + AVD :</strong> certaines ASR rules (notamment <em>"Block Office apps from creating child processes"</em>) peuvent bloquer des applications m&eacute;tiers l&eacute;gitimes sur les session hosts. Toujours d&eacute;ployer en mode <strong>Audit</strong> pendant 1-2 semaines avant de passer en Block. Surveiller les &eacute;v&eacute;nements Event ID 1121 (block) et 1122 (audit) dans l'observateur d'&eacute;v&eacute;nements.
+        </div>
+    </div>
+
+    <h3>S4.2 — Configuration : ASR Rules + Exclusions FSLogix via Intune</h3>
+    <div class="code-block">
+        <div class="code-header"><span>PowerShell — D&eacute;ploiement exclusions antivirus FSLogix (local ou via Intune/GPO)</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div>
+<pre><span class="comment"># Exclusions antivirus obligatoires pour FSLogix (sur chaque session host)</span>
+<span class="comment"># Source : https://learn.microsoft.com/fr-fr/fslogix/overview-prerequisites</span>
+
+<span class="var">$exclusionPaths</span> = @(
+    <span class="string">"%ProgramFiles%\FSLogix\Apps\frxdrv.sys"</span>,
+    <span class="string">"%ProgramFiles%\FSLogix\Apps\frxdrvvt.sys"</span>,
+    <span class="string">"%ProgramFiles%\FSLogix\Apps\frxccd.sys"</span>,
+    <span class="string">"%TEMP%\*\*.VHD"</span>,
+    <span class="string">"%TEMP%\*\*.VHDX"</span>,
+    <span class="string">"%Windir%\TEMP\*\*.VHD"</span>,
+    <span class="string">"%Windir%\TEMP\*\*.VHDX"</span>
+)
+<span class="var">$exclusionProcesses</span> = @(
+    <span class="string">"%ProgramFiles%\FSLogix\Apps\frxccds.exe"</span>,
+    <span class="string">"%ProgramFiles%\FSLogix\Apps\frxsvc.exe"</span>,
+    <span class="string">"%ProgramFiles%\FSLogix\Apps\frxrobocopy.exe"</span>
+)
+
+<span class="var">$exclusionPaths</span> | <span class="keyword">ForEach-Object</span> {
+    <span class="keyword">Add-MpPreference</span> <span class="param">-ExclusionPath</span> <span class="var">$_</span>
+}
+<span class="var">$exclusionProcesses</span> | <span class="keyword">ForEach-Object</span> {
+    <span class="keyword">Add-MpPreference</span> <span class="param">-ExclusionProcess</span> <span class="var">$_</span>
+}
+<span class="keyword">Add-MpPreference</span> <span class="param">-ExclusionExtension</span> <span class="string">"vhd"</span>
+<span class="keyword">Add-MpPreference</span> <span class="param">-ExclusionExtension</span> <span class="string">"vhdx"</span>
+<span class="keyword">Write-Host</span> <span class="string">"Exclusions FSLogix configurées — $($(Get-MpPreference).ExclusionPath.Count) chemins exclus"</span></pre>
+    </div>
+
+    <div class="code-block">
+        <div class="code-header"><span>PowerShell — Activer les ASR Rules cl&eacute;s en mode Audit (puis Block)</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div>
+<pre><span class="comment"># Mode : 0=Disabled, 1=Block, 2=Audit, 6=Warn</span>
+<span class="comment"># Déployer en mode Audit d'abord, puis Block après 1-2 semaines de monitoring</span>
+<span class="var">$mode</span> = <span class="string">"AuditMode"</span>  <span class="comment"># Changer en "Enabled" pour Block</span>
+
+<span class="var">$asrRules</span> = @{
+    <span class="comment"># Bloquer macros Office créant des processus enfants</span>
+    <span class="string">"d4f940ab-401b-4efc-aadc-ad5f3c50688a"</span> = <span class="var">$mode</span>
+    <span class="comment"># Bloquer exécution de scripts Office</span>
+    <span class="string">"3b576869-a4ec-4529-8536-b80a7769e899"</span> = <span class="var">$mode</span>
+    <span class="comment"># Bloquer contenu exécutable depuis emails/webmail</span>
+    <span class="string">"be9ba2d9-53ea-4cdc-84e5-9b1eeee46550"</span> = <span class="var">$mode</span>
+    <span class="comment"># Bloquer PowerShell obfusqué</span>
+    <span class="string">"5beb7efe-fd9a-4556-801d-275e5ffc04cc"</span> = <span class="var">$mode</span>
+    <span class="comment"># Bloquer credential stealing depuis LSASS</span>
+    <span class="string">"9e6c4e1f-7d60-472f-ba1a-a39ef669e4b3"</span> = <span class="var">$mode</span>
+}
+<span class="var">$asrRules</span>.GetEnumerator() | <span class="keyword">ForEach-Object</span> {
+    <span class="keyword">Add-MpPreference</span> <span class="param">-AttackSurfaceReductionRules_Ids</span> <span class="var">$_</span>.Key `
+                     <span class="param">-AttackSurfaceReductionRules_Actions</span> <span class="var">$_</span>.Value
+}
+<span class="keyword">Write-Host</span> <span class="string">"ASR rules déployées en mode : $mode"</span></pre>
+    </div>
+
+    <h3>S4.3 — V&eacute;rification Hardening</h3>
+    <div class="code-block">
+        <div class="code-header"><span>PowerShell — Audit &eacute;tat hardening session host</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div>
+<pre><span class="comment"># Vérifier état MDE (Defender for Endpoint)</span>
+<span class="keyword">Get-MpComputerStatus</span> | <span class="keyword">Select-Object</span> `
+    AMServiceEnabled, AntispywareEnabled, AntivirusEnabled, `
+    RealTimeProtectionEnabled, TamperProtectionSource, `
+    IoavProtectionEnabled, NISEnabled | <span class="keyword">Format-List</span>
+
+<span class="comment"># Vérifier les ASR rules actives</span>
+<span class="keyword">Get-MpPreference</span> | <span class="keyword">Select-Object</span> <span class="param">-ExpandProperty</span> AttackSurfaceReductionRules_Ids
+
+<span class="comment"># Vérifier que le compte Administrateur local est désactivé</span>
+<span class="keyword">Get-LocalUser</span> <span class="param">-Name</span> <span class="string">"Administrateur"</span> | <span class="keyword">Select-Object</span> Name, Enabled, PasswordLastSet
+
+<span class="comment"># Vérifier l'enrollment Intune</span>
+<span class="keyword">dsregcmd</span> /status | <span class="keyword">Select-String</span> <span class="string">"AzureAdJoined|DomainJoined|MDMEnrolled"</span></pre>
+    </div>
+
+    <h3>S4.4 — Checklist Session Host Hardening</h3>
+    <div class="checklist-item"><input type="checkbox"><span>Session hosts <strong>enroll&eacute;s dans Intune</strong> (Hybrid AADJ ou Microsoft Entra ID Join)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span><strong>MDE onboard&eacute;</strong> sur tous les session hosts — Tamper Protection activ&eacute;</span></div>
+    <div class="checklist-item"><input type="checkbox"><span><strong>Exclusions FSLogix</strong> configur&eacute;es (chemins VHD/VHDX + processus frx*)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span><strong>ASR rules</strong> d&eacute;ploy&eacute;es (au moins en mode Audit, objectif Block)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Compte <strong>Administrateur local d&eacute;sactiv&eacute;</strong> ou renomm&eacute; + LAPS configur&eacute;</span></div>
+    <div class="checklist-item"><input type="checkbox"><span><strong>Chiffrement disque OS</strong> activ&eacute; (Azure Disk Encryption + Key Vault)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span><strong>Azure Update Manager</strong> configur&eacute; — patching mensuel programm&eacute;</span></div>
+    <div class="checklist-item"><input type="checkbox"><span><strong>WDAC</strong> configur&eacute; au moins en mode Audit sur les session hosts prod</span></div>
+</div>
+<!-- S5 FSLOGIX & PROFILE SECURITY -->
+<div class="section" id="s5">
+    <div class="section-header orange">
+        <div class="section-number orange">S5</div>
+        <div>
+            <div class="section-title">FSLogix &amp; Profile Security <span class="lic lic-m365-e3">M365 E3</span> <span class="lic lic-azure-pay">Azure Pay</span></div>
+            <div class="section-desc">FSLogix Profile Container, chiffrement CMK, Azure Files/NetApp, NTFS ACLs, Cloud Cache multi-site</div>
+        </div>
+    </div>
+
+    <div class="alert alert-error">
+        <span class="alert-icon">&#x1F6A8;</span>
+        <div>
+            <strong>Sc&eacute;nario d'attaque :</strong> Le partage Azure Files contenant les profils FSLogix est accessible &agrave; tous les employ&eacute;s avec les permissions SMB par d&eacute;faut. Un utilisateur malveillant monte le partage, browse les dossiers des autres utilisateurs et exfiltre des documents sensibles. <strong>Analogie :</strong> FSLogix = "casier personnel verrouill&eacute; dans un vestiaire sécurisé" — chaque utilisateur ne voit que son casier, pas celui des autres.
+        </div>
+    </div>
+
+    <h3>S5.1 — Configuration FSLogix Profile Container</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr>
+            <th>Param&egrave;tre FSLogix</th><th>D&eacute;faut</th><th>&#x26A1; Quick Win</th><th>&#x1F512; Avanc&eacute;</th><th>&#x1F3AF; Optimal</th><th>Licence</th>
+        </tr></thead>
+        <tbody>
+            <tr class="row-ko"><td><strong>Enabled (Profile Container)</strong></td><td><span class="hl-red">0 (d&eacute;sactiv&eacute;)</span></td><td><span class="hl-green">1 (activer)</span></td><td>1 + Cloud Cache</td><td>1 + Cloud Cache multi-site</td><td><span class="lic lic-m365-e3">M365 E3</span></td></tr>
+            <tr class="row-ko"><td><strong>VHDLocations (chemin stockage)</strong></td><td>Non configur&eacute;</td><td><span class="hl-green">\\storage.file.core.windows.net\fslogix</span></td><td>Azure Files + Private Endpoint</td><td>Azure NetApp Files (premium perf)</td><td><span class="lic lic-azure-pay">Azure Pay</span></td></tr>
+            <tr class="row-ko"><td><strong>NTFS ACLs sur le partage</strong></td><td><span class="hl-red">H&eacute;rit&eacute;es — trop permissif</span></td><td><span class="hl-green">Creator Owner = Full Control uniquement</span></td><td>CREATOR OWNER + SYSTEM + Admins seulement</td><td>ACLs via AD + audit SACL activ&eacute;</td><td><span class="lic lic-m365-e3">M365 E3</span></td></tr>
+            <tr class="row-warn"><td><strong>DeleteLocalProfileWhenVHDShouldApply</strong></td><td>0 — profil local conserv&eacute;</td><td>1 — supprimer profil local si VHD dispo</td><td>1</td><td>1 + monitoring orphan profiles</td><td><span class="lic lic-m365-e3">M365 E3</span></td></tr>
+            <tr class="row-warn"><td><strong>Chiffrement du stockage FSLogix</strong></td><td><span class="hl-green">Chiffr&eacute; par d&eacute;faut</span> avec Microsoft-managed keys</td><td>Valider SSE Azure Storage + Private Endpoint</td><td>CMK via Key Vault</td><td>CMK + infrastructure encryption + Key Vault HSM + rotation cl&eacute;s</td><td><span class="lic lic-azure-pay">Azure Pay</span></td></tr>
+            <tr class="row-ko"><td><strong>Cloud Cache (r&eacute;plication)</strong></td><td><span class="hl-red">D&eacute;sactiv&eacute;</span></td><td>Actif si multi-r&eacute;gion</td><td>Cloud Cache 2 sites</td><td>Cloud Cache + monitoring sync + alertes</td><td><span class="lic lic-m365-e3">M365 E3</span></td></tr>
+        </tbody>
+    </table>
+    </div>
+
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x1F4A1;</span>
+        <div>
+            <strong>NTFS ACLs sur Azure Files — configuration recommand&eacute;e Microsoft :</strong><br>
+            &bull; Racine du partage (<code>\\storage\fslogix</code>) : <em>Utilisateurs du domaine</em> = <strong>Modify</strong> (pas Full Control)<br>
+            &bull; Sous-dossiers (cr&eacute;&eacute;s automatiquement par FSLogix) : <em>CREATOR OWNER</em> = Full Control (h&eacute;rit&eacute;)<br>
+            &bull; <em>NT AUTHORITY\SYSTEM</em> = Full Control<br>
+            &bull; <em>Admins FSLogix</em> (groupe AD d&eacute;di&eacute;) = Full Control<br>
+            Cela garantit que l'utilisateur A ne peut pas acc&eacute;der au dossier de profil de l'utilisateur B. Source : <a href="https://learn.microsoft.com/fr-fr/fslogix/how-to-configure-storage-permissions" target="_blank">Microsoft Learn — FSLogix storage permissions</a>
+        </div>
+    </div>
+
+    <div class="alert alert-warn">
+        <span class="alert-icon">&#x26A0;&#xFE0F;</span>
+        <div>
+            <strong>Pi&egrave;ge Cloud Cache :</strong> si Cloud Cache est activ&eacute; mais que les chemins secondaires sont indisponibles, FSLogix peut bloquer la connexion de l'utilisateur. Configurer <code>ConcurrentUserSessions=1</code> pour &eacute;viter la corruption VHD en cas de d&eacute;connexion brutale.<br><br>
+            <strong>Vigilance Kerberos 2026 :</strong> Microsoft indique qu'une modification Windows Server d'avril 2026 fait basculer le type de chiffrement Kerberos par d&eacute;faut de <code>RC4</code> vers <code>AES-SHA1</code>. Les partages SMB qui h&eacute;bergent les conteneurs FSLogix et qui ne sont pas pr&ecirc;ts pour <code>AES-SHA1</code> peuvent subir des probl&egrave;mes d'acc&egrave;s apr&egrave;s mise &agrave; jour ; il faut terminer la migration avant de d&eacute;ployer ce correctif sur les h&ocirc;tes concern&eacute;s.
+        </div>
+    </div>
+
+    <h3>S5.2 — Configuration FSLogix via Registre / GPO</h3>
+    <div class="code-block">
+        <div class="code-header"><span>PowerShell — Configuration FSLogix Profile Container (sur session host ou via GPO)</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div>
+<pre><span class="comment"># Chemin de registre FSLogix</span>
+<span class="var">$regPath</span> = <span class="string">"HKLM:\SOFTWARE\FSLogix\Profiles"</span>
+<span class="keyword">If</span> (-Not (<span class="keyword">Test-Path</span> <span class="var">$regPath</span>)) { <span class="keyword">New-Item</span> <span class="param">-Path</span> <span class="var">$regPath</span> <span class="param">-Force</span> | <span class="keyword">Out-Null</span> }
+
+<span class="comment"># Activer les profils FSLogix</span>
+<span class="keyword">Set-ItemProperty</span> <span class="param">-Path</span> <span class="var">$regPath</span> <span class="param">-Name</span> <span class="string">"Enabled"</span> <span class="param">-Value</span> 1 <span class="param">-Type</span> DWord
+<span class="comment"># Chemin VHD (Azure Files via Private Endpoint ou UNC)</span>
+<span class="keyword">Set-ItemProperty</span> <span class="param">-Path</span> <span class="var">$regPath</span> <span class="param">-Name</span> <span class="string">"VHDLocations"</span> `
+    <span class="param">-Value</span> <span class="string">"\\stavdfslogixprod.file.core.windows.net\fslogix-profiles"</span> <span class="param">-Type</span> String
+<span class="comment"># Supprimer le profil local quand le VHD est disponible</span>
+<span class="keyword">Set-ItemProperty</span> <span class="param">-Path</span> <span class="var">$regPath</span> <span class="param">-Name</span> <span class="string">"DeleteLocalProfileWhenVHDShouldApply"</span> <span class="param">-Value</span> 1 <span class="param">-Type</span> DWord
+<span class="comment"># Empêcher les sessions concurrentes (évite corruption VHD)</span>
+<span class="keyword">Set-ItemProperty</span> <span class="param">-Path</span> <span class="var">$regPath</span> <span class="param">-Name</span> <span class="string">"ConcurrentUserSessions"</span> <span class="param">-Value</span> 1 <span class="param">-Type</span> DWord
+<span class="comment"># Taille max VHD en Mo (ex: 30 Go)</span>
+<span class="keyword">Set-ItemProperty</span> <span class="param">-Path</span> <span class="var">$regPath</span> <span class="param">-Name</span> <span class="string">"SizeInMBs"</span> <span class="param">-Value</span> 30720 <span class="param">-Type</span> DWord
+<span class="comment"># Type : VHDX recommandé (meilleure performance)</span>
+<span class="keyword">Set-ItemProperty</span> <span class="param">-Path</span> <span class="var">$regPath</span> <span class="param">-Name</span> <span class="string">"VolumeType"</span> <span class="param">-Value</span> <span class="string">"VHDX"</span> <span class="param">-Type</span> String
+<span class="keyword">Write-Host</span> <span class="string">"FSLogix Profile Container configuré"</span></pre>
+    </div>
+
+    <div class="code-block">
+        <div class="code-header"><span>Azure CLI — Cr&eacute;ation Azure Files + configuration CMK pour FSLogix</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div>
+<pre><span class="var">RG</span>=<span class="string">"rg-avd-prod"</span>
+<span class="var">STORAGE</span>=<span class="string">"stavdfslogixprod"</span>
+<span class="var">SHARE</span>=<span class="string">"fslogix-profiles"</span>
+<span class="var">KEYVAULT</span>=<span class="string">"kv-avd-prod"</span>
+
+<span class="comment"># Créer le storage account (SMB 3.x, TLS 1.2 minimum)</span>
+az storage account create \
+  --name <span class="var">$STORAGE</span> --resource-group <span class="var">$RG</span> \
+  --sku Premium_LRS --kind FileStorage \
+  --enable-large-file-share \
+  --min-tls-version TLS1_2 \
+  --https-only true \
+  --allow-blob-public-access false
+
+<span class="comment"># Créer le partage FSLogix (100 Go)</span>
+az storage share-rm create \
+  --storage-account <span class="var">$STORAGE</span> --resource-group <span class="var">$RG</span> \
+  --name <span class="var">$SHARE</span> --quota 100
+
+<span class="comment"># Activer le chiffrement CMK (Customer-Managed Keys)</span>
+az storage account update \
+  --name <span class="var">$STORAGE</span> --resource-group <span class="var">$RG</span> \
+  --encryption-key-source Microsoft.Keyvault \
+  --encryption-key-vault $(az keyvault show --name <span class="var">$KEYVAULT</span> \
+      --resource-group <span class="var">$RG</span> --query properties.vaultUri -o tsv) \
+  --encryption-key-name <span class="string">"key-avd-fslogix"</span> \
+  --encryption-key-version <span class="string">""</span>   <span class="comment"># "" = auto-rotation vers dernière version</span>
+
+<span class="keyword">echo</span> <span class="string">"Azure Files FSLogix créé avec chiffrement CMK"</span></pre>
+    </div>
+
+    <h3>S5.3 — V&eacute;rification FSLogix</h3>
+    <div class="code-block">
+        <div class="code-header"><span>PowerShell — V&eacute;rification FSLogix et ACLs</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div>
+<pre><span class="comment"># Vérifier la config FSLogix active</span>
+<span class="keyword">Get-ItemProperty</span> <span class="param">-Path</span> <span class="string">"HKLM:\SOFTWARE\FSLogix\Profiles"</span> | <span class="keyword">Select-Object</span> `
+    Enabled, VHDLocations, DeleteLocalProfileWhenVHDShouldApply, SizeInMBs | <span class="keyword">Format-List</span>
+
+<span class="comment"># Vérifier les ACLs NTFS du partage FSLogix</span>
+<span class="var">$sharePath</span> = <span class="string">"\\stavdfslogixprod.file.core.windows.net\fslogix-profiles"</span>
+<span class="keyword">Get-Acl</span> <span class="param">-Path</span> <span class="var">$sharePath</span> | <span class="keyword">Select-Object</span> <span class="param">-ExpandProperty</span> Access |
+    <span class="keyword">Select-Object</span> IdentityReference, FileSystemRights, AccessControlType | <span class="keyword">Format-Table</span></pre>
+    </div>
+
+    <h3>S5.4 — Checklist FSLogix</h3>
+    <div class="checklist-item"><input type="checkbox"><span>FSLogix Profile Container <code>Enabled=1</code> — VHDLocations pointant vers Azure Files via Private Endpoint</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>NTFS ACLs : CREATOR OWNER = Full Control sur sous-dossiers, utilisateurs = Modify sur racine seulement</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Chiffrement Azure Files : CMK via Key Vault activ&eacute;</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>TLS 1.2 minimum sur le storage account (<code>--min-tls-version TLS1_2</code>)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Acc&egrave;s public au storage account d&eacute;sactiv&eacute; (<code>--allow-blob-public-access false</code>)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Exclusions antivirus FSLogix configur&eacute;es (VHD/VHDX + processus frx*)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>ConcurrentUserSessions=1 pour &eacute;viter la corruption des profils VHD</span></div>
+</div>
+<!-- S6 MSIX APP ATTACH & APPCONTROL -->
+<div class="section" id="s6">
+    <div class="section-header orange">
+        <div class="section-number orange">S6</div>
+        <div>
+            <div class="section-title">MSIX App Attach &amp; AppLocker <span class="lic lic-m365-e3">M365 E3</span></div>
+            <div class="section-desc">MSIX App Attach, AppLocker, WDAC — gestion s&eacute;curis&eacute;e des applications sur session hosts</div>
+        </div>
+    </div>
+
+    <div class="alert alert-error">
+        <span class="alert-icon">&#x1F6A8;</span>
+        <div>
+            <strong>Sc&eacute;nario d'attaque :</strong> Un utilisateur AVD t&eacute;l&eacute;charge un ex&eacute;cutable malveillant depuis le web sur sa session, l'installe et l'ex&eacute;cute. Sans AppLocker ou WDAC, tout ex&eacute;cutable non sign&eacute; peut s'installer librement. <strong>Analogie :</strong> MSIX App Attach = "distributeur automatique d'applications verrouill&eacute;" — seules les apps approuv&eacute;es et sign&eacute;es sont disponibles, pas d'installations manuelles.
+        </div>
+    </div>
+
+    <h3>S6.1 — Configuration MSIX App Attach &amp; AppLocker</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr>
+            <th>Fonctionnalit&eacute;</th><th>D&eacute;faut</th><th>&#x26A1; Quick Win</th><th>&#x1F512; Avanc&eacute;</th><th>&#x1F3AF; Optimal</th><th>Licence</th>
+        </tr></thead>
+        <tbody>
+            <tr class="row-ko"><td><strong>MSIX App Attach</strong></td><td><span class="hl-red">Non configur&eacute;</span></td><td>MSIX pour 1-2 apps pilotes</td><td>MSIX pour toutes les apps m&eacute;tiers</td><td>MSIX + Azure Compute Gallery + versionning</td><td><span class="lic lic-m365-e3">M365 E3</span></td></tr>
+            <tr class="row-ko"><td><strong>AppLocker — ex&eacute;cutables</strong></td><td><span class="hl-red">D&eacute;sactiv&eacute;</span></td><td>AppLocker Audit mode EXE/MSI</td><td>AppLocker Block — r&egrave;gles publisher + path</td><td>WDAC remplacement AppLocker (plus robuste)</td><td><span class="lic lic-m365-e3">M365 E3</span></td></tr>
+            <tr class="row-ko"><td><strong>Scripts restriction (PS/VBS)</strong></td><td><span class="hl-red">Powershell non restreint</span></td><td>PowerShell Constrained Language Mode</td><td>AppLocker scripts + GPO PSLanguageMode</td><td>WDAC + CLM enforc&eacute; + audit transcription</span></td><td><span class="lic lic-m365-e3">M365 E3</span></td></tr>
+            <tr class="row-warn"><td><strong>Signature code (MSIX packages)</strong></td><td>Packages non sign&eacute;s accept&eacute;s</td><td>Exiger signature code signing certificate</td><td>Code signing + DigiCert ou cert interne PKI</td><td>Code signing + Hardware Security Module PKI</td><td><span class="lic lic-m365-e3">M365 E3</span></td></tr>
+            <tr class="row-ko"><td><strong>Credential Guard / VBS</strong></td><td><span class="hl-red">D&eacute;sactiv&eacute;</span></td><td>Activer Virtualization Based Security (VBS)</td><td>VBS + Credential Guard via Intune Device Config</td><td>VBS + Credential Guard + HVCI (Hypervisor Protected Code Integrity)</td><td><span class="lic lic-intune">Intune</span></td></tr>
+    </table>
+    </div>
+
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x1F4A1;</span>
+        <div>
+            <strong>MSIX App Attach vs installation classique :</strong> avec MSIX App Attach, les applications ne sont pas install&eacute;es sur l'image OS — elles sont attach&eacute;es dynamiquement &agrave; la session au login via un package MSIX mont&eacute; en read-only. Avantages : image OS plus petite, mise &agrave; jour applications sans rebuild d'image, isolation entre apps. Les packages MSIX doivent &ecirc;tre <strong>sign&eacute;s num&eacute;riquement</strong> — un package non sign&eacute; ne s'attachera pas. Source : <a href="https://learn.microsoft.com/fr-fr/azure/virtual-desktop/app-attach-overview" target="_blank">Microsoft Learn — MSIX App Attach overview</a>
+        </div>
+    </div>
+
+    <div class="alert alert-warn">
+        <span class="alert-icon">&#x26A0;&#xFE0F;</span>
+        <div>
+            <strong>Pi&egrave;ge AppLocker + services :</strong> les r&egrave;gles AppLocker ne s'appliquent pas aux processus s'ex&eacute;cutant en tant que <code>SYSTEM</code> ou <code>LOCAL SERVICE</code>. Pour une protection compl&egrave;te incluant les services, utiliser <strong>WDAC (Windows Defender Application Control)</strong> qui s'applique &agrave; tous les processus, y compris les services syst&egrave;me.
+        </div>
+    </div>
+
+    <h3>S6.2 — Configuration MSIX App Attach via Azure CLI</h3>
+    <div class="code-block">
+        <div class="code-header"><span>Azure CLI — Ajouter un package MSIX au Host Pool</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div>
+<pre><span class="comment"># Prérequis : package MSIX signé et uploadé sur Azure Files ou Storage Account</span>
+<span class="var">RG</span>=<span class="string">"rg-avd-prod"</span>
+<span class="var">HOSTPOOL</span>=<span class="string">"hp-avd-prod-pooled"</span>
+<span class="var">MSIX_PATH</span>=<span class="string">"\\stavdmsixprod.file.core.windows.net\msix-packages\MyApp_1.0.0.0_x64.msix"</span>
+
+<span class="comment"># Créer le package MSIX App Attach (staging)</span>
+az desktopvirtualization msixpackage create \
+  --host-pool-name <span class="var">$HOSTPOOL</span> --resource-group <span class="var">$RG</span> \
+  --msix-package-full-name <span class="string">"MyApp_1.0.0.0_x64__publisherid"</span> \
+  --image-path <span class="var">$MSIX_PATH</span> \
+  --is-active true \
+  --is-regular-registration false \
+  --display-name <span class="string">"My Application v1.0"</span>
+
+<span class="comment"># Lister les packages MSIX actifs</span>
+az desktopvirtualization msixpackage list \
+  --host-pool-name <span class="var">$HOSTPOOL</span> --resource-group <span class="var">$RG</span> \
+  --query <span class="string">"[].{Name:msixPackageFullName, Active:isActive, Path:imagePath}"</span> \
+  --output table</pre>
+    </div>
+
+    <div class="code-block">
+        <div class="code-header"><span>PowerShell — AppLocker Audit Mode (EXE + Scripts)</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div>
+<pre><span class="comment"># Activer AppLocker en mode Audit (sans bloquer — pour analyse)</span>
+<span class="comment"># Prérequis : service Application Identity doit être démarré</span>
+<span class="keyword">Set-Service</span> <span class="param">-Name</span> appidsvc <span class="param">-StartupType</span> Automatic
+<span class="keyword">Start-Service</span> appidsvc
+
+<span class="comment"># Générer des règles AppLocker par défaut (autoriser Windows + Program Files)</span>
+<span class="var">$policy</span> = [Microsoft.Security.ApplicationId.PolicyManagement.PolicyModel.AppLockerPolicy]::new()
+<span class="keyword">Set-AppLockerPolicy</span> <span class="param">-XMLPolicy</span> @<span class="string">"
+&lt;AppLockerPolicy Version="1"&gt;
+  &lt;RuleCollection Type="Exe" EnforcementMode="AuditOnly"&gt;
+    &lt;FilePathRule Id="00000000-0000-0000-0000-000000000001" Name="Allow Windows" Action="Allow" UserOrGroupSid="S-1-1-0"&gt;
+      &lt;Conditions&gt;&lt;FilePathCondition Path="%WINDIR%\*"/&gt;&lt;/Conditions&gt;
+    &lt;/FilePathRule&gt;
+    &lt;FilePathRule Id="00000000-0000-0000-0000-000000000002" Name="Allow Program Files" Action="Allow" UserOrGroupSid="S-1-1-0"&gt;
+      &lt;Conditions&gt;&lt;FilePathCondition Path="%PROGRAMFILES%\*"/&gt;&lt;/Conditions&gt;
+    &lt;/FilePathRule&gt;
+  &lt;/RuleCollection&gt;
+&lt;/AppLockerPolicy&gt;
+"@
+<span class="keyword">Write-Host</span> <span class="string">"AppLocker activé en mode Audit — surveiller Event Log AppLocker/EXE and DLL"</span>
+<span class="comment"># Surveiller : Event Viewer > Application and Services Logs > Microsoft > Windows > AppLocker</span></pre>
+    </div>
+
+    <h3>S6.3 — V&eacute;rification App Control</h3>
+    <div class="code-block">
+        <div class="code-header"><span>PowerShell — V&eacute;rification AppLocker et MSIX</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div>
+<pre><span class="comment"># Vérifier la politique AppLocker active</span>
+<span class="keyword">Get-AppLockerPolicy</span> <span class="param">-Effective</span> | <span class="keyword">Format-List</span>
+
+<span class="comment"># Tester si un exécutable serait autorisé</span>
+<span class="keyword">Test-AppLockerPolicy</span> <span class="param">-Path</span> <span class="string">"C:\Windows\System32\cmd.exe"</span> <span class="param">-User</span> <span class="string">"Everyone"</span>
+
+<span class="comment"># Vérifier les événements AppLocker (bloqués en mode Enforced)</span>
+<span class="keyword">Get-WinEvent</span> <span class="param">-LogName</span> <span class="string">"Microsoft-Windows-AppLocker/EXE and DLL"</span> <span class="param">-MaxEvents</span> 20 |
+    <span class="keyword">Where-Object</span> { <span class="var">$_</span>.LevelDisplayName <span class="param">-eq</span> <span class="string">"Warning"</span> } |
+    <span class="keyword">Select-Object</span> TimeCreated, Message | <span class="keyword">Format-Table</span> <span class="param">-Wrap</span></pre>
+    </div>
+
+    <h3>S6.4 — Checklist App Control</h3>
+    <div class="checklist-item"><input type="checkbox"><span>MSIX App Attach configur&eacute; — packages sign&eacute;s num&eacute;riquement avant staging</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>AppLocker ou WDAC en mode Audit d&eacute;ploy&eacute; — collecte des &eacute;v&eacute;nements via Log Analytics</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Service Application Identity (<code>appidsvc</code>) d&eacute;marr&eacute; et en Automatic sur session hosts</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>PowerShell Constrained Language Mode activ&eacute; pour les sessions utilisateurs standard</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Surveillance Event ID 8003/8004 (AppLocker block) dans Log Analytics</span></div>
+</div>
+<!-- S7 MONITORING & LOGGING -->
+<div class="section" id="s7">
+    <div class="section-header yellow">
+        <div class="section-number yellow">S7</div>
+        <div>
+            <div class="section-title">Monitoring &amp; Logging <span class="lic lic-m365-e3">M365 E3</span> <span class="lic lic-azure-pay">Azure Pay</span></div>
+            <div class="section-desc">Diagnostic Settings AVD, Log Analytics, KQL sessions, Azure Monitor Insights, alertes connexions &eacute;chou&eacute;es</div>
+        </div>
+    </div>
+
+    <div class="alert alert-error">
+        <span class="alert-icon">&#x1F6A8;</span>
+        <div>
+            <strong>Sc&eacute;nario d'attaque :</strong> Une session compromise reste ouverte pendant 72h apr&egrave;s que l'utilisateur a quitt&eacute; l'organisation. Sans monitoring des sessions actives ni alertes d&eacute;connexion/reconnexion suspectes, l'acc&egrave;s persiste ind&eacute;finiment. <strong>Analogie :</strong> le monitoring AVD = "cam&eacute;ra de surveillance du datacenter" — sans elle, on ne sait pas qui entre, combien de temps, ni quelles ressources sont consult&eacute;es.
+        </div>
+    </div>
+
+    <h3>S7.1 — Configuration Diagnostic Settings &amp; Log Analytics</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr>
+            <th>Source de logs</th><th>D&eacute;faut</th><th>&#x26A1; Quick Win</th><th>&#x1F512; Avanc&eacute;</th><th>&#x1F3AF; Optimal</th><th>Licence</th>
+        </tr></thead>
+        <tbody>
+            <tr class="row-ko"><td><strong>Diagnostic Settings Host Pool</strong></td><td><span class="hl-red">D&eacute;sactiv&eacute;</span></td><td><span class="hl-green">Envoyer vers Log Analytics Workspace</span></td><td>LAW + r&eacute;tention 90j</td><td>LAW + Sentinel int&eacute;gration + alertes</td><td><span class="lic lic-azure-pay">Azure Pay</span></td></tr>
+            <tr class="row-ko"><td><strong>Diagnostic Settings Workspace</strong></td><td><span class="hl-red">D&eacute;sactiv&eacute;</span></td><td><span class="hl-green">Logs AVD Workspace vers LAW</span></td><td>Workspace + ApplicationGroup logs</td><td>Tous composants AVD vers LAW centralis&eacute;</td><td><span class="lic lic-azure-pay">Azure Pay</span></td></tr>
+            <tr class="row-ko"><td><strong>WVDConnections (table KQL)</strong></td><td>Non disponible sans diag</td><td>Table disponible apr&egrave;s activation</td><td>Alertes sur connexions &eacute;chou&eacute;es</td><td>Dashboard + alertes + analyse tendances</td><td><span class="lic lic-azure-pay">Azure Pay</span></td></tr>
+            <tr class="row-ko"><td><strong>Azure Monitor Insights for AVD</strong></td><td><span class="hl-red">Non activ&eacute;</span></td><td>Activer le workbook AVD Insights</td><td>Insights + host performance</td><td>Insights + alertes CPU/mem session hosts</td><td><span class="lic lic-azure-pay">Azure Pay</span></td></tr>
+            <tr class="row-warn"><td><strong>R&eacute;tention logs</strong></td><td>30 jours (d&eacute;faut LAW)</td><td>90 jours</td><td>180 jours</td><td>365 jours (ou archive cold tier)</td><td><span class="lic lic-azure-pay">Azure Pay</span></td></tr>
+        </tbody>
+    </table>
+    </div>
+
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x1F4A1;</span>
+        <div>
+            <strong>Tables de logs AVD cl&eacute;s dans Log Analytics :</strong><br>
+            &bull; <code>WVDConnections</code> — connexions utilisateurs (login, logout, dur&eacute;e, IP source, session host)<br>
+            &bull; <code>WVDErrors</code> — erreurs de connexion avec codes (AuthFailed, ClientDisconnect, etc.)<br>
+            &bull; <code>WVDHostRegistrations</code> — enregistrement/d&eacute;sinscription des session hosts<br>
+            &bull; <code>WVDAgentHealthStatus</code> — &eacute;tat de sant&eacute; des agents AVD sur chaque session host<br>
+            &bull; <code>WVDSessionHostManagement</code> — op&eacute;rations de gestion (drain, mise en maintenance)
+        </div>
+    </div>
+
+    <div class="alert alert-warn">
+        <span class="alert-icon">&#x26A0;&#xFE0F;</span>
+        <div>
+            <strong>Pi&egrave;ge co&ucirc;t Log Analytics :</strong> chaque Go de logs ingr&eacute; est factur&eacute;. Pour un d&eacute;ploiement de 500 utilisateurs AVD, anticiper ~10-20 Go/jour selon les niveaux de verbosit&eacute;. Utiliser le <strong>Basic tier</strong> pour les tables &agrave; faible requ&ecirc;te (archive) et le <strong>Analytics tier</strong> pour les tables KQL actives. Estimation co&ucirc;t : ~2-5€/utilisateur/mois pour le monitoring complet.
+        </div>
+    </div>
+
+    <h3>S7.2 — Configuration Diagnostic Settings AVD</h3>
+    <div class="code-block">
+        <div class="code-header"><span>Azure CLI — Activer les Diagnostic Settings sur Host Pool et Workspace</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div>
+<pre><span class="var">RG</span>=<span class="string">"rg-avd-prod"</span>
+<span class="var">HOSTPOOL</span>=<span class="string">"hp-avd-prod-pooled"</span>
+<span class="var">WORKSPACE</span>=<span class="string">"ws-avd-prod"</span>
+<span class="var">LAW_ID</span>=$(az monitor log-analytics workspace show \
+    --resource-group <span class="var">$RG</span> --workspace-name <span class="string">"law-avd-prod"</span> \
+    --query id -o tsv)
+
+<span class="comment"># Récupérer les IDs des ressources AVD</span>
+<span class="var">HP_ID</span>=$(az desktopvirtualization hostpool show \
+    --name <span class="var">$HOSTPOOL</span> --resource-group <span class="var">$RG</span> --query id -o tsv)
+<span class="var">WS_ID</span>=$(az desktopvirtualization workspace show \
+    --name <span class="var">$WORKSPACE</span> --resource-group <span class="var">$RG</span> --query id -o tsv)
+
+<span class="comment"># Activer les diagnostics sur le Host Pool (toutes les catégories)</span>
+az monitor diagnostic-settings create \
+  --name <span class="string">"diag-avd-hostpool"</span> \
+  --resource <span class="var">$HP_ID</span> \
+  --workspace <span class="var">$LAW_ID</span> \
+  --logs '[{"category":"Checkpoint","enabled":true},{"category":"Error","enabled":true},{"category":"Management","enabled":true},{"category":"Connection","enabled":true},{"category":"HostRegistration","enabled":true},{"category":"AgentHealthStatus","enabled":true}]'
+
+<span class="comment"># Activer les diagnostics sur le Workspace AVD</span>
+az monitor diagnostic-settings create \
+  --name <span class="string">"diag-avd-workspace"</span> \
+  --resource <span class="var">$WS_ID</span> \
+  --workspace <span class="var">$LAW_ID</span> \
+  --logs '[{"category":"Checkpoint","enabled":true},{"category":"Error","enabled":true},{"category":"Management","enabled":true},{"category":"Feed","enabled":true}]'
+
+<span class="keyword">echo</span> <span class="string">"Diagnostic Settings AVD activés vers Log Analytics"</span></pre>
+    </div>
+
+    <div class="code-block">
+        <div class="code-header"><span>KQL — Requ&ecirc;tes essentielles pour monitoring AVD</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div>
+<pre><span class="comment">// Connexions actives des dernières 24h par utilisateur</span>
+WVDConnections
+| where TimeGenerated > ago(24h)
+| where State == <span class="string">"Connected"</span>
+| summarize SessionCount = count(), 
+            LastConnection = max(TimeGenerated) 
+  by UserName, SessionHostName
+| order by SessionCount desc
+
+<span class="comment">// Connexions échouées (erreurs auth) — détecter brute force</span>
+WVDErrors
+| where TimeGenerated > ago(24h)
+| where ServiceError contains <span class="string">"AuthFailed"</span> or 
+        ServiceError contains <span class="string">"TokenExpired"</span>
+| summarize FailureCount = count() by UserName, ClientIPAddress, ServiceError
+| where FailureCount > 5   <span class="comment">// Seuil alerte : &gt;5 échecs depuis même IP</span>
+| order by FailureCount desc
+
+<span class="comment">// Session hosts avec problèmes de santé agent</span>
+WVDAgentHealthStatus
+| where TimeGenerated > ago(1h)
+| where SessionHostHealthCheckResult !contains <span class="string">"HealthCheckSucceeded"</span>
+| summarize LastAlert = max(TimeGenerated) by SessionHostName, 
+            SessionHostHealthCheckResult
+| order by LastAlert desc
+
+<span class="comment">// Durée moyenne des sessions (performance utilisateur)</span>
+WVDConnections
+| where TimeGenerated > ago(7d)
+| where State == <span class="string">"Completed"</span>
+| extend SessionDurationMin = datetime_diff(<span class="string">"minute"</span>, TimeGenerated, 
+          todatetime(ClientConnectionStartTime))
+| summarize AvgDurationMin = avg(SessionDurationMin), 
+            P95DurationMin = percentile(SessionDurationMin, 95)
+  by SessionHostName</pre>
+    </div>
+
+    <h3>S7.3 — V&eacute;rification Monitoring</h3>
+    <div class="code-block">
+        <div class="code-header"><span>Azure CLI — V&eacute;rifier que les diagnostics sont bien actifs</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div>
+<pre><span class="comment"># Vérifier les diagnostic settings sur le host pool</span>
+az monitor diagnostic-settings list \
+  --resource $(az desktopvirtualization hostpool show \
+      --name <span class="string">"hp-avd-prod-pooled"</span> --resource-group <span class="string">"rg-avd-prod"</span> --query id -o tsv) \
+  --query <span class="string">"[].{Name:name, Workspace:workspaceId}"</span> --output table</pre>
+    </div>
+
+    <h3>S7.4 — Checklist Monitoring</h3>
+    <div class="checklist-item"><input type="checkbox"><span>Diagnostic Settings activ&eacute;s sur Host Pool <strong>et</strong> Workspace AVD vers Log Analytics</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>R&eacute;tention Log Analytics ≥ 90 jours</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Alerte configur&eacute;e sur erreurs auth &gt; 5/heure/utilisateur (<code>WVDErrors</code>)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Azure Monitor Workbook <strong>AVD Insights</strong> activ&eacute; dans le portail Azure</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Alerte sur <code>WVDAgentHealthStatus</code> — session hosts en &eacute;tat d&eacute;grad&eacute;</span></div>
+</div>
+<!-- S8 IMAGE MANAGEMENT & GOLDEN IMAGE -->
+<div class="section" id="s8">
+    <div class="section-header yellow">
+        <div class="section-number yellow">S8</div>
+        <div>
+            <div class="section-title">Image Management &amp; Golden Image <span class="lic lic-azure-pay">Azure Pay</span></div>
+            <div class="section-desc">Azure Image Builder (AIB), Azure Compute Gallery (SIG), sysprep, versionning, snapshot rotation, patching image</div>
+        </div>
+    </div>
+
+    <div class="alert alert-error">
+        <span class="alert-icon">&#x1F6A8;</span>
+        <div>
+            <strong>Sc&eacute;nario d'attaque :</strong> L'image golden utilis&eacute;e pour d&eacute;ployer 200 session hosts n'a pas &eacute;t&eacute; mise &agrave; jour depuis 6 mois. Elle contient des vuln&eacute;rabilit&eacute;s critiques (CVE non patchées). Tous les session hosts d&eacute;ploy&eacute;s depuis cette image sont vuln&eacute;rables d&egrave;s leur cr&eacute;ation. <strong>Analogie :</strong> l'image golden = "moule &agrave; g&acirc;teau" — si le moule est contamin&eacute;, tous les g&acirc;teaux le seront aussi.
+        </div>
+    </div>
+
+    <h3>S8.1 — Gestion du cycle de vie des images</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr>
+            <th>Pratique</th><th>D&eacute;faut</th><th>&#x26A1; Quick Win</th><th>&#x1F512; Avanc&eacute;</th><th>&#x1F3AF; Optimal</th><th>Licence</th>
+        </tr></thead>
+        <tbody>
+            <tr class="row-ko"><td><strong>Azure Compute Gallery (SIG)</strong></td><td><span class="hl-red">Images non versionn&eacute;es</span></td><td><span class="hl-green">SIG avec versionning s&eacute;mantique (1.0.YYYYMMDD)</span></td><td>SIG + R&eacute;plication multi-r&eacute;gions</td><td>SIG + AIB pipeline automatis&eacute; + scoring s&eacute;curit&eacute;</td><td><span class="lic lic-azure-pay">Azure Pay</span></td></tr>
+            <tr class="row-ko"><td><strong>Azure Image Builder (AIB)</strong></td><td><span class="hl-red">Build manuel</span></td><td>AIB template de base</td><td>AIB + customisations FSLogix + MDE</td><td>AIB + pipeline CI/CD GitHub Actions / ADO</td><td><span class="lic lic-azure-pay">Azure Pay</span></td></tr>
+            <tr class="row-ko"><td><strong>Fr&eacute;quence de rebuild</strong></td><td><span class="hl-red">Ad hoc (irreg)</span></td><td>Mensuel (Patch Tuesday + 2j)</td><td>Mensuel automatis&eacute; avec tests</td><td>Mensuel + scan vuln&eacute;rabilit&eacute;s post-build</td><td><span class="lic lic-azure-pay">Azure Pay</span></td></tr>
+            <tr class="row-warn"><td><strong>Rotation des anciennes versions</strong></td><td>Conservation ind&eacute;finie</td><td>Garder les 3 derni&egrave;res versions</td><td>Politique de r&eacute;tention automatis&eacute;e</td><td>R&eacute;tention automatis&eacute;e + audit trail complet</td><td><span class="lic lic-azure-pay">Azure Pay</span></td></tr>
+            <tr class="row-ko"><td><strong>Scan vuln&eacute;rabilit&eacute;s image post-build</strong></td><td><span class="hl-red">Aucun scan</span></td><td>Activer Microsoft Defender for Cloud sur les images</td><td>MDC scan + rapport de vuln&eacute;rabilit&eacute;s automatis&eacute;</td><td>MDC + Qualys ou Trivy int&eacute;gr&eacute; dans pipeline AIB</td><td><span class="lic lic-m365-e5">MDC Standard</span></td></tr>
+    </table>
+    </div>
+
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x1F4A1;</span>
+        <div>
+            <strong>Convention de nommage image versions :</strong> utiliser le format <code>major.minor.patch</code> o&ugrave; <code>patch</code> = date de build (YYYYMMDD). Exemple : <code>1.0.20260415</code> = image version 1.0 construite le 15 avril 2026. Conserver au minimum les <strong>3 derni&egrave;res versions</strong> pour permettre un rollback rapide en cas de probl&egrave;me post-d&eacute;ploiement. Source : <a href="https://learn.microsoft.com/fr-fr/azure/virtual-machines/shared-image-galleries" target="_blank">Microsoft Learn — Azure Compute Gallery</a>
+        </div>
+    </div>
+
+    <div class="alert alert-warn">
+        <span class="alert-icon">&#x26A0;&#xFE0F;</span>
+        <div>
+            <strong>Pi&egrave;ge AIB + Managed Identity :</strong> Azure Image Builder n&eacute;cessite une Managed Identity avec les permissions <code>Contributor</code> sur le Resource Group cible et <code>Storage Blob Data Reader</code> si les scripts de customisation sont dans un Storage Account. Ne pas utiliser un Service Principal classique — pr&eacute;f&eacute;rer une User-Assigned Managed Identity d&eacute;di&eacute;e AIB.
+        </div>
+    </div>
+
+    <h3>S8.2 — Pipeline Azure Image Builder</h3>
+    <div class="code-block">
+        <div class="code-header"><span>Azure CLI — Cr&eacute;er une Azure Compute Gallery et d&eacute;finition d'image</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div>
+<pre><span class="var">RG</span>=<span class="string">"rg-avd-images"</span>
+<span class="var">GALLERY</span>=<span class="string">"gal_avd_prod"</span>
+<span class="var">IMAGE_DEF</span>=<span class="string">"win11-avd-hardened"</span>
+<span class="var">LOCATION</span>=<span class="string">"westeurope"</span>
+
+<span class="comment"># Créer la Azure Compute Gallery (SIG)</span>
+az sig create \
+  --resource-group <span class="var">$RG</span> \
+  --gallery-name <span class="var">$GALLERY</span> \
+  --location <span class="var">$LOCATION</span>
+
+<span class="comment"># Créer la définition d'image (Windows 11 AVD optimisé)</span>
+az sig image-definition create \
+  --resource-group <span class="var">$RG</span> \
+  --gallery-name <span class="var">$GALLERY</span> \
+  --gallery-image-definition <span class="var">$IMAGE_DEF</span> \
+  --publisher <span class="string">"MonEntreprise"</span> \
+  --offer <span class="string">"Windows11-AVD"</span> \
+  --sku <span class="string">"Win11-23H2-Hardened"</span> \
+  --os-type Windows \
+  --os-state Generalized \
+  --hyper-v-generation V2 \
+  --features SecurityType=TrustedLaunch
+
+<span class="keyword">echo</span> <span class="string">"Gallery $GALLERY et définition image $IMAGE_DEF créées"</span></pre>
+    </div>
+
+    <div class="code-block">
+        <div class="code-header"><span>JSON — Template Azure Image Builder avec FSLogix + MDE</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div>
+<pre>{
+  <span class="string">"type"</span>: <span class="string">"Microsoft.VirtualMachineImages/imageTemplates"</span>,
+  <span class="string">"apiVersion"</span>: <span class="string">"2022-02-14"</span>,
+  <span class="string">"name"</span>: <span class="string">"aib-win11-avd-hardened"</span>,
+  <span class="string">"properties"</span>: {
+    <span class="string">"source"</span>: {
+      <span class="string">"type"</span>: <span class="string">"PlatformImage"</span>,
+      <span class="string">"publisher"</span>: <span class="string">"MicrosoftWindowsDesktop"</span>,
+      <span class="string">"offer"</span>: <span class="string">"windows-11"</span>,
+      <span class="string">"sku"</span>: <span class="string">"win11-23h2-avd"</span>,
+      <span class="string">"version"</span>: <span class="string">"latest"</span>
+    },
+    <span class="string">"customize"</span>: [
+      {
+        <span class="string">"type"</span>: <span class="string">"PowerShell"</span>,
+        <span class="string">"name"</span>: <span class="string">"InstallFSLogix"</span>,
+        <span class="string">"inline"</span>: [
+          <span class="string">"$url = 'https://aka.ms/fslogix_download'"</span>,
+          <span class="string">"Invoke-WebRequest -Uri $url -OutFile 'C:\\fslogix.zip'"</span>,
+          <span class="string">"Expand-Archive 'C:\\fslogix.zip' -DestinationPath 'C:\\FSLogix' -Force"</span>,
+          <span class="string">"Start-Process 'C:\\FSLogix\\x64\\Release\\FSLogixAppsSetup.exe' '/install /quiet /norestart' -Wait"</span>
+        ]
+      },
+      {
+        <span class="string">"type"</span>: <span class="string">"WindowsUpdate"</span>,
+        <span class="string">"searchCriteria"</span>: <span class="string">"IsInstalled=0"</span>,
+        <span class="string">"filters"</span>: [<span class="string">"include:$_.Title -match 'Security'"</span>],
+        <span class="string">"updateLimit"</span>: 40
+      }
+    ],
+    <span class="string">"distribute"</span>: [{
+      <span class="string">"type"</span>: <span class="string">"SharedImage"</span>,
+      <span class="string">"galleryImageId"</span>: <span class="string">"/subscriptions/SUB_ID/resourceGroups/rg-avd-images/providers/Microsoft.Compute/galleries/gal_avd_prod/images/win11-avd-hardened"</span>,
+      <span class="string">"runOutputName"</span>: <span class="string">"win11-avd-$(date +%Y%m%d)"</span>,
+      <span class="string">"replicationRegions"</span>: [<span class="string">"westeurope"</span>, <span class="string">"northeurope"</span>]
+    }]
+  }
+}</pre>
+    </div>
+
+    <h3>S8.3 — V&eacute;rification Image Management</h3>
+    <div class="code-block">
+        <div class="code-header"><span>Azure CLI — Lister les versions d'images disponibles dans le gallery</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div>
+<pre><span class="comment"># Lister les versions d'images dans le gallery</span>
+az sig image-version list \
+  --resource-group <span class="string">"rg-avd-images"</span> \
+  --gallery-name <span class="string">"gal_avd_prod"</span> \
+  --gallery-image-definition <span class="string">"win11-avd-hardened"</span> \
+  --query <span class="string">"[].{Version:name, State:provisioningState, Published:publishingProfile.publishedDate}"</span> \
+  --output table</pre>
+    </div>
+
+    <h3>S8.4 — Checklist Image Management</h3>
+    <div class="checklist-item"><input type="checkbox"><span>Azure Compute Gallery (SIG) cr&eacute;&eacute; — images versionn&eacute;es avec format <code>1.0.YYYYMMDD</code></span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Azure Image Builder configur&eacute; — rebuild mensuel automatis&eacute; (Patch Tuesday + 2j)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>FSLogix + mises &agrave; jour s&eacute;curit&eacute; inclus dans le template AIB</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Conservation des <strong>3 derni&egrave;res versions</strong> minimum pour rollback</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Images r&eacute;pliqu&eacute;es dans toutes les r&eacute;gions AVD actives</span></div>
+</div>
+<!-- S9 CONFORMITE & GOUVERNANCE -->
+<div class="section" id="s9">
+    <div class="section-header blue">
+        <div class="section-number blue">S9</div>
+        <div>
+            <div class="section-title">Conformit&eacute; &amp; Gouvernance <span class="lic lic-azure-pay">Azure Pay</span> <span class="lic lic-m365-e5">E5</span></div>
+            <div class="section-desc">Azure Policy AVD, RBAC granulaire, Microsoft Defender for Cloud, naming convention, tagging, audit Microsoft Entra ID</div>
+        </div>
+    </div>
+
+    <div class="alert alert-error">
+        <span class="alert-icon">&#x1F6A8;</span>
+        <div>
+            <strong>Sc&eacute;nario d'attaque :</strong> Un administrateur helpdesk avec des permissions trop larges supprime accidentellement (ou malicieusement) le host pool de production. Sans RBAC granulaire et sans verrous Azure Resource Lock, la suppression est irr&eacute;versible. <strong>Analogie :</strong> la gouvernance RBAC = "cl&eacute;s diff&eacute;rentes pour chaque porte du datacenter" — le technicien peut acc&eacute;der &agrave; la salle des serveurs, pas &agrave; la salle des archives.
+        </div>
+    </div>
+
+    <h3>S9.1 — RBAC et Azure Policy</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr>
+            <th>Contr&ocirc;le</th><th>D&eacute;faut</th><th>&#x26A1; Quick Win</th><th>&#x1F512; Avanc&eacute;</th><th>&#x1F3AF; Optimal</th><th>Licence</th>
+        </tr></thead>
+        <tbody>
+            <tr class="row-ko"><td><strong>RBAC AVD (r&ocirc;les d&eacute;di&eacute;s)</strong></td><td><span class="hl-red">Owner ou Contributor</span></td><td><span class="hl-green">Desktop Virtualization Reader pour support L1</span></td><td>Contributor + Reader selon profil</td><td>Custom roles RBAC + PIM (JIT) pour Admin</td><td><span class="lic lic-m365-e5">Entra ID P2</span></td></tr>
+            <tr class="row-ko"><td><strong>Azure Resource Lock</strong></td><td><span class="hl-red">Pas de verrou</span></td><td><span class="hl-green">CanNotDelete sur RG prod</span></td><td>ReadOnly sur host pool prod</td><td>CanNotDelete sur tous les composants AVD critiques</td><td><span class="lic lic-azure-pay">Azure Pay</span></td></tr>
+            <tr class="row-ko"><td><strong>Azure Policy — conformit&eacute;</strong></td><td><span class="hl-red">Aucune policy AVD</span></td><td>Politique tags obligatoires</td><td>Policies CIS + audit chiffrement disques</td><td>Initiative AVD compl&egrave;te + Microsoft Defender for Cloud</td><td><span class="lic lic-azure-pay">Azure Pay</span></td></tr>
+            <tr class="row-warn"><td><strong>Microsoft Defender for Cloud</strong></td><td>D&eacute;sactiv&eacute; (Free tier)</td><td>Activer MDC recommandations (gratuit)</td><td>MDC Standard — Defender for Servers Plan 2</td><td>MDC + Defender CSPM + Secure Score ≥ 75%</td><td><span class="lic lic-m365-e5">MDC Standard</span></td></tr>
+            <tr class="row-ko"><td><strong>Naming convention &amp; Tagging</strong></td><td><span class="hl-red">Pas de convention</span></td><td>Tags obligatoires : env, owner, costcenter</td><td>Azure Policy — audit tags manquants</td><td>Azure Policy + deny tag manquant + rapport mensuel</td><td><span class="lic lic-azure-pay">Azure Pay</span></td></tr>
+        </tbody>
+    </table>
+    </div>
+
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x1F4A1;</span>
+        <div>
+            <strong>R&ocirc;les RBAC natifs Azure Virtual Desktop &agrave; utiliser :</strong><br>
+            &bull; <strong>Desktop Virtualization Reader</strong> — lecture seule (support L1/L2)<br>
+            &bull; <strong>Desktop Virtualization User</strong> — acc&egrave;s aux application groups (assign&eacute; aux utilisateurs finaux)<br>
+            &bull; <strong>Desktop Virtualization Session Host Operator</strong> — g&eacute;rer les session hosts<br>
+            &bull; <strong>Desktop Virtualization Application Group Contributor</strong> — g&eacute;rer les app groups<br>
+            &bull; <strong>Desktop Virtualization Workspace Contributor</strong> — g&eacute;rer les workspaces<br>
+            Ne pas utiliser <em>Contributor</em> ou <em>Owner</em> en production — appliquer le principe de moindre privil&egrave;ge.
+        </div>
+    </div>
+
+    <h3>S9.2 — Configuration RBAC et Resource Locks</h3>
+    <div class="code-block">
+        <div class="code-header"><span>Azure CLI — RBAC granulaire AVD + Resource Lock</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div>
+<pre><span class="var">RG</span>=<span class="string">"rg-avd-prod"</span>
+<span class="var">SUBSCRIPTION</span>=$(az account show --query id -o tsv)
+
+<span class="comment"># Assigner Desktop Virtualization Reader au groupe Support L1</span>
+az role assignment create \
+  --assignee-object-id $(az ad group show --group <span class="string">"GRP-AVD-Support-L1"</span> --query id -o tsv) \
+  --assignee-principal-type Group \
+  --role <span class="string">"Desktop Virtualization Reader"</span> \
+  --scope <span class="string">"/subscriptions/$SUBSCRIPTION/resourceGroups/$RG"</span>
+
+<span class="comment"># Assigner Desktop Virtualization User aux utilisateurs finaux (Application Group)</span>
+<span class="var">APPGROUP_ID</span>=$(az desktopvirtualization applicationgroup show \
+    --name <span class="string">"dag-avd-prod-pooled"</span> --resource-group <span class="var">$RG</span> --query id -o tsv)
+az role assignment create \
+  --assignee-object-id $(az ad group show --group <span class="string">"GRP-AVD-Users-Prod"</span> --query id -o tsv) \
+  --assignee-principal-type Group \
+  --role <span class="string">"Desktop Virtualization User"</span> \
+  --scope <span class="var">$APPGROUP_ID</span>
+
+<span class="comment"># Appliquer un Resource Lock CanNotDelete sur le RG de production</span>
+az lock create \
+  --name <span class="string">"lock-avd-prod-nodelete"</span> \
+  --resource-group <span class="var">$RG</span> \
+  --lock-type CanNotDelete \
+  --notes <span class="string">"Protection contre suppression accidentelle AVD prod"</span>
+
+<span class="keyword">echo</span> <span class="string">"RBAC AVD configuré + Resource Lock appliqué"</span></pre>
+    </div>
+
+    <h3>S9.3 — Checklist Conformit&eacute;</h3>
+    <div class="checklist-item"><input type="checkbox"><span>RBAC : r&ocirc;les natifs AVD utilis&eacute;s (pas Contributor/Owner en prod)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Resource Lock <code>CanNotDelete</code> sur le Resource Group de production</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Azure Policy — audit chiffrement disques + tags obligatoires (env, owner, costcenter)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Microsoft Defender for Cloud activ&eacute; — Secure Score suivi mensuellement</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>PIM (Privileged Identity Management) pour les r&ocirc;les Admin AVD (acc&egrave;s JIT)</span></div>
+</div>
+<!-- S10 DISASTER RECOVERY & RESILIENCE -->
+<div class="section" id="s10">
+    <div class="section-header blue">
+        <div class="section-number blue">S10</div>
+        <div>
+            <div class="section-title">Disaster Recovery &amp; R&eacute;silience <span class="lic lic-azure-pay">Azure Pay</span></div>
+            <div class="section-desc">DR multi-r&eacute;gion AVD, host pool secondaire, FSLogix Cloud Cache, r&eacute;plication SIG cross-r&eacute;gion, RTO/RPO objectifs, plan de bascule</div>
+        </div>
+    </div>
+
+    <div class="alert alert-error">
+        <span class="alert-icon">&#x1F6A8;</span>
+        <div>
+            <strong>Sc&eacute;nario d'attaque :</strong> Un ransomware chiffre tous les disques des session hosts de la r&eacute;gion West Europe. Sans DR configur&eacute;, tous les 500 utilisateurs sont bloqu&eacute;s pendant la dur&eacute;e de restauration (72h+ estim&eacute;). Avec FSLogix Cloud Cache et un host pool secondaire en North Europe, la bascule se fait en &lt;2h. <strong>Analogie :</strong> le DR AVD = "g&eacute;n&eacute;rateur de secours" — quand le courant coupe, il prend le relai automatiquement.
+        </div>
+    </div>
+
+    <h3>S10.1 — Strat&eacute;gie DR multi-r&eacute;gion</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr>
+            <th>Composant</th><th>Sans DR</th><th>&#x26A1; DR Basique</th><th>&#x1F512; DR Avanc&eacute;</th><th>&#x1F3AF; DR Optimal (RTO &lt;2h)</th><th>Licence</th>
+        </tr></thead>
+        <tbody>
+            <tr class="row-ko"><td><strong>Session Hosts (DR)</strong></td><td><span class="hl-red">Aucun host secondaire</span></td><td>Host pool secondaire &agrave; 0 instances (scale out &agrave; la demande)</td><td>Hot standby : 20% de la capacit&eacute; secondaire</td><td>Active/Active dual-r&eacute;gion avec load balancing</td><td><span class="lic lic-azure-pay">Azure Pay</span></td></tr>
+            <tr class="row-ko"><td><strong>FSLogix Profils (DR)</strong></td><td><span class="hl-red">Profils perdus si r&eacute;gion tombe</span></td><td>Backup Azure Files (snapshots quotidiens)</td><td>FSLogix Cloud Cache — r&eacute;plication active sur 2 sites</td><td>Cloud Cache + Azure Files Geo-Redundant Storage (GRS)</td><td><span class="lic lic-azure-pay">Azure Pay</span></td></tr>
+            <tr class="row-ko"><td><strong>Image Golden (DR)</strong></td><td><span class="hl-red">Image disponible dans 1 r&eacute;gion</span></td><td>R&eacute;plication SIG vers r&eacute;gion DR</td><td>SIG Geo-Redundant + rebuild auto DR</td><td>SIG multi-r&eacute;gion + AIB pipeline automatis&eacute;</td><td><span class="lic lic-azure-pay">Azure Pay</span></td></tr>
+            <tr class="row-warn"><td><strong>RTO / RPO cibles</strong></td><td>RTO &gt;72h — RPO non d&eacute;fini</td><td>RTO 8h — RPO 24h</td><td>RTO 4h — RPO 1h</td><td>RTO &lt;2h — RPO &lt;15min (Cloud Cache)</td><td><span class="lic lic-azure-pay">Azure Pay</span></td></tr>
+            <tr class="row-ko"><td><strong>Test DR / Runbook bascule</strong></td><td><span class="hl-red">Jamais test&eacute;</span></td><td>Test annuel document&eacute;</td><td>Test semestriel avec mesure RTO r&eacute;el</td><td>Test trimestriel automatis&eacute; + playbook d&eacute;taill&eacute;</td><td><span class="lic lic-azure-pay">Azure Pay</span></td></tr>
+        </tbody>
+    </table>
+    </div>
+
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x1F4A1;</span>
+        <div>
+            <strong>FSLogix Cloud Cache — fonctionnement DR :</strong> avec Cloud Cache, les profils sont &eacute;crits <em>simultan&eacute;ment</em> sur le site primaire (West Europe) et secondaire (North Europe). En cas de panne du site primaire, le profil secondaire est utilis&eacute; automatiquement d&egrave;s la connexion sur le host pool DR. Il n'y a pas de basculement manuel — c'est transparent pour l'utilisateur. Configurer : <code>CCDLocations</code> = 2 chemins UNC s&eacute;par&eacute;s par <code>|</code>.
+        </div>
+    </div>
+
+    <h3>S10.2 — Configuration FSLogix Cloud Cache DR</h3>
+    <div class="code-block">
+        <div class="code-header"><span>PowerShell — FSLogix Cloud Cache (multi-site DR)</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div>
+<pre><span class="comment"># Cloud Cache : FSLogix écrit simultanément sur site primaire ET secondaire</span>
+<span class="var">$regPath</span> = <span class="string">"HKLM:\SOFTWARE\FSLogix\Profiles"</span>
+
+<span class="comment"># Désactiver VHDLocations (remplacé par CCDLocations en Cloud Cache)</span>
+<span class="keyword">Remove-ItemProperty</span> <span class="param">-Path</span> <span class="var">$regPath</span> <span class="param">-Name</span> <span class="string">"VHDLocations"</span> <span class="param">-ErrorAction</span> SilentlyContinue
+
+<span class="comment"># Configurer Cloud Cache avec 2 emplacements (primaire | secondaire)</span>
+<span class="keyword">Set-ItemProperty</span> <span class="param">-Path</span> <span class="var">$regPath</span> <span class="param">-Name</span> <span class="string">"CCDLocations"</span> <span class="param">-Value</span> `
+    <span class="string">"type=smb,connectionString=\\stavdfslogixwe.file.core.windows.net\fslogix-profiles|type=smb,connectionString=\\stavdfslogixne.file.core.windows.net\fslogix-profiles"</span> `
+    <span class="param">-Type</span> String
+
+<span class="comment"># Activer la résilience aux interruptions réseau transitoires</span>
+<span class="keyword">Set-ItemProperty</span> <span class="param">-Path</span> <span class="var">$regPath</span> <span class="param">-Name</span> <span class="string">"ReAttachIntervalSeconds"</span> <span class="param">-Value</span> 15 <span class="param">-Type</span> DWord
+<span class="keyword">Set-ItemProperty</span> <span class="param">-Path</span> <span class="var">$regPath</span> <span class="param">-Name</span> <span class="string">"ReAttachRetryCount"</span> <span class="param">-Value</span> 3 <span class="param">-Type</span> DWord
+<span class="keyword">Write-Host</span> <span class="string">"FSLogix Cloud Cache configuré — DR dual-site actif"</span></pre>
+    </div>
+
+    <div class="code-block">
+        <div class="code-header"><span>Azure CLI — V&eacute;rifier la r&eacute;plication SIG vers r&eacute;gion DR</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div>
+<pre><span class="comment"># Vérifier les régions de réplication de la dernière version d'image</span>
+az sig image-version show \
+  --resource-group <span class="string">"rg-avd-images"</span> \
+  --gallery-name <span class="string">"gal_avd_prod"</span> \
+  --gallery-image-definition <span class="string">"win11-avd-hardened"</span> \
+  --gallery-image-version <span class="string">"latest"</span> \
+  --query <span class="string">"publishingProfile.targetRegions[].{Region:name, State:regionalReplicaCount}"</span> \
+  --output table</pre>
+    </div>
+
+    <h3>S10.3 — Checklist Disaster Recovery</h3>
+    <div class="checklist-item"><input type="checkbox"><span>Host pool secondaire cr&eacute;&eacute; dans la r&eacute;gion DR (minimum 0 instances — scale out &agrave; la demande)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>FSLogix Cloud Cache configur&eacute; — <code>CCDLocations</code> avec 2 sites s&eacute;par&eacute;s</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Azure Files r&eacute;plication GRS (Geo-Redundant Storage) pour les profils FSLogix</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Images SIG r&eacute;pliqu&eacute;es automatiquement vers la r&eacute;gion DR</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Plan de bascule DR document&eacute; et test&eacute; semestriellement (RTO &lt;4h)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Alertes Azure Monitor sur disponibilit&eacute; du site primaire (pour d&eacute;clenchement bascule)</span></div>
+</div>
+<!-- MATRICE D'INTERACTIONS -->
+<!-- SCORES -->
+<!-- SCRIPT ALL-IN-ONE -->
+<div class="section" id="script">
+    <h2 style="color:var(--azure-dark);border-bottom:3px solid var(--azure-blue);padding-bottom:8px;">&#x1F916; Script de d&eacute;ploiement All-in-One</h2>
+    <div class="alert alert-warn">
+        <span class="alert-icon">&#x26A0;&#xFE0F;</span>
+        <div><strong>Avant d'ex&eacute;cuter ce script :</strong> adapter les variables de la section [CONFIG] &agrave; votre environnement. Tester sur un environnement de dev/test avant la production. Pr&eacute;requis : Azure CLI install&eacute;, connect&eacute; (<code>az login</code>), Graph PowerShell Module install&eacute;.</div>
+    </div>
+    <div class="code-block">
+        <div class="code-header"><span>PowerShell — Script de d&eacute;ploiement AVD Sécurisé (Phases 1/8 &agrave; 8/8)</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div>
+<pre><span class="comment">#Requires -Version 7.0
+# Script AVD Security Hardening — All-in-One
+# Usage : .\avd-hardening.ps1 [-DryRun] [-Phase 1..8]
+</span>
+param(
+    [switch]<span class="var">$DryRun</span> = <span class="var">$false</span>,
+    [ValidateRange(1,8)][int]<span class="var">$Phase</span> = 0  <span class="comment"># 0 = toutes les phases</span>
+)
+
+<span class="comment"># ===================== [CONFIG] =====================</span>
+<span class="var">$RG</span>               = <span class="string">"rg-avd-prod"</span>
+<span class="var">$Location</span>         = <span class="string">"westeurope"</span>
+<span class="var">$HostPoolName</span>     = <span class="string">"hp-avd-prod-pooled"</span>
+<span class="var">$WorkspaceName</span>    = <span class="string">"ws-avd-prod"</span>
+<span class="var">$StorageAccount</span>   = <span class="string">"stavdfslogixprod"</span>
+<span class="var">$KeyVaultName</span>     = <span class="string">"kv-avd-prod"</span>
+<span class="var">$LAWName</span>          = <span class="string">"law-avd-prod"</span>
+<span class="var">$VNetName</span>         = <span class="string">"vnet-avd-prod"</span>
+<span class="var">$SubnetName</span>       = <span class="string">"snet-avd-sessionhosts"</span>
+<span class="comment"># ====================================================</span>
+
+<span class="keyword">function</span> <span class="var">Invoke-Step</span>(<span class="var">$description</span>, <span class="var">$scriptBlock</span>) {
+    <span class="keyword">Write-Host</span> <span class="string">"`n[AVD] $description"</span> <span class="param">-ForegroundColor</span> Cyan
+    <span class="keyword">if</span> (<span class="var">$DryRun</span>) { <span class="keyword">Write-Host</span> <span class="string">"  [DRY-RUN] Étape simulée"</span> <span class="param">-ForegroundColor</span> Yellow; <span class="keyword">return</span> }
+    <span class="keyword">try</span> { &amp; <span class="var">$scriptBlock</span>; <span class="keyword">Write-Host</span> <span class="string">"  OK"</span> <span class="param">-ForegroundColor</span> Green }
+    <span class="keyword">catch</span> { <span class="keyword">Write-Warning</span> <span class="string">"  ERREUR : $_"</span> }
+}
+
+<span class="comment"># [1/8] Infrastructure — NSG + subnet</span>
+<span class="keyword">if</span> (<span class="var">$Phase</span> <span class="param">-eq</span> 0 <span class="param">-or</span> <span class="var">$Phase</span> <span class="param">-eq</span> 1) {
+    <span class="var">Invoke-Step</span> <span class="string">"[1/8] NSG Session Hosts"</span> {
+        az network nsg create --name <span class="string">"nsg-avd-sessionhosts"</span> `
+            --resource-group <span class="var">$RG</span> --location <span class="var">$Location</span>
+        az network nsg rule create --nsg-name <span class="string">"nsg-avd-sessionhosts"</span> `
+            --resource-group <span class="var">$RG</span> --name <span class="string">"DenyInternetInbound"</span> `
+            --priority 200 --direction Inbound --access Deny `
+            --source-address-prefix Internet --destination-port-range <span class="string">"*"</span>
+    }
+}
+
+<span class="comment"># [2/8] MFA + Conditional Access (via Graph PS)</span>
+<span class="keyword">if</span> (<span class="var">$Phase</span> <span class="param">-eq</span> 0 <span class="param">-or</span> <span class="var">$Phase</span> <span class="param">-eq</span> 2) {
+    <span class="var">Invoke-Step</span> <span class="string">"[2/8] Conditional Access — MFA AVD"</span> {
+        <span class="keyword">Connect-MgGraph</span> <span class="param">-Scopes</span> <span class="string">"Policy.ReadWrite.ConditionalAccess"</span> <span class="param">-NoWelcome</span>
+        <span class="comment"># Voir S2 pour le script complet CA policy</span>
+        <span class="keyword">Write-Host</span> <span class="string">"  → Configurer via portail entra.microsoft.com ou script S2"</span>
+    }
+}
+
+<span class="comment"># [3/8] Private Endpoint Azure Files</span>
+<span class="keyword">if</span> (<span class="var">$Phase</span> <span class="param">-eq</span> 0 <span class="param">-or</span> <span class="var">$Phase</span> <span class="param">-eq</span> 3) {
+    <span class="var">Invoke-Step</span> <span class="string">"[3/8] Private Endpoint Azure Files FSLogix"</span> {
+        az storage account update --name <span class="var">$StorageAccount</span> `
+            --resource-group <span class="var">$RG</span> --public-network-access Disabled
+        az network private-endpoint create `
+            --name <span class="string">"pe-avd-fslogix"</span> --resource-group <span class="var">$RG</span> `
+            --vnet-name <span class="var">$VNetName</span> --subnet <span class="var">$SubnetName</span> `
+            --private-connection-resource-id $(az storage account show `
+                --name <span class="var">$StorageAccount</span> --resource-group <span class="var">$RG</span> --query id -o tsv) `
+            --group-id file --connection-name <span class="string">"pe-conn-fslogix"</span>
+    }
+}
+
+<span class="comment"># [4/8] Session Host Hardening (exclusions AV + ASR)</span>
+<span class="keyword">if</span> (<span class="var">$Phase</span> <span class="param">-eq</span> 0 <span class="param">-or</span> <span class="var">$Phase</span> <span class="param">-eq</span> 4) {
+    <span class="var">Invoke-Step</span> <span class="string">"[4/8] ASR Rules + Exclusions FSLogix (à exécuter sur chaque session host)"</span> {
+        <span class="keyword">Add-MpPreference</span> <span class="param">-ExclusionExtension</span> <span class="string">"vhd"</span>
+        <span class="keyword">Add-MpPreference</span> <span class="param">-ExclusionExtension</span> <span class="string">"vhdx"</span>
+        <span class="keyword">Add-MpPreference</span> <span class="param">-ExclusionProcess</span> <span class="string">"%ProgramFiles%\FSLogix\Apps\frxccds.exe"</span>
+        <span class="keyword">Add-MpPreference</span> <span class="param">-ExclusionProcess</span> <span class="string">"%ProgramFiles%\FSLogix\Apps\frxsvc.exe"</span>
+        <span class="keyword">Write-Host</span> <span class="string">"  Exclusions AV FSLogix configurées"</span>
+    }
+}
+
+<span class="comment"># [5/8] FSLogix Profile Container</span>
+<span class="keyword">if</span> (<span class="var">$Phase</span> <span class="param">-eq</span> 0 <span class="param">-or</span> <span class="var">$Phase</span> <span class="param">-eq</span> 5) {
+    <span class="var">Invoke-Step</span> <span class="string">"[5/8] FSLogix Profile Container"</span> {
+        <span class="var">$reg</span> = <span class="string">"HKLM:\SOFTWARE\FSLogix\Profiles"</span>
+        <span class="keyword">If</span> (-Not (<span class="keyword">Test-Path</span> <span class="var">$reg</span>)) { <span class="keyword">New-Item</span> <span class="var">$reg</span> <span class="param">-Force</span> | <span class="keyword">Out-Null</span> }
+        <span class="keyword">Set-ItemProperty</span> <span class="var">$reg</span> Enabled 1 <span class="param">-Type</span> DWord
+        <span class="keyword">Set-ItemProperty</span> <span class="var">$reg</span> DeleteLocalProfileWhenVHDShouldApply 1 <span class="param">-Type</span> DWord
+        <span class="keyword">Set-ItemProperty</span> <span class="var">$reg</span> VHDLocations `
+            <span class="string">"\\$StorageAccount.file.core.windows.net\fslogix-profiles"</span> <span class="param">-Type</span> String
+    }
+}
+
+<span class="comment"># [6/8] Diagnostic Settings AVD vers Log Analytics</span>
+<span class="keyword">if</span> (<span class="var">$Phase</span> <span class="param">-eq</span> 0 <span class="param">-or</span> <span class="var">$Phase</span> <span class="param">-eq</span> 6) {
+    <span class="var">Invoke-Step</span> <span class="string">"[6/8] Diagnostic Settings AVD"</span> {
+        <span class="var">$lawId</span> = az monitor log-analytics workspace show `
+            --resource-group <span class="var">$RG</span> --workspace-name <span class="var">$LAWName</span> --query id -o tsv
+        <span class="var">$hpId</span> = az desktopvirtualization hostpool show `
+            --name <span class="var">$HostPoolName</span> --resource-group <span class="var">$RG</span> --query id -o tsv
+        az monitor diagnostic-settings create --name <span class="string">"diag-avd-hostpool"</span> `
+            --resource <span class="var">$hpId</span> --workspace <span class="var">$lawId</span> `
+            --logs <span class="string">'[{"category":"Connection","enabled":true},{"category":"Error","enabled":true},{"category":"AgentHealthStatus","enabled":true}]'</span>
+    }
+}
+
+<span class="comment"># [7/8] Resource Lock production</span>
+<span class="keyword">if</span> (<span class="var">$Phase</span> <span class="param">-eq</span> 0 <span class="param">-or</span> <span class="var">$Phase</span> <span class="param">-eq</span> 7) {
+    <span class="var">Invoke-Step</span> <span class="string">"[7/8] Resource Lock CanNotDelete"</span> {
+        az lock create --name <span class="string">"lock-avd-prod"</span> `
+            --resource-group <span class="var">$RG</span> --lock-type CanNotDelete
+    }
+}
+
+<span class="comment"># [8/8] Vérification finale</span>
+<span class="keyword">if</span> (<span class="var">$Phase</span> <span class="param">-eq</span> 0 <span class="param">-or</span> <span class="var">$Phase</span> <span class="param">-eq</span> 8) {
+    <span class="var">Invoke-Step</span> <span class="string">"[8/8] Rapport de vérification"</span> {
+        <span class="keyword">Write-Host</span> <span class="string">"`n=== VÉRIFICATION AVD HARDENING ==="</span> <span class="param">-ForegroundColor</span> Cyan
+        az desktopvirtualization hostpool show --name <span class="var">$HostPoolName</span> `
+            --resource-group <span class="var">$RG</span> `
+            --query <span class="string">"{Name:name, Type:hostPoolType, ValidationEnv:validationEnvironment}"</span> --output table
+        az lock list --resource-group <span class="var">$RG</span> `
+            --query <span class="string">"[].{Name:name, Type:level}"</span> --output table
+        <span class="keyword">Get-ItemProperty</span> <span class="string">"HKLM:\SOFTWARE\FSLogix\Profiles"</span> <span class="param">-ErrorAction</span> SilentlyContinue |
+            <span class="keyword">Select-Object</span> Enabled, VHDLocations
+    }
+}
+<span class="keyword">Write-Host</span> <span class="string">"`n[AVD] Script terminé. Consulter le guide pour les étapes manuelles restantes."</span> <span class="param">-ForegroundColor</span> Green</pre>
+    </div>
+</div>
+<div class="section" id="scores">
+    <h2 style="color:var(--azure-dark);border-bottom:3px solid var(--azure-blue);padding-bottom:8px;">&#x1F4CA; Niveaux de maturit&eacute; s&eacute;curit&eacute; AVD</h2>
+    <p>Score global calcul&eacute; sur 100 points — somme des scores de chaque section. L'objectif recommand&eacute; est <strong>Avanc&eacute; (75+)</strong> pour les environnements de production.</p>
+
+    <div class="level-comparison">
+        <div class="level-card">
+            <div class="level-title" style="color:var(--danger-red)">&#x1F534; D&eacute;faut Azure</div>
+            <div class="level-score">~35<small>/100</small></div>
+            <div class="progress-bar"><div class="progress-fill" style="width:35%;background:var(--danger-red)"></div></div>
+            <ul style="text-align:left;font-size:0.85rem;margin-top:8px">
+                <li>Acc&egrave;s non contr&ocirc;l&eacute; depuis Internet</li>
+                <li>Pas de MFA, pas de CA policies</li>
+                <li>FSLogix non configur&eacute;</li>
+                <li>Pas de monitoring ni d'alertes</li>
+                <li>Image non mise &agrave; jour r&eacute;guli&egrave;rement</li>
+            </ul>
+        </div>
+        <div class="level-card">
+            <div class="level-title" style="color:var(--warning-orange)">&#x1F7E0; Standard</div>
+            <div class="level-score">~55<small>/100</small></div>
+            <div class="progress-bar"><div class="progress-fill" style="width:55%;background:var(--warning-orange)"></div></div>
+            <ul style="text-align:left;font-size:0.85rem;margin-top:8px">
+                <li>MFA activ&eacute; (Entra ID P1 minimum)</li>
+                <li>FSLogix profils configur&eacute;s</li>
+                <li>NSG basiques sur le subnet</li>
+                <li>Patching mensuel avec Azure Update Manager</li>
+                <li>Diagnostic Settings activ&eacute;s</li>
+            </ul>
+        </div>
+        <div class="level-card">
+            <div class="level-title" style="color:var(--azure-blue)">&#x1F535; Avanc&eacute;</div>
+            <div class="level-score">~75<small>/100</small></div>
+            <div class="progress-bar"><div class="progress-fill" style="width:75%;background:var(--azure-blue)"></div></div>
+            <ul style="text-align:left;font-size:0.85rem;margin-top:8px">
+                <li>CA policies compl&egrave;tes + Intune compliance</li>
+                <li>Private Endpoints Azure Files</li>
+                <li>MDE onboard&eacute; + ASR rules (Block)</li>
+                <li>CMK sur disques + Azure Files</li>
+                <li>AIB pipeline mensuel automatis&eacute;</li>
+            </ul>
+        </div>
+        <div class="level-card">
+            <div class="level-title" style="color:var(--success-green)">&#x1F7E2; Optimal</div>
+            <div class="level-score">100<small>/100</small></div>
+            <div class="progress-bar"><div class="progress-fill" style="width:100%;background:var(--success-green)"></div></div>
+            <ul style="text-align:left;font-size:0.85rem;margin-top:8px">
+                <li>Toutes sections &agrave; niveau Optimal</li>
+                <li>FSLogix Cloud Cache multi-r&eacute;gion DR</li>
+                <li>WDAC enforc&eacute; + MSIX App Attach</li>
+                <li>Sentinel int&eacute;gration + hunting KQL</li>
+                <li>PIM JIT pour tous les admins AVD</li>
+            </ul>
+        </div>
+    </div>
+
+    <h3>D&eacute;tail des scores par section</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr><th>Section</th><th>Points max</th><th>Criticité</th><th>D&eacute;faut Azure</th><th>&#x26A1; Quick Win</th><th>&#x1F3AF; Optimal</th></tr></thead>
+        <tbody>
+            <tr><td><strong>S1 — Architecture &amp; Composants</strong></td><td><strong>15</strong></td><td><span class="hl-red">Critique</span></td><td>5 (pas de Hub-Spoke)</td><td>+5 → VNet d&eacute;di&eacute; + NSG</td><td>Hub-Spoke + Private EP + RDP Shortpath = 15/15</td></tr>
+            <tr><td><strong>S2 — Acc&egrave;s Conditionnel &amp; MFA</strong></td><td><strong>15</strong></td><td><span class="hl-red">Critique</span></td><td>3 (pas de CA)</td><td>+7 → MFA + CA policy AVD</td><td>CA compl&egrave;te + Intune compliance + CAE = 15/15</td></tr>
+            <tr><td><strong>S3 — Network Security</strong></td><td><strong>12</strong></td><td><span class="hl-red">Critique</span></td><td>4 (NSG basiques)</td><td>+4 → DenyInternet + Private Endpoint</td><td>NSG + UDR + Azure Firewall + Private EP = 12/12</td></tr>
+            <tr><td><strong>S4 — Session Host Hardening</strong></td><td><strong>12</strong></td><td><span class="hl-orange">&Eacute;lev&eacute;</span></td><td>3 (config par d&eacute;faut)</td><td>+5 → Intune enroll + MDE + exclusions AV</td><td>ASR Block + LAPS + Defender complet = 12/12</td></tr>
+            <tr><td><strong>S5 — FSLogix &amp; Profile Security</strong></td><td><strong>10</strong></td><td><span class="hl-orange">&Eacute;lev&eacute;</span></td><td>2 (pas de profil)</td><td>+4 → FSLogix activ&eacute; + ACLs</td><td>FSLogix + CMK + Cloud Cache = 10/10</td></tr>
+            <tr><td><strong>S6 — MSIX App Attach &amp; AppLocker</strong></td><td><strong>8</strong></td><td><span class="hl-orange">&Eacute;lev&eacute;</span></td><td>1 (pas de contr&ocirc;le app)</td><td>+3 → AppLocker Audit + MSIX pilot</td><td>WDAC + MSIX toutes apps + signature = 8/8</td></tr>
+            <tr><td><strong>S7 — Monitoring &amp; Logging</strong></td><td><strong>10</strong></td><td><span class="hl-yellow">Moyen</span></td><td>2 (logs d&eacute;sactiv&eacute;s)</td><td>+4 → Diagnostic Settings + alertes</td><td>LAW + Sentinel + hunting KQL = 10/10</td></tr>
+            <tr><td><strong>S8 — Image Management</strong></td><td><strong>8</strong></td><td><span class="hl-yellow">Moyen</span></td><td>3 (image non versionn&eacute;e)</td><td>+2 → SIG + AIB mensuel</td><td>AIB CI/CD + scan vuln + rotation = 8/8</td></tr>
+            <tr><td><strong>S9 — Conformit&eacute; &amp; Gouvernance</strong></td><td><strong>5</strong></td><td><span class="hl-blue">Standard</span></td><td>2 (RBAC laxiste)</td><td>+1 → r&ocirc;les natifs AVD + Resource Lock</td><td>RBAC fin + PIM + MDC Secure Score = 5/5</td></tr>
+            <tr><td><strong>S10 — Disaster Recovery</strong></td><td><strong>5</strong></td><td><span class="hl-blue">Standard</span></td><td>1 (pas de DR)</td><td>+2 → host pool secondaire</td><td>Cloud Cache + SIG multi-r&eacute;gion + test DR = 5/5</td></tr>
+            <tr style="font-weight:bold;background:var(--azure-light)"><td><strong>TOTAL</strong></td><td><strong>100</strong></td><td></td><td><strong>~26/100</strong></td><td><strong>+36 → ~62/100</strong></td><td><strong>100/100</strong></td></tr>
+        </tbody>
+    </table>
+    </div>
+</div>
+<div class="section" id="matrice">
+    <h2 style="color:var(--azure-dark);border-bottom:3px solid var(--azure-blue);padding-bottom:8px;">&#x1F517; Matrice d'interactions avec les autres guides</h2>
+    <p>Azure Virtual Desktop s'int&egrave;gre avec plusieurs composants de l'infrastructure. Les guides ci-dessous compl&egrave;tent la s&eacute;curit&eacute; AVD bout-en-bout.</p>
+    <div class="table-container">
+    <table>
+        <thead><tr>
+            <th>Guide connexe</th><th>Int&eacute;gration AVD</th><th>Sections AVD concern&eacute;es</th><th>Impact s&eacute;curit&eacute;</th>
+        </tr></thead>
+        <tbody>
+            <tr><td><a href="entra-id.html"><strong>entra-id.html</strong></a></td><td>Identit&eacute;s utilisateurs, Entra ID Join des session hosts, Conditional Access, PIM pour admins AVD</td><td>S1, S2, S9</td><td><span class="hl-red">Critique</span></td></tr>
+            <tr><td><a href="m365-intune.html"><strong>m365-intune.html</strong></a></td><td>Enrollment Intune des session hosts, Intune compliance policies, LAPS, configuration profiles MDM</td><td>S4, S6</td><td><span class="hl-red">Critique</span></td></tr>
+            <tr><td><a href="azure-networking.html"><strong>azure-networking.html</strong></a></td><td>Hub-Spoke topology, NSG rules, Private Endpoints Azure Files, RDP Shortpath, pare-feu Azure</td><td>S1, S3</td><td><span class="hl-red">Critique</span></td></tr>
+            <tr><td><a href="defender-endpoint.html"><strong>defender-endpoint.html</strong></a></td><td>Onboarding MDE sur session hosts, ASR rules, EDR, Threat &amp; Vulnerability Management AVD</td><td>S4, S6</td><td><span class="hl-orange">Élevé</span></td></tr>
+            <tr><td><a href="azure-keyvault.html"><strong>azure-keyvault.html</strong></a></td><td>CMK pour chiffrement Azure Files FSLogix, CMK disques OS session hosts, secrets AIB</td><td>S5, S8</td><td><span class="hl-orange">Élevé</span></td></tr>
+            <tr><td><a href="defender-cloud.html"><strong>defender-cloud.html</strong></a></td><td>Microsoft Defender for Cloud — recommendations session hosts, Secure Score AVD, CSPM</td><td>S4, S9</td><td><span class="hl-orange">Élevé</span></td></tr>
+            <tr><td><a href="sentinel.html"><strong>sentinel.html</strong></a></td><td>Connecteur AVD vers Microsoft Sentinel, analytics rules sessions suspectes, hunting KQL AVD</td><td>S7</td><td><span class="hl-orange">Élevé</span></td></tr>
+            <tr><td><a href="entra-governance.html"><strong>entra-governance.html</strong></a></td><td>Access Reviews groupes AVD, Entitlement Management pour acc&egrave;s Desktop Application Groups</td><td>S2, S9</td><td><span class="hl-yellow">Moyen</span></td></tr>
+        </tbody>
+    </table>
+    </div>
+</div>
+<!-- CHECKLIST DEPLOIEMENT -->
+<div class="section" id="checklist">
+    <h2 style="color:var(--azure-dark);border-bottom:3px solid var(--azure-blue);padding-bottom:8px;">&#x2705; Checklist de d&eacute;ploiement consolid&eacute;e</h2>
+    <p>Checklist compl&egrave;te issue de toutes les sections. Cocher chaque &eacute;l&eacute;ment apr&egrave;s impl&eacute;mentation.</p>
+
+    <h3>&#x1F534; Critique — &agrave; impl&eacute;menter en priorit&eacute;</h3>
+    <div class="checklist-item"><input type="checkbox"><span><strong>[S1]</strong> Architecture Hub-Spoke valid&eacute;e — session hosts dans subnet d&eacute;di&eacute; isol&eacute;</span></div>
+    <div class="checklist-item"><input type="checkbox"><span><strong>[S1]</strong> Host Pool de type Pooled avec RDP Shortpath UDP activ&eacute;</span></div>
+    <div class="checklist-item"><input type="checkbox"><span><strong>[S2]</strong> Conditional Access Policy — MFA obligatoire pour connexion AVD (app ID <code>9cdead84...</code>)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span><strong>[S2]</strong> Politique CA — compliance Intune requise pour session hosts</span></div>
+    <div class="checklist-item"><input type="checkbox"><span><strong>[S3]</strong> NSG — DenyInternetInbound sur le subnet session hosts</span></div>
+    <div class="checklist-item"><input type="checkbox"><span><strong>[S3]</strong> Private Endpoint sur Azure Files FSLogix — acc&egrave;s public d&eacute;sactiv&eacute;</span></div>
+    <div class="checklist-item"><input type="checkbox"><span><strong>[S4]</strong> Session hosts enroll&eacute;s Intune + MDE onboard&eacute;</span></div>
+    <div class="checklist-item"><input type="checkbox"><span><strong>[S4]</strong> Exclusions antivirus FSLogix configur&eacute;es (VHD/VHDX + processus frx*)</span></div>
+
+    <h3>&#x1F7E0; Élevé — &agrave; impl&eacute;menter dans les 30 jours</h3>
+    <div class="checklist-item"><input type="checkbox"><span><strong>[S4]</strong> ASR Rules d&eacute;ploy&eacute;es en mode Audit (puis Block apr&egrave;s 2 semaines)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span><strong>[S4]</strong> Compte Administrateur local d&eacute;sactiv&eacute; + LAPS configur&eacute;</span></div>
+    <div class="checklist-item"><input type="checkbox"><span><strong>[S5]</strong> FSLogix Profile Container activ&eacute; — VHDLocations vers Azure Files</span></div>
+    <div class="checklist-item"><input type="checkbox"><span><strong>[S5]</strong> NTFS ACLs : CREATOR OWNER = Full Control, users = Modify sur racine partage</span></div>
+    <div class="checklist-item"><input type="checkbox"><span><strong>[S5]</strong> Chiffrement Azure Files — CMK via Key Vault activ&eacute;</span></div>
+    <div class="checklist-item"><input type="checkbox"><span><strong>[S6]</strong> AppLocker activ&eacute; en mode Audit — service appidsvc d&eacute;marr&eacute;</span></div>
+    <div class="checklist-item"><input type="checkbox"><span><strong>[S6]</strong> MSIX App Attach configur&eacute; pour les applications m&eacute;tiers critiques</span></div>
+
+    <h3>&#x1F7E1; Moyen — &agrave; impl&eacute;menter dans les 90 jours</h3>
+    <div class="checklist-item"><input type="checkbox"><span><strong>[S7]</strong> Diagnostic Settings activ&eacute;s sur Host Pool + Workspace AVD vers Log Analytics</span></div>
+    <div class="checklist-item"><input type="checkbox"><span><strong>[S7]</strong> R&eacute;tention Log Analytics ≥ 90 jours</span></div>
+    <div class="checklist-item"><input type="checkbox"><span><strong>[S7]</strong> Alerte sur erreurs auth &gt;5/heure — Azure Monitor Alert Rule</span></div>
+    <div class="checklist-item"><input type="checkbox"><span><strong>[S8]</strong> Azure Compute Gallery cr&eacute;&eacute; — images versionn&eacute;es format <code>1.0.YYYYMMDD</code></span></div>
+    <div class="checklist-item"><input type="checkbox"><span><strong>[S8]</strong> Azure Image Builder pipeline configur&eacute; — rebuild mensuel automatis&eacute;</span></div>
+    <div class="checklist-item"><input type="checkbox"><span><strong>[S8]</strong> Conservation des 3 derni&egrave;res versions d'image minimum</span></div>
+
+    <h3>&#x1F535; Standard — &agrave; impl&eacute;menter dans les 180 jours</h3>
+    <div class="checklist-item"><input type="checkbox"><span><strong>[S9]</strong> RBAC granulaire — r&ocirc;les natifs AVD (pas Contributor/Owner en prod)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span><strong>[S9]</strong> Resource Lock <code>CanNotDelete</code> sur le Resource Group de production</span></div>
+    <div class="checklist-item"><input type="checkbox"><span><strong>[S9]</strong> Microsoft Defender for Cloud activ&eacute; — Secure Score suivi mensuel</span></div>
+    <div class="checklist-item"><input type="checkbox"><span><strong>[S9]</strong> PIM configur&eacute; pour acc&egrave;s JIT aux r&ocirc;les Admin AVD</span></div>
+    <div class="checklist-item"><input type="checkbox"><span><strong>[S10]</strong> Host pool secondaire cr&eacute;&eacute; dans r&eacute;gion DR</span></div>
+    <div class="checklist-item"><input type="checkbox"><span><strong>[S10]</strong> FSLogix Cloud Cache configur&eacute; — <code>CCDLocations</code> dual-site</span></div>
+    <div class="checklist-item"><input type="checkbox"><span><strong>[S10]</strong> Plan de bascule DR document&eacute; et test&eacute; semestriellement</span></div>
+</div>
+<!-- GLOSSAIRE -->
+<div class="section" id="glossaire">
+    <h2 style="color:var(--azure-dark);border-bottom:3px solid var(--azure-blue);padding-bottom:8px;">&#x1F4D6; Glossaire</h2>
+    <div class="table-container">
+    <table>
+        <thead><tr><th>Acronyme</th><th>Signification</th><th>Contexte AVD</th></tr></thead>
+        <tbody>
+            <tr><td><strong>AVD</strong></td><td>Azure Virtual Desktop</td><td>Service Microsoft de virtualisation de postes de travail et d'applications dans Azure. Anciennement "Windows Virtual Desktop" (WVD)</td></tr>
+            <tr><td><strong>FSLogix</strong></td><td>—</td><td>Technologie Microsoft de gestion de profils utilisateurs via conteneurs VHD/VHDX mont&eacute;s dynamiquement au login sur les session hosts AVD</td></tr>
+            <tr><td><strong>VHD / VHDX</strong></td><td>Virtual Hard Disk / eXtended</td><td>Format de disque virtuel utilis&eacute; par FSLogix pour stocker les profils utilisateurs. VHDX recommand&eacute; pour les nouvelles installations</td></tr>
+            <tr><td><strong>RDP Shortpath</strong></td><td>Remote Desktop Protocol Shortpath</td><td>Mode de transport AVD utilisant UDP (au lieu de TCP via reverse proxy) pour r&eacute;duire la latence et am&eacute;liorer la qualit&eacute; des sessions interactives</td></tr>
+            <tr><td><strong>Reverse Connect</strong></td><td>—</td><td>Architecture AVD o&ugrave; le session host &eacute;tablit une connexion sortante vers le service AVD (pas d'ouverture de port entrant requis sur les firewalls)</td></tr>
+            <tr><td><strong>MSIX App Attach</strong></td><td>—</td><td>Technologie Microsoft permettant d'attacher des applications packag&eacute;es au format MSIX dynamiquement aux sessions AVD, sans installation sur l'image OS</td></tr>
+            <tr><td><strong>WDAC</strong></td><td>Windows Defender Application Control</td><td>Politique de contr&ocirc;le d'applications Windows (successeur d'AppLocker) qui s'applique &agrave; tous les processus, y compris les services SYSTEM</td></tr>
+            <tr><td><strong>ASR</strong></td><td>Attack Surface Reduction</td><td>Ensemble de r&egrave;gles Microsoft Defender for Endpoint (MDE) qui bloquent des comportements malveillants courants (macros Office, LSASS dump, scripts obfusqu&eacute;s)</td></tr>
+            <tr><td><strong>SIG / ACG</strong></td><td>Shared Image Gallery / Azure Compute Gallery</td><td>Service Azure de stockage et distribution d'images VM versionn&eacute;es avec r&eacute;plication g&eacute;ographique. Nouveau nom : Azure Compute Gallery</td></tr>
+            <tr><td><strong>AIB</strong></td><td>Azure Image Builder</td><td>Service Azure permettant de cr&eacute;er automatiquement des images VM personnalis&eacute;es via des templates JSON (basé sur HashiCorp Packer)</td></tr>
+            <tr><td><strong>CA</strong></td><td>Conditional Access / Acc&egrave;s Conditionnel</td><td>Politiques Microsoft Entra ID qui &eacute;valuent les conditions de connexion (utilisateur, appareil, IP, risque) avant d'autoriser l'acc&egrave;s aux ressources</td></tr>
+            <tr><td><strong>PIM</strong></td><td>Privileged Identity Management</td><td>Service Entra ID P2 permettant l'activation JIT (Just-In-Time) des r&ocirc;les privil&eacute;gi&eacute;s avec dur&eacute;e limit&eacute;e et workflow d'approbation</td></tr>
+            <tr><td><strong>MDE</strong></td><td>Microsoft Defender for Endpoint</td><td>Solution EDR Microsoft d&eacute;ploy&eacute;e sur les session hosts AVD pour la protection, d&eacute;tection et r&eacute;ponse aux menaces</td></tr>
+            <tr><td><strong>NSG</strong></td><td>Network Security Group</td><td>Pare-feu stateless Azure appliqu&eacute; sur les subnets ou interfaces r&eacute;seau des VM pour filtrer le trafic entrant et sortant</td></tr>
+            <tr><td><strong>CMK</strong></td><td>Customer-Managed Keys</td><td>Option Azure permettant au client de g&eacute;rer ses propres cl&eacute;s de chiffrement (via Key Vault) au lieu des cl&eacute;s g&eacute;r&eacute;es par Microsoft (PMK)</td></tr>
+            <tr><td><strong>CAE</strong></td><td>Continuous Access Evaluation</td><td>M&eacute;canisme Entra ID qui r&eacute;voque les tokens d'acc&egrave;s en temps r&eacute;el lors d'&eacute;v&eacute;nements critiques (r&eacute;vocation de session, changement de mot de passe)</td></tr>
+            <tr><td><strong>GRS</strong></td><td>Geo-Redundant Storage</td><td>Option de r&eacute;plication Azure Storage qui copie automatiquement les donn&eacute;es vers une r&eacute;gion secondaire (ex: WestEurope → NorthEurope)</td></tr>
+        </tbody>
+    </table>
+    </div>
+</div>
+
+</div><!-- /container -->
+
+<footer>
+    <p>Azure Virtual Desktop &mdash; S&eacute;curit&eacute; VDI, Hardening &amp; Contr&ocirc;le d'Acc&egrave;s &bull; Version 1.1 &bull; Mai 2026</p>
+    <p>Bas&eacute; sur <a href="https://learn.microsoft.com/fr-fr/azure/virtual-desktop/security-guide" target="_blank">Microsoft Learn — AVD Security Guide</a> &bull; CIS Microsoft Azure Foundations Benchmark &bull; CIS Windows Server Benchmark</p>
+</footer>
+
+<script>
+function copyCode(btn) {
+    const pre = btn.closest('.code-block').querySelector('pre');
+    const tmp = document.createElement('div');
+    tmp.innerHTML = pre.innerHTML;
+    tmp.querySelectorAll('br').forEach(b => b.replaceWith('\n'));
+    const text = tmp.textContent || tmp.innerText;
+    navigator.clipboard.writeText(text).then(() => {
+        btn.textContent = 'Copi\u00e9 !';
+        btn.style.background = '#107C10';
+        setTimeout(() => { btn.textContent = 'Copier'; btn.style.background = ''; }, 1500);
+    }).catch(() => {
+        const ta = document.createElement('textarea');
+        ta.value = text; ta.style.position = 'fixed'; ta.style.left = '-9999px';
+        document.body.appendChild(ta); ta.select();
+        try { document.execCommand('copy'); btn.textContent = 'Copi\u00e9 !'; } catch(e) { btn.textContent = 'Erreur'; }
+        setTimeout(() => { btn.textContent = 'Copier'; }, 1500);
+        document.body.removeChild(ta);
+    });
+}
+document.querySelectorAll('.nav-container a').forEach(link => {
+    link.addEventListener('click', function(e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+});
+window.addEventListener('scroll', function() {
+    const sections = document.querySelectorAll('[id]');
+    const navLinks = document.querySelectorAll('.nav-container nav a');
+    let current = '';
+    sections.forEach(section => {
+        if (window.scrollY >= section.offsetTop - 120) current = section.getAttribute('id');
+    });
+    navLinks.forEach(link => {
+        link.style.borderBottomColor = 'transparent';
+        link.style.color = '';
+        if (link.getAttribute('href') && link.getAttribute('href').substring(1) === current) {
+            link.style.borderBottomColor = '#0078d4';
+            link.style.color = '#0078d4';
+        }
+    });
+});
+(function() {
+    const btt = document.createElement('button');
+    btt.innerHTML = '&#8593;';
+    btt.setAttribute('aria-label', 'Retour en haut');
+    btt.style.cssText = 'position:fixed;bottom:24px;right:24px;width:44px;height:44px;border-radius:50%;background:#0078D4;color:#fff;border:none;font-size:20px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.25);opacity:0;visibility:hidden;transition:all .25s;z-index:1000;display:flex;align-items:center;justify-content:center;';
+    document.body.appendChild(btt);
+    btt.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+    window.addEventListener('scroll', () => {
+        if (window.scrollY > 400) { btt.style.opacity = '1'; btt.style.visibility = 'visible'; }
+        else { btt.style.opacity = '0'; btt.style.visibility = 'hidden'; }
+    });
+})();
+(function() {
+    const pb = document.createElement('div');
+    pb.style.cssText = 'position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,#0078D4,#2b88d8);z-index:9999;transition:width .1s linear;width:0%;';
+    document.body.appendChild(pb);
+    window.addEventListener('scroll', () => {
+        const pct = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight)) * 100;
+        pb.style.width = pct + '%';
+    });
+})();
+</script>
+<script id="v1a-script">
+(function(){
+  const sidebar = document.querySelector('.v1a-sidebar');
+  if(!sidebar) return;
+  const accs = [...sidebar.querySelectorAll('details.acc')];
+  accs.forEach(a => a.addEventListener('toggle', () => {
+    if(a.open) accs.forEach(o => { if(o!==a) o.open = false; });
+  }));
+  const links = [...sidebar.querySelectorAll('.acc-body a[href^="#"]')];
+  const map = new Map(links.map(a => [a.getAttribute('href').slice(1), a]));
+  const sections = [...document.querySelectorAll('.section[id], section[id]')];
+  function onScroll(){
+    const y = window.scrollY + 120;
+    let cur = null;
+    for(const s of sections){ if(s.offsetTop <= y) cur = s; else break; }
+    links.forEach(a => a.classList.remove('active'));
+    if(cur){
+      const a = map.get(cur.id);
+      if(a){
+        a.classList.add('active');
+        const det = a.closest('details.acc');
+        if(det && !det.open){ accs.forEach(o=>o.open=false); det.open = true; }
+      }
+    }
+  }
+  document.addEventListener('scroll', onScroll, {passive:true});
+  onScroll();
+})();
+</script>
+</main>
+</div>
+</body>
+</html>

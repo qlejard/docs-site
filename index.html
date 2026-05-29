@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!--
+    ╔═══════════════════════════════════════════════════════════════════════════╗
+    ║  index.html — Documentation Technique Sécurité                           ║
+    ║  Index de navigation — 66 guides Microsoft 365, Azure, AWS, Entra,       ║
+    ║  Defender, Purview, Sentinel                                              ║
+    ╚═══════════════════════════════════════════════════════════════════════════╝
+    -->
+    <title>Documentation Technique Sécurité — Index des Guides</title>
+    <style>
+        /* === DESIGN SYSTEM v2026 — V1 Sobre + Hero Ticker V1-C === */
+        :root {
+            --azure-blue: #0078d4;
+            --azure-dark: #004578;
+            --azure-light: #deecf9;
+            --success-green: #107c10;
+            --warning-orange: #ff8c00;
+            --danger-red: #d13438;
+            --bg: #f8f9fb;
+            --surface: #ffffff;
+            --text: #1a1f2e;
+            --muted: #5b6478;
+            --border: #e3e6ec;
+            --neutral-bg: #f3f2f1;       /* legacy fallback */
+            --neutral-dark: #1a1f2e;
+            --neutral-medium: #5b6478;
+            --white: #ffffff;
+            --shadow-sm: 0 1px 3px rgba(15,23,42,.06);
+            --shadow: 0 4px 16px rgba(15,23,42,.08);
+            --shadow-hover: 0 12px 32px rgba(15,23,42,.12);
+            --radius: 12px;
+            /* Accents catégories */
+            --aws: #ff9900;
+            --aws-orange: #ff9900;
+            --aws-dark: #232f3e;
+            --m365: #7719aa;
+            --m365-purple: #7719aa;
+            --entra: #2b5797;
+            --defender: #d13438;
+            --purview: #107c10;
+            --sentinel: #0078d4;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; -webkit-font-smoothing: antialiased; }
+        a { color: var(--azure-blue); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+
+        /* ===== HERO V1-C · LIGNE DE CHIFFRES GÉANTS ===== */
+        .hero {
+            position: relative;
+            background: linear-gradient(135deg, #003864 0%, #0078d4 60%, #50abff 100%);
+            color: #fff;
+            overflow: hidden;
+            padding: 80px 24px 0;
+            text-align: center;
+            max-width: none;
+            margin: 0;
+            border-bottom: none;
+        }
+        .hero::before {
+            content: ""; position: absolute; inset: 0; pointer-events: none;
+            background-image:
+                linear-gradient(rgba(255,255,255,.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,.05) 1px, transparent 1px);
+            background-size: 60px 60px;
+            mask-image: radial-gradient(ellipse at center, #000 30%, transparent 70%);
+            -webkit-mask-image: radial-gradient(ellipse at center, #000 30%, transparent 70%);
+        }
+        .hero-inner { position: relative; max-width: 1180px; margin: 0 auto; z-index: 1; }
+        .hero .eyebrow {
+            display: inline-flex; align-items: center; gap: 8px;
+            background: rgba(255,255,255,.14); backdrop-filter: blur(10px);
+            padding: 6px 14px; border-radius: 999px; font-size: .82em; font-weight: 600;
+            border: 1px solid rgba(255,255,255,.2); margin-bottom: 24px; letter-spacing: .3px;
+        }
+        .hero .eyebrow .dot { width: 6px; height: 6px; border-radius: 50%; background: #7fffa3; box-shadow: 0 0 8px #7fffa3; }
+        .hero h1 {
+            font-size: clamp(2em, 4.2vw, 3.2em); font-weight: 700; line-height: 1.1;
+            letter-spacing: -1.2px; margin-bottom: 18px; color: #fff;
+        }
+        .hero h1 .accent {
+            background: linear-gradient(90deg, #fff, #bfe3ff);
+            -webkit-background-clip: text; background-clip: text; color: transparent;
+        }
+        .hero .tagline {
+            font-size: 1.1em; max-width: 720px; margin: 0 auto 28px;
+            color: rgba(255,255,255,.88); line-height: 1.55;
+        }
+        .hero-actions {
+            display: flex; gap: 14px; justify-content: center; flex-wrap: wrap;
+            margin-bottom: 28px;
+        }
+        .btn-hero {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 13px 26px; border-radius: 8px; font-weight: 600; font-size: .95em;
+            transition: all .2s; border: none; cursor: pointer; text-decoration: none;
+        }
+        .btn-hero.primary { background: #fff; color: var(--azure-dark); }
+        .btn-hero.primary:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.25); text-decoration: none; }
+        .btn-hero.ghost { background: rgba(255,255,255,.12); color: #fff; border: 1px solid rgba(255,255,255,.3); backdrop-filter: blur(10px); }
+        .btn-hero.ghost:hover { background: rgba(255,255,255,.2); text-decoration: none; }
+
+        /* Search bar dans le hero */
+        .hero .search-wrap { max-width: 580px; margin: 0 auto 48px; position: relative; }
+        .hero .search-wrap input {
+            width: 100%; padding: 14px 56px 14px 20px;
+            border: none; border-radius: 12px;
+            font-size: 1em; font-family: inherit;
+            background: rgba(255,255,255,.97); color: var(--text);
+            box-shadow: 0 8px 30px rgba(0,0,0,.18);
+            outline: none;
+        }
+        .hero .search-wrap input:focus { outline: 2px solid #fff; outline-offset: 2px; }
+        .hero .search-wrap .search-hint {
+            position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+            background: #eef0f3; color: var(--muted); padding: 3px 8px;
+            border-radius: 5px; font-size: .72em; font-family: monospace;
+            border: 1px solid var(--border); pointer-events: none;
+        }
+
+        /* Ticker : grands chiffres horizontaux avec séparateurs lumineux */
+        .ticker {
+            position: relative;
+            display: grid; grid-template-columns: repeat(4, 1fr);
+            align-items: end; gap: 0;
+            padding: 32px 0 0;
+            border-top: 1px solid rgba(255,255,255,.18);
+            max-width: 1180px; margin: 0 auto;
+        }
+        .tk { padding: 28px 18px 36px; position: relative; text-align: center; }
+        .tk:not(:last-child)::after {
+            content: ""; position: absolute; top: 32px; bottom: 32px; right: 0;
+            width: 1px;
+            background: linear-gradient(180deg, transparent, rgba(255,255,255,.25), transparent);
+        }
+        .tk .num {
+            font-size: clamp(3em, 7vw, 5.5em); font-weight: 800; line-height: .9;
+            letter-spacing: -3px; display: block;
+            background: linear-gradient(180deg, #fff 0%, #bfe3ff 60%, rgba(191,227,255,.4) 100%);
+            -webkit-background-clip: text; background-clip: text; color: transparent;
+        }
+        .tk .num small { font-size: .4em; font-weight: 600; letter-spacing: 0; margin-left: 4px; }
+        .tk .lbl { font-size: .82em; text-transform: uppercase; letter-spacing: 2.5px; margin-top: 14px; opacity: .9; font-weight: 600; }
+        .tk .sub { font-size: .78em; opacity: .65; margin-top: 8px; }
+
+        /* Mini légende sous le ticker */
+        .hero-legend {
+            background: rgba(0,0,0,.18); backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(255,255,255,.1);
+            padding: 18px 24px; text-align: center;
+            font-size: .85em; opacity: .9; letter-spacing: .3px; color: #fff;
+        }
+        .hero-legend strong { color: #7fffa3; font-weight: 600; }
+
+        /* Legacy stats-bar (cachée, le ticker la remplace) */
+        .stats-bar, .badge-row { display: none; }
+
+        /* ===== NAV — chips responsives ===== */
+        .nav-container {
+            max-width: none; margin: 0;
+            border-bottom: 1px solid var(--border);
+            position: sticky; top: 0; z-index: 100;
+            background: rgba(255,255,255,.96); backdrop-filter: blur(12px);
+            box-shadow: var(--shadow-sm);
+        }
+        .nav-container nav {
+            display: flex; flex-wrap: wrap; justify-content: center;
+            gap: 8px; padding: 10px 20px;
+            max-width: 1400px; margin: 0 auto;
+        }
+        .nav-container nav a {
+            text-decoration: none; color: var(--muted);
+            padding: 7px 14px; font-size: .8em; font-weight: 600;
+            white-space: nowrap;
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            background: var(--bg);
+            transition: all .18s;
+        }
+        .nav-container nav a:hover {
+            color: var(--azure-blue); border-color: var(--azure-blue);
+            background: #e8f3ff; text-decoration: none;
+            transform: translateY(-1px); box-shadow: 0 3px 10px rgba(0,120,212,.12);
+        }
+
+        /* ===== CONTAINER & SECTIONS (V1 sobre cat-card style) ===== */
+        .container { max-width: 1280px; margin: 0 auto; padding: 56px 24px; }
+        .section { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow-sm); padding: 36px 36px; margin-bottom: 28px; border: 1px solid var(--border); transition: transform .25s, box-shadow .25s, border-color .25s; position: relative; overflow: hidden; }
+        .section::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: var(--c, var(--azure-blue)); }
+        .section:hover { transform: translateY(-3px); box-shadow: var(--shadow-hover); border-color: transparent; }
+        .section#aws       { --c: var(--aws-orange); }
+        .section#azure     { --c: var(--azure-blue); }
+        .section#m365      { --c: var(--m365-purple); }
+        .section#defender  { --c: var(--danger-red); }
+        .section#entra     { --c: var(--azure-dark); }
+        .section#purview   { --c: var(--success-green); }
+        .section#securite  { --c: var(--neutral-dark); }
+        .section#apropos, .section#structure { --c: var(--azure-blue); }
+
+        /* === ABOUT === */
+        .about-intro { font-size: 0.96em; line-height: 1.75; margin-bottom: 22px; max-width: 960px; }
+        .about-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-bottom: 24px; }
+        .about-card { background: var(--neutral-bg); border-radius: var(--radius); padding: 18px 20px; border-left: 4px solid var(--azure-blue); }
+        .about-card.green { border-left-color: var(--success-green); }
+        .about-card.orange { border-left-color: var(--warning-orange); }
+        .about-card h4 { font-size: 0.93em; font-weight: 700; color: var(--azure-dark); margin-bottom: 6px; }
+        .about-card p { font-size: 0.86em; color: var(--neutral-medium); line-height: 1.5; }
+        .principles-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 14px 0 22px; }
+        .principle-item { background: var(--neutral-bg); padding: 11px 14px; border-radius: 6px; }
+        .principle-item strong { color: var(--azure-dark); font-size: 0.86em; display: block; margin-bottom: 3px; }
+        .principle-item span { color: var(--neutral-medium); font-size: 0.8em; line-height: 1.4; display: block; }
+        .structure-row { display: flex; gap: 8px; flex-wrap: wrap; margin: 12px 0 18px; }
+        .structure-tag { background: var(--azure-light); color: var(--azure-dark); padding: 4px 12px; border-radius: 20px; font-size: 0.79em; font-weight: 500; }
+        .alert { border-radius: var(--radius); padding: 14px 18px; margin: 14px 0; font-size: 0.9em; line-height: 1.6; }
+        .alert-info { background: #e6f2ff; border: 1px solid #b3d7ff; color: #004578; }
+        h3.sub { font-size: 1em; font-weight: 600; margin: 22px 0 10px; padding-left: 12px; border-left: 3px solid var(--azure-blue); color: var(--azure-dark); }
+
+        /* === CATEGORY HEADER (V1 sobre — accent bar via .section::before, plus de border-bottom) === */
+        .cat-header { display: flex; align-items: center; gap: 16px; margin-bottom: 26px; }
+        .cat-icon { width: 52px; height: 52px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.55em; flex-shrink: 0; background: var(--c, var(--azure-blue)); color: #fff; box-shadow: 0 6px 14px rgba(0,0,0,.12); }
+        /* fallback: si .cat-icon est utilisé hors d'une .section avec --c (about/structure), garder lisible */
+        .cat-icon.aws   { background: var(--aws-orange); }
+        .cat-icon.azure { background: var(--azure-blue); }
+        .cat-icon.m365  { background: var(--m365-purple); }
+        .cat-icon.def   { background: var(--danger-red); }
+        .cat-icon.entra { background: var(--azure-dark); }
+        .cat-icon.purv  { background: var(--success-green); }
+        .cat-icon.sec   { background: var(--neutral-dark); }
+        .cat-title { font-size: 1.4em; color: var(--text); font-weight: 700; letter-spacing: -.3px; }
+        .cat-count { display: inline-block; font-size: .78em; font-weight: 600; color: var(--muted); background: var(--bg); padding: 3px 10px; border-radius: 999px; margin-top: 4px; }
+
+        /* === GUIDE CARDS (V1 sobre — fond surface, accent gauche au hover) === */
+        .guides-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(285px, 1fr)); gap: 16px; }
+        .guide-card { background: var(--bg); border-radius: var(--radius); padding: 18px 20px; border: 1px solid var(--border); transition: transform .2s, box-shadow .2s, border-color .2s; display: flex; flex-direction: column; gap: 8px; cursor: pointer; position: relative; overflow: hidden; }
+        .guide-card::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--c, var(--azure-blue)); transform: scaleY(0); transform-origin: top; transition: transform .25s; }
+        .guide-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-hover); border-color: transparent; text-decoration: none; background: var(--surface); }
+        .guide-card:hover::before { transform: scaleY(1); }
+        .guide-card.hidden { display: none; }
+        .gc-title { font-size: .95em; font-weight: 700; color: var(--text); line-height: 1.4; }
+        .gc-desc { font-size: .83em; color: var(--muted); line-height: 1.55; flex: 1; }
+        .gc-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 6px; }
+        .gc-tag { display: inline-block; font-size: 0.7em; padding: 3px 9px; border-radius: 999px; font-weight: 600; letter-spacing: .3px; }
+        .gc-tag.azure  { background: var(--azure-light); color: var(--azure-blue); }
+        .gc-tag.aws    { background: #fff3e0; color: #d46300; }
+        .gc-tag.m365   { background: #f3e5f5; color: #6a1b9a; }
+        .gc-tag.def    { background: #fde7e9; color: var(--danger-red); }
+        .gc-tag.entra  { background: #e3f2fd; color: var(--azure-dark); }
+        .gc-tag.purv   { background: #e8f5e9; color: var(--success-green); }
+        .gc-tag.sec    { background: #f5f5f5; color: var(--neutral-dark); }
+        .gc-arrow { font-size: .8em; color: var(--c, var(--azure-blue)); font-weight: 700; opacity: 0; transition: opacity .2s, transform .2s; }
+        .guide-card:hover .gc-arrow { opacity: 1; transform: translateX(3px); }
+
+        /* === NO RESULTS === */
+        .no-results { display: none; text-align: center; color: var(--neutral-medium); padding: 20px; font-size: 0.88em; }
+
+        /* === CTA BAND (V1 sobre) === */
+        .cta-band { background: linear-gradient(135deg, var(--azure-dark), var(--azure-blue)); color: #fff; padding: 72px 24px; text-align: center; }
+        .cta-band h2 { font-size: clamp(1.6em, 3vw, 2.2em); font-weight: 700; margin-bottom: 14px; letter-spacing: -.5px; }
+        .cta-band p { opacity: .92; max-width: 640px; margin: 0 auto 32px; line-height: 1.6; }
+        .cta-band .btn-hero.primary { background: #fff; color: var(--azure-dark); }
+        .cta-band .btn-hero.primary:hover { transform: translateY(-2px); box-shadow: 0 12px 32px rgba(0,0,0,.3); }
+
+        /* === FOOTER (V2) === */
+        footer { background: #0d1526; color: #8a9ab8; padding: 52px 24px 28px; font-size: .88em; }
+        .footer-inner { max-width: 1180px; margin: 0 auto; display: grid; grid-template-columns: 1.8fr 1fr 1fr; gap: 52px; }
+        .footer-logo { font-size: 1.05em; font-weight: 700; color: #fff; margin-bottom: 12px; letter-spacing: -.3px; }
+        .footer-desc { line-height: 1.7; color: #8a9ab8; margin-bottom: 16px; }
+        .footer-badges { display: flex; flex-wrap: wrap; gap: 6px; }
+        .footer-badges .fbadge { background: rgba(255,255,255,.06); color: #9aabc8; border: 1px solid rgba(255,255,255,.1); border-radius: 5px; padding: 3px 9px; font-size: .73em; font-weight: 500; }
+        footer h5 { color: #c8d3e8; font-size: .7em; font-weight: 700; margin-bottom: 14px; letter-spacing: 1.8px; text-transform: uppercase; }
+        footer a { color: #8a9ab8; padding: 4px 0; text-decoration: none; transition: color .2s; display: block; }
+        footer a:hover { color: #e8edf8; text-decoration: none; }
+        .footer-nav-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; }
+        .flink { padding: 5px 6px; border-radius: 5px; font-size: .88em; display: block; }
+        .flink:hover { background: rgba(255,255,255,.07) !important; color: #e8edf8 !important; }
+        .footer-resources a { font-size: .88em; padding: 5px 0; }
+        .footer-copy { max-width: 1180px; margin: 40px auto 0; padding-top: 22px; border-top: 1px solid rgba(255,255,255,.07); text-align: center; font-size: .79em; opacity: .55; }
+
+        /* === RESPONSIVE === */
+        @media (max-width: 980px) {
+            .ticker { grid-template-columns: repeat(2, 1fr); }
+            .tk:nth-child(2)::after { display: none; }
+            .footer-inner { grid-template-columns: 1fr; gap: 32px; }
+            .footer-nav-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+        @media (max-width: 900px) {
+            .about-grid { grid-template-columns: 1fr 1fr; }
+            .principles-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 600px) {
+            .hero { padding: 56px 18px 0; }
+            .hero h1 { font-size: 1.8em; }
+            .hero .tagline { font-size: .95em; }
+            .container { padding: 32px 16px; }
+            .section { padding: 24px 18px; }
+            .nav-container nav { justify-content: flex-start; }
+            .about-grid { grid-template-columns: 1fr; }
+            .principles-grid { grid-template-columns: 1fr; }
+            .guides-grid { grid-template-columns: 1fr; }
+            .ticker { grid-template-columns: 1fr 1fr; padding-top: 16px; }
+            .tk { padding: 16px 12px 20px; }
+            .tk::after { display: none !important; }
+            .hero-actions { flex-direction: column; align-items: stretch; }
+            .btn-hero { justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ════════════════════════ HERO V1-C · TICKER ════════════════════════ -->
+<section class="hero" id="top">
+    <div class="hero-inner">
+        <span class="eyebrow"><span class="dot"></span> 66 guides à jour · CIS / NIST / ANSSI</span>
+        <h1>Sécurisez votre cloud,<br><span class="accent">une commande à la fois.</span></h1>
+        <p class="tagline">
+            Guides techniques actionnables pour Microsoft 365, Azure, AWS, Entra ID, Defender, Purview et Sentinel.
+            Pas de jargon, pas d'onglets à ouvrir — juste ce qu'il faut faire, et pourquoi.
+        </p>
+        <div class="hero-actions">
+            <a href="#aws" class="btn-hero primary">Parcourir les guides →</a>
+            <a href="#apropos" class="btn-hero ghost">Comment ça marche&nbsp;?</a>
+        </div>
+        <div class="search-wrap">
+            <input
+                type="text"
+                id="searchInput"
+                placeholder="Rechercher : GuardDuty, Key Vault, Conditional Access…"
+                oninput="filterGuides(this.value)"
+                autocomplete="off"
+                spellcheck="false"
+            />
+            <span class="search-hint">/</span>
+        </div>
+
+        <!-- Ticker : chiffres XL avec frises lumineuses -->
+        <div class="ticker">
+            <div class="tk">
+                <span class="num">66</span>
+                <div class="lbl">Guides</div>
+                <div class="sub">Actionnables · sourcés</div>
+            </div>
+            <div class="tk">
+                <span class="num">7</span>
+                <div class="lbl">Domaines</div>
+                <div class="sub">AWS · Azure · M365 · Entra…</div>
+            </div>
+            <div class="tk">
+                <span class="num">100<small>%</small></span>
+                <div class="lbl">Sans onglet</div>
+                <div class="sub">Tout est dans le guide</div>
+            </div>
+            <div class="tk">
+                <span class="num">/100</span>
+                <div class="lbl">Score / section</div>
+                <div class="sub">Baseline → objectif</div>
+            </div>
+        </div>
+    </div>
+    <div class="hero-legend">
+        <strong>● Live</strong> · Référentiels CIS Benchmarks v8.1 · NIST 800-53 Rev.5 · ANSSI · mise à jour continue
+    </div>
+</section>
+
+<!-- ════════════════════════ NAV ════════════════════════ -->
+<div class="nav-container">
+    <nav>
+        <a href="#apropos">ℹ️ À propos</a>
+        <a href="#aws">☁️ AWS (25)</a>
+        <a href="#azure">⚡ Azure (16)</a>
+        <a href="#m365">💼 Microsoft 365 (8)</a>
+        <a href="#defender">🛡️ Defender (6)</a>
+        <a href="#entra">🔑 Entra ID (4)</a>
+        <a href="#purview">🔒 Purview (4)</a>
+        <a href="#securite">🔍 Sécurité (3)</a>
+    </nav>
+</div>
+
+<div class="container">
+
+    <!-- ════════════════════════ À PROPOS ════════════════════════ -->
+    <div class="section" id="apropos">
+        <div class="cat-header" style="border-bottom-color: var(--azure-blue);">
+            <div class="cat-icon azure" style="background: var(--azure-light);">ℹ️</div>
+            <div>
+                <div class="cat-title">À propos de ce site</div>
+                <div class="cat-count">Philosophie, méthodologie et structure des guides techniques</div>
+            </div>
+        </div>
+
+        <p class="about-intro">
+            Ce site rassemble <strong>66 guides techniques</strong> couvrant la configuration, l'audit et le durcissement
+            des principaux services cloud et de sécurité : Microsoft 365, Azure, AWS, Entra ID, Defender, Purview et Sentinel.
+            Chaque guide est <strong>généré par un agent IA</strong> à partir de prompts structurés
+            (<code>Documentation/prompts/</code>) et de standards qualité stricts
+            (<code>standards/QUALITY_STANDARDS.md</code>), puis soumis à une <strong>validation factuelle automatisée</strong>
+            (valeurs par défaut vérifiées, références CIS/NIST actualisées).
+            L'objectif : des livrables <em>actionnables sans aucun onglet externe à ouvrir</em>,
+            utilisables aussi bien en <strong>audit client</strong> qu'en <strong>déploiement opérationnel</strong>.
+        </p>
+
+        <!-- 3 audiences -->
+        <h3 class="sub">3 audiences simultanées</h3>
+        <div class="about-grid">
+            <div class="about-card">
+                <h4>👤 Décideur non technique</h4>
+                <p>Scénarios d'attaque concrets, analogies parlantes (« caméra de surveillance du tenant »,
+                « scellé judiciaire »), impact métier chiffré. Chaque guide justifie le budget et
+                le temps nécessaire sans jargon.</p>
+            </div>
+            <div class="about-card green">
+                <h4>🔧 Administrateur / Implémenteur</h4>
+                <p>Étapes portail numérotées, commandes PowerShell/<wbr>CLI copier-collables,
+                checklists cochables, script All-in-One. Pas besoin d'ouvrir un autre onglet —
+                tout est dans le guide.</p>
+            </div>
+            <div class="about-card orange">
+                <h4>🏗️ Architecte d'entreprise</h4>
+                <p>Sources réglementaires citées (CIS, NIST 800-53, RGPD, ISO 27001, ANSSI),
+                matrice d'interactions entre sections, alternatives documentées et écartées.
+                Aucun angle mort argumentaire.</p>
+            </div>
+        </div>
+
+        <!-- 8 principes -->
+        <h3 class="sub">Les 8 principes de construction</h3>
+        <div class="principles-grid">
+            <div class="principle-item"><strong>1 · Autonome</strong><span>Aucun onglet externe nécessaire — tout est dans le guide.</span></div>
+            <div class="principle-item"><strong>2 · Actionnable</strong><span>Commande copier-collable ou procédure pas-à-pas dans chaque section.</span></div>
+            <div class="principle-item"><strong>3 · Progressif</strong><span>Quick Win dès l'étape 1 — amélioration immédiate, même partielle.</span></div>
+            <div class="principle-item"><strong>4 · Mesurable</strong><span>Score /100 par section — baseline avant / objectif après.</span></div>
+            <div class="principle-item"><strong>5 · Référencé</strong><span>Chaque recommandation cite sa source (Microsoft, CIS, NIST, loi).</span></div>
+            <div class="principle-item"><strong>6 · Concret</strong><span>Tableaux comparatifs, blocs de code, alertes visuelles. Pas de prose.</span></div>
+            <div class="principle-item"><strong>7 · Imprimable</strong><span>Rendu PDF propre — livrable client sans mise en forme supplémentaire.</span></div>
+            <div class="principle-item"><strong>8 · Justifié</strong><span>Bloc « Pourquoi il compte » par paramètre clé — guide irréfutable.</span></div>
+        </div>
+
+        <!-- Structure type -->
+        <h3 class="sub">Structure type d'un guide (10 sections + annexes)</h3>
+        <div class="structure-row">
+            <span class="structure-tag">S1–S10 — Sections techniques</span>
+            <span class="structure-tag">Score /100 par section</span>
+            <span class="structure-tag">Checklist état des lieux</span>
+            <span class="structure-tag">Glossaire</span>
+            <span class="structure-tag">Matrice de couverture</span>
+            <span class="structure-tag">Routines de maintenance</span>
+            <span class="structure-tag">Coûts / licences</span>
+            <span class="structure-tag">Script PowerShell All-in-One</span>
+            <span class="structure-tag">Références CIS / NIST</span>
+        </div>
+
+        <div class="alert alert-info">
+            <strong>Maintenance &amp; génération :</strong> les guides sont produits depuis le dépôt
+            <a href="https://github.com/qlejard/Documentation" target="_blank">qlejard/Documentation</a>
+            via des prompts structurés dans <code>Documentation/prompts/</code>.
+            La validation factuelle est effectuée par <code>tools/factual_audit.py</code>
+            avec les référentiels CIS JSON intégrés. Toute modification manuelle doit
+            passer par le prompt de correction pour maintenir la cohérence du design system.
+            Site hébergé sur <a href="https://github.com/qlejard/docs-site" target="_blank">qlejard/docs-site</a>
+            (GitHub Pages — HTML statique, aucun framework).
+        </div>
+    </div>
+
+    <!-- ════════════════════════ AWS ════════════════════════ -->
+    <div class="section" id="aws">
+        <div class="cat-header aws">
+            <div class="cat-icon aws">☁️</div>
+            <div>
+                <div class="cat-title">Amazon Web Services</div>
+                <div class="cat-count">25 guides — IAM, sécurité réseau, détection de menaces, conformité, stockage, serverless</div>
+            </div>
+        </div>
+        <div class="guides-grid" id="grid-aws">
+
+            <a class="guide-card" href="guides/aws-iam.html" data-search="aws iam identity access management permissions roles policies least privilege">
+                <div class="gc-title">AWS IAM — Gestion des Identités &amp; Accès</div>
+                <div class="gc-desc">Politiques IAM, rôles, permissions minimales, analyse des accès inutilisés (IAM Access Analyzer), SCP et gouvernance IAM.</div>
+                <div class="gc-footer"><span class="gc-tag aws">IAM</span><span class="gc-arrow">→ Ouvrir</span></div>
+            </a>
+
+            <a class="guide-card" href="guides/aws-iam-identity-center.html" data-search="aws iam identity center sso single sign on multi account permission sets">
+                <div class="gc-title">IAM Identity Center — SSO Multi-comptes</div>
+                <div class="gc-desc">Authentification centralisée, permission sets, intégration Active Directory, accès fédéré aux comptes via AWS Organizations.</div>
+                <div class="gc-footer"><span class="gc-tag aws">SSO</span><span class="gc-arrow">→ Ouvrir</span></div>
+            </a>
+
+            <a class="guide-card" href="guides/aws-organizations.html" data-search="aws organizations multi account scp governance landing zone ou hierarchy">
+                <div class="gc-title">AWS Organizations — Gouvernance Multi-comptes</div>
+                <div class="gc-desc">Structure OU, Service Control Policies (SCP), délégation d'administration, facturation consolidée, gestion centralisée des comptes.</div>
+                <div class="gc-footer"><span class="gc-tag aws">Gouvernance</span><span class="gc-arrow">→ Ouvrir</span></div>
+            </a>
+
+            <a class="guide-card" href="guides/aws-control-tower.html" data-search="aws control tower landing zone guardrails governance account factory">
+                <div class="gc-title">Control Tower — Landing Zone &amp; Guardrails</div>
+                <div class="gc-desc">Déploiement de landing zone, guardrails préventifs/détectifs, Account Factory, enrôlement de comptes existants.</div>
+                <div class="gc-footer"><span class="gc-tag aws">Gouvernance</span><span class="gc-arrow">→ Ouvrir</span></div>
+            </a>
+
+            <a class="guide-card" href="guides/aws-guardduty.html" data-search="aws guardduty threat detection anomaly behavioral dns vpc cloudtrail findings">
+                <div class="gc-title">GuardDuty — Détection de Menaces</div>
+                <div class="gc-desc">Analyse comportementale, détection d'anomalies DNS/VPC/CloudTrail, threat intelligence, suppression des faux positifs, exportation des findings.</div>
+                <div class="gc-footer"><span class="gc-tag aws">Détection</span><span class="gc-arrow">→ Ouvrir</span></div>
+            </a>
+
+            <a class="guide-card" href="guides/aws-security-hub.html" data-search="aws security hub cspm compliance fsbp cis dashboard findings aggregation remediation">
+                <div class="gc-title">Security Hub — Tableau de Bord Sécurité</div>
+                <div class="gc-desc">Agrégation des findings, standards FSBP / CIS AWS, intégration multi-services, remédiation automatisée, vue multi-comptes.</div>
+                <div class="gc-footer"><span class="gc-tag aws">CSPM</span><span class="gc-arrow">→ Ouvrir</span></div>
+            </a>
+
+            <a class="guide-card" href="guides/aws-cloudtrail.html" data-search="aws cloudtrail audit logs trail events management data forensic governance">
+                <div class="gc-title">CloudTrail — Audit &amp; Journalisation</div>
+                <div class="gc-desc">Configuration des trails, événements de management et données, intégration CloudWatch/S3, immutabilité, analyse forensique des logs.</div>
+                <div class="gc-footer"><span class="gc-tag aws">Logs</span><span class="gc-arrow">→ Ouvrir</span></div>
+            </a>
+
+            <a class="guide-card" href="guides/aws-cloudwatch.html" data-search="aws cloudwatch monitoring metrics alarms logs insights dashboards events">
+                <div class="gc-title">CloudWatch — Monitoring &amp; Alertes</div>
+                <div class="gc-desc">Métriques personnalisées, alarmes sur seuils de sécurité, Logs Insights, dashboards opérationnels, EventBridge et actions automatiques.</div>
+                <div class="gc-footer"><span class="gc-tag aws">Monitoring</span><span class="gc-arrow">→ Ouvrir</span></div>
+            </a>
+
+            <a class="guide-card" href="guides/aws-config.html" data-search="aws config compliance conformance pack rules remediation governance history">
+                <div class="gc-title">AWS Config — Conformité &amp; Gouvernance</div>
+                <div class="gc-desc">Règles de conformité, conformance packs CIS/PCI, remédiation automatique, historique des configurations, agrégation multi-comptes.</div>
+                <div class="gc-footer"><span class="gc-tag aws">Conformité</span><span class="gc-arrow">→ Ouvrir</span></div>
+            </a>
+
+            <a class="guide-card" href="guides/aws-inspector.html" data-search="aws inspector vulnerability assessment cve ec2 ecr lambda container scan">
+                <div class="gc-title">Inspector — Analyse de Vulnérabilités</div>
+                <div class="gc-desc">Scan CVE automatique sur EC2, images ECR et fonctions Lambda, priorisation des findings, intégration Security Hub/EventBridge.</div>
+                <div class="gc-footer"><span class="gc-tag aws">Vulnérabilités</span><span class="gc-arrow">→ Ouvrir</span></div>
+            </a>
+
+            <a class="guide-card" href="guides/aws-vpc.html" data-search="aws vpc network security groups nacl flow logs peering private link transit gateway">
+                <div class="gc-title">Amazon VPC — Sécurité Réseau</div>
+                <div class="gc-desc">Security Groups, NACLs, VPC Flow Logs, segmentation réseau, NAT Gateway, endpoints PrivateLink, Transit Gateway, Network Firewall.</div>
+                <div class="gc-footer"><span class="gc-tag aws">Réseau</span><span class="gc-arrow">→ Ouvrir</span></div>
+            </a>
+
+            <a class="guide-card" href="guides/aws-waf.html" data-search="aws waf web application firewall rules bot control shield managed cloudfront alb">
+                <div class="gc-title">AWS WAF — Web Application Firewall</div>
+                <div class="gc-desc">WebACL, règles managées AWS, protection OWASP Top 10, Bot Control, rate limiting, intégration ALB/CloudFront/API Gateway.</div>
+                <div class="gc-footer"><span class="gc-tag aws">WAF</span><span class="gc-arrow">→ Ouvrir</span></div>
+            </a>
+
+            <a class="guide-card" href="guides/aws-shield.html" data-search="aws shield ddos protection advanced route53 cloudfront srt response team">
+                <div class="gc-title">AWS Shield — Protection DDoS</div>
+                <div class="gc-desc">Shield Standard vs Advanced, Shield Response Team (SRT), protections avancées, mitigation DDoS sur CloudFront/ALB/Route 53.</div>
+                <div class="gc-footer"><span class="gc-tag aws">DDoS</span><span class="gc-arrow">→ Ouvrir</span></div>
+            </a>
+
+            <a class="guide-card" href="guides/aws-kms-secrets.html" data-search="aws kms key management secrets manager encryption cmk rotation envelope cross-account">
+                <div class="gc-title">KMS &amp; Secrets Manager — Chiffrement &amp; Secrets</div>
+                <div class="gc-desc">CMK, rotation automatique, Key Policy, chiffrement en enveloppe, Secrets Manager vs Parameter Store, accès cross-account.</div>
+                <div class="gc-footer"><span class="gc-tag aws">Chiffrement</span><span class="gc-arrow">→ Ouvrir</span></div>
+            </a>
+
+            <a class="guide-card" href="guides/aws-s3.html" data-search="aws s3 storage bucket policy acl encryption versioning object lock worm replication">
+                <div class="gc-title">Amazon S3 — Sécurité du Stockage Objet</div>
+                <div class="gc-desc">Block Public Access, Bucket Policies, chiffrement SSE-S3/SSE-KMS, versioning, MFA Delete, Object Lock (WORM), accès logs, replication.</div>
+                <div class="gc-footer"><span class="gc-tag aws">Stockage</span><span class="gc-arrow">→ Ouvrir</span></div>
+            </a>
+
+            <a class="guide-card" href="guides/aws-rds.html" data-search="aws rds database security encryption multi-az snapshots iam auth audit logs">
+                <div class="gc-title">Amazon RDS — Sécurité des Bases de Données</div>
+                <div class="gc-desc">Chiffrement au repos/transit, authentification IAM, groupes de sous-réseaux, parameter groups durcis, audit logs, snapshots chiffrés.</div>
+                <div class="gc-footer"><span class="gc-tag aws">BDD</span><span class="gc-arrow">→ Ouvrir</span></div>
+            </a>
+
+            <a class="guide-card" href="guides/aws-ec2.html" data-search="aws ec2 instance security hardening imds ssm patch manager ebs encryption bastion">
+                <div class="gc-title">EC2 — Durcissement des Instances</div>
+                <div class="gc-desc">IMDSv2 obligatoire, accès via SSM Session Manager (sans SSH exposé), Patch Manager, chiffrement EBS, groupes de sécurité minimalistes.</div>
+                <div class="gc-footer"><span class="gc-tag aws">Compute</span><span class="gc-arrow">→ Ouvrir</span></div>
+            </a>
+
+            <a class="guide-card" href="guides/aws-eks.html" data-search="aws eks kubernetes security rbac pod security network policies irsa audit logs">
+                <div class="gc-title">Amazon EKS — Sécurité Kubernetes</div>
+                <div class="gc-desc">RBAC Kubernetes, Pod Security Standards, network policies, audit logs EKS, IRSA (IAM Roles for Service Accounts), gestion des secrets.</div>
+                <div class="gc-footer"><span class="gc-tag aws">Kubernetes</span><span class="gc-arrow">→ Ouvrir</span></div>
+            </a>
+
+            <a class="guide-card" href="guides/aws-lambda.html" data-search="aws lambda serverless security iam role vpc execution environment variables layers">
+                <div class="gc-title">AWS Lambda — Sécurité Serverless</div>
+                <div class="gc-desc">Permissions minimales des rôles d'exécution, déploiement en VPC, chiffrement des variables d'environnement, gestion des couches (layers).</div>
+                <div class="gc-footer"><span class="gc-tag aws">Serverless</span><span class="gc-arrow">→ Ouvrir</span></div>
+            </a>
+
+            <a class="guide-card" href="guides/aws-api-gateway.html" data-search="aws api gateway rest http security waf authentication authorization throttling tls">
+                <div class="gc-title">API Gateway — Sécurité des APIs REST &amp; HTTP</div>
+                <div class="gc-desc">Authentification Cognito/IAM/Lambda Authorizer, intégration WAF, throttling, logging, mutual TLS, déploiement sécurisé par stage.</div>
+                <div class="gc-footer"><span class="gc-tag aws">API</span><span class="gc-arrow">→ Ouvrir</span></div>
+            </a>
+
+            <a class="guide-card" href="guides/aws-cognito.html" data-search="aws cognito identity authentication user pool mfa tokens saml oidc federation">
+                <div class="gc-title">Amazon Cognito — Identité &amp; Authentification</div>
+                <div class="gc-desc">User Pools, Identity Pools, MFA adaptatif, politiques de mot de passe, fédération SAML/OIDC, gestion des tokens JWT et rotation.</div>
+                <div class="gc-footer"><span class="gc-tag aws">Identité</span><span class="gc-arrow">→ Ouvrir</span></div>
+            </a>
+
+            <a class="guide-card" href="guides/aws-macie.html" data-search="aws macie data discovery pii s3 classification sensitive financial personal data">
+                <div class="gc-title">Amazon Macie — Protection des Données S3</div>
+                <div class="gc-desc">Découverte et classification de données sensibles (PII, financières) dans S3, jobs de découverte, intégration Security Hub/EventBridge.</div>
+                <div class="gc-footer"><span class="gc-tag aws">DLP</span><span class="gc-arrow">→ Ouvrir</span></div>
+            </a>
+
+            <a class="guide-card" href="guides/aws-backup.html" data-search="aws backup vault recovery plan policies cross-region account worm lock restore testing">
+                <div class="gc-title">AWS Backup — Sauvegarde &amp; Restauration</div>
+                <div class="gc-desc">Plans de sauvegarde, backup vault, rétention et archivage Glacier, backup cross-région/cross-compte, Vault Lock (WORM), tests de restauration.</div>
+                <div class="gc-footer"><span class="gc-tag aws">Backup</span><span class="gc-arrow">→ Ouvrir</span></div>
+            </a>
+
+            <a class="guide-card" href="guides/aws-cost.html" data-search="aws cost billing budgets cost explorer savings plans rightsizing trusted advisor finops">
+                <div class="gc-title">AWS Cost — Gouvernance Financière</div>
+                <div class="gc-desc">Cost Explorer, budgets et alertes, Savings Plans, rightsizing des instances, allocation par tags, Trusted Advisor recommandations coûts.</div>
+                <div class="gc-footer"><span class="gc-tag aws">FinOps</span><span class="gc-arrow">→ Ouvrir</span></div>
+            </a>
+
+            <a class="guide-card" href="guides/aws-devsecops.html" data-search="aws devsecops pipeline cicd security sast dast iac scanning secrets codepipeline sbom">
+                <div class="gc-title">DevSecOps AWS — Sécurité dans le CI/CD</div>
+                <div class="gc-desc">Intégration SAST/DAST dans CodePipeline, scan IaC (CFn Guard, Checkov), signature d'artefacts, gestion des secrets dans les pipelines.</div>
+                <div class="gc-footer"><span class="gc-tag aws">DevSecOps</span><span class="gc-arrow">→ Ouvrir</span></div>
+            </a>
+
+        </div>
+        <div class="no-results" id="no-aws">Aucun guide AWS ne correspond à votre recherche.</div>
+    </div>
+
+    <!-- ════════════════════════ AZURE ════════════════════════ -->
+    <div class="section" id="azure">
+        <div class="cat-header azure">
+            <div class="cat-icon azure">⚡</div>
+            <div>
+                <div class="cat-title">Microsoft Azure</div>
+                <div class="cat-count">16 guides — sécurité réseau, gouvernance, conteneurs, stockage, identité, DevOps</div>
+            </div>
+        </div>
+        <div class="guides-grid" id="grid-azure">
+
+            <a class="guide-card" href="guides/azure-aks.html" data-search="azure aks kubernetes security rbac network policy defender containers api server">
+                <div class="gc-title">Azure Kubernetes Service — Sécurité des Clusters</div>
+                <div class="gc-desc">RBAC Kubernetes/Azure, Network Policies, Microsoft Defender for Containers, admission controllers, secrets management, API server hardening.</div>
+                <div class="gc-footer"><span class="gc-tag azure">AKS</span><span class="gc-arrow">→ Ouvrir</span></div>
+            </a>
+
+            <a class="guide-card" href="guides/azure-governance.html" data-search="azure governance policy rbac management groups subscriptions blueprints regulatory compliance">
+                <div class="gc-title">Azure Governance — Policies, RBAC &amp; Management Groups</div>
+                <div class="gc-desc">Azure Policy, Management Groups, initiatives de conformité réglementaire, RBAC tenant, Blueprints, Regulatory Compliance dashboard.</div>
+                <div class="gc-footer"><span class="gc-tag azure">Gouvernance</span><span class="gc-arrow">→ Ouvrir</span></div>
+            </a>
+
+            <a class="guide-card" href="guides/azure-networking.html" data-search="azure networking vnet nsg udr hub spoke peering private endpoint ddos protection segmentation">
+                <div class="gc-title">Azure Networking — Architecture &amp; Sécurité Réseau</div>
+                <div class="gc-desc">VNet, NSG, UDR, topologie hub-spoke, Private Endpoints, peering, DDoS Protection Standard, segmentation réseau et flux autorisés.</div>
+                <div class="gc-footer"><span class="gc-tag azure">Réseau</span><span class="gc-arrow">→ Ouvrir</span></div>
+            </a>
+
+            <a class="guide-card" href="guides/azure-firewall.html" data-search="azure firewall premium idps tls inspection threat intel network application rules manager">
+                <div class="gc-title">Azure Firewall Premium — Filtrage &amp; IDPS</div>
+                <div class="gc-desc">Règles réseau/application, IDPS, inspection TLS, Threat Intelligence, Azure Firewall Manager, intégration hub-spoke, structured logging.</div>
+                <div class="gc-footer"><span class="gc-tag azure">Firewall</span><span class="gc-arrow">→ Ouvrir</span></div>
+            </a>
+
+            <a class="guide-card" href="guides/azure-waf.html" data-search="azure waf front door application gateway owasp bot protection rules exclusions">
+                <div class="gc-title">Azure WAF — Web Application Firewall</div>
+                <div class="gc-desc">WAF sur Application Gateway et Azure Front Door, règles OWASP Core Rule Set 3.2, Bot Manager, exclusions, modes détection/prévention.</div>
+                <div class="gc-footer"><span class="gc-tag azure">WAF</span><span class="gc-arrow">→ Ouvrir</span></div>
+            </a>
+
+            <a class="guide-card" href="guides/azure-keyvault.html" data-search="azure key vault secrets certificates keys rbac soft delete purge protection managed identity rotation">
+                <div class="gc-title">Key Vault — Secrets, Clés &amp; Certificats</div>
+                <div class="gc-desc">Modèle RBAC vs Access Policies, soft delete, purge protection, rotation automatique des secrets, Private Endpoint, intégration Managed Identity.</div>
+                <div class="gc-footer"><span class="gc-tag azure">Secrets</span><span class="gc-arrow">→ Ouvrir</span></div>
+            </a>
+
+            <a class="guide-card" href="guides/azure-monitor.html" data-search="azure monitor log analytics metrics alerts diagnostic settings workspace application insights workbooks">
+                <div class="gc-title">Azure Monitor — Observabilité &amp; Alertes</div>
+                <div class="gc-desc">Log Analytics workspace, Diagnostic Settings, alertes métriques/logs, Application Insights, workbooks de sécurité, intégration Sentinel.</div>
+                <div class="gc-footer"><span class="gc-tag azure">Monitoring</span><span class="gc-arrow">→ Ouvrir</span></div>
+            </a>
+
+            <a class="guide-card" href="guides/azure-storage.html" data-search="azure storage blob security encryption sas private endpoint rbac soft delete versioning immutability">
+                <div class="gc-title">Azure Storage — Sécurité du Stockage</div>
+                <div class="gc-desc">Chiffrement CMK, SAS tokens sécurisées, accès réseau restreint (Private Endpoint), RBAC Storage, Soft Delete, versioning, immutabilité WORM.</div>
+                <div class="gc-footer"><span class="gc-tag azure">Stockage</span><span class="gc-arrow">→ Ouvrir</span></div>
+            </a>
+
+            <a class="guide-card" href="guides/azure-sql.html" data-search="azure sql database security tde auditing defender vulnerability assessment always encrypted firewall">
+                <div class="gc-title">Azure SQL — Sécurité des Bases de Données</div>
+                <div class="gc-desc">Transparent Data Encryption, audit logs, Microsoft Defender for SQL, évaluation des vulnérabilités, Always Encrypted, firewall SQL.</div>
+                <div class="gc-footer"><span class="gc-tag azure">BDD</span><span class="gc-arrow">→ Ouvrir</span></div>
+            </a>
+
+            <a class="guide-card" href="guides/azure-apim.html" data-search="azure apim api management security jwt oauth policies rate limiting threat protection private endpoint">
+                <div class="gc-title">API Management — Passerelle &amp; Sécurité des APIs</div>
+                <div class="gc-desc">Politiques de sécurité (JWT, OAuth2, certificats), rate limiting, threat protection, Private Endpoint, intégration SIEM et Developer Portal sécurisé.</div>
+                <div class="gc-footer"><span class="gc-tag azure">API</span><span class="gc-arrow">→ Ouvrir</span></div>
+            </a>
+
+            <a class="guide-card" href="guides/azure-appservice.html" data-search="azure app service security managed identity vnet integration slots deployment tls easyauth">
+                <div class="gc-title">App Service — Sécurité des Web Apps</div>
+                <div class="gc-desc">Managed Identity, VNet Integration, accès restreint (IP/service endpoint), déploiement sécurisé, TLS 1.2 minimum, EasyAuth, slots de déploiement.</div>
+                <div class="gc-footer"><span class="gc-tag azure">Web</span><span class="gc-arrow">→ Ouvrir</span></div>
+            </a>
+
+            <a class="guide-card" href="guides/azure-devops.html" data-search="azure devops pipeline security scanning secrets branch policies service connections audit logs approvals">
+                <div class="gc-title">Azure DevOps — Sécurité du Pipeline CI/CD</div>
+                <div class="gc-desc">Branch policies, service connections sécurisées, scan de secrets dans les repos, gestion des agents, audit logs, approbations de déploiement.</div>
+                <div class="gc-footer"><span class="gc-tag azure">DevSecOps</span><span class="gc-arrow">→ Ouvrir</span></div>
+            </a>
+
+            <a class="guide-card" href="guides/azure-arc.html" data-search="azure arc hybrid multi-cloud governance policy defender servers kubernetes gitops inventory">
+                <div class="gc-title">Azure Arc — Gouvernance Hybride &amp; Multi-cloud</div>
+                <div class="gc-desc">Onboarding serveurs/Kubernetes hybrides, Azure Policy à l'échelle, Defender for Servers sur Arc, configurations GitOps, inventaire unifié.</div>
+                <div class="gc-footer"><span class="gc-tag azure">Hybride</span><span class="gc-arrow">→ Ouvrir</span></div>
+            </a>
+
+            <a class="guide-card" href="guides/azure-backup.html" data-search="azure backup vault recovery services immutable soft delete geo-redundancy restore testing">
+                <div class="gc-title">Azure Backup — Sauvegarde &amp; Restauration</div>
+                <div class="gc-desc">Recovery Services Vault, Backup Center, soft delete, vault immutabilité, politique de sauvegarde cross-région, alertes et tests de restauration.</div>
+                <div class="gc-footer"><span class="gc-tag azure">Backup</span><span class="gc-arrow">→ Ouvrir</span></div>
+            </a>
+
+            <a class="guide-card" href="guides/azure-virtualdesktop.html" data-search="azure virtual desktop avd vdi security conditional access fslogix rdp shortpath host pools">
+                <div class="gc-title">Azure Virtual Desktop — VDI &amp; Sécurité</div>
+                <div class="gc-desc">Host pools sécurisés, session hosts durcis, FSLogix profiles, Conditional Access pour AVD, RDP Shortpath, chiffrement disques et accès réseau restreint.</div>
+                <div class="gc-footer"><span class="gc-tag azure">VDI</span><span class="gc-arrow">→ Ouvrir</span></div>
+            </a>
+
+            <a class="guide-card" href="guides/azure-cost.html" data-search="azure cost management budgets alerts advisor rightsizing reservations savings plans finops tags">
+                <div class="gc-title">Azure Cost — Gouvernance Financière</div>
+                <div class="gc-desc">Cost Management, budgets et alertes, Azure Advisor recommandations, Reservations, rightsizing VMs, allocation par tags, exports automatisés.</div>
+                <div class="gc-footer"><span class="gc-tag azure">FinOps</span><span class="gc-arrow">→ Ouvrir</span></div>
+            </a>
+
+        </div>
+        <div class="no-results" id="no-azure">Aucun guide Azure ne correspond à votre recherche.</div>
+    </div>
+
+    <!-- ════════════════════════ M365 ════════════════════════ -->
+    <div class="section" id="m365">
+        <div class="cat-header m365">
+            <div class="cat-icon m365">💼</div>
+            <div>
+                <div class="cat-title">Microsoft 365</div>
+                <div class="cat-count">8 guides — collaboration, messagerie, gestion des appareils, gouvernance des données</div>
+            </div>
+        </div>
+        <div class="guides-grid" id="grid-m365">
+
+            <a class="guide-card" href="guides/m365-intune.html" data-search="intune mdm mam device compliance windows autopilot configuration profiles conditional access">
+                <div class="gc-title">Microsoft Intune — MDM/MAM &amp; Conformité Appareils</div>
+                <div class="gc-desc">Autopilot, profils de configuration Windows/macOS, politiques de conformité, App Protection Policies (MAM), RBAC Intune, CIS Intune Benchmark.</div>
+                <div class="gc-footer"><span class="gc-tag m365">Intune</span><span class="gc-arrow">→ Ouvrir</span></div>
+            </a>
+
+            <a class="guide-card" href="guides/m365-mdm-mobile.html" data-search="intune ios android mobile mdm ade zero-touch vpp apns enrollment work profile byod">
+                <div class="gc-title">MDM Mobile — iOS/iPadOS &amp; Android Enterprise</div>
+                <div class="gc-desc">ADE/Apple Business Manager, Android Zero-Touch, Work Profile BYOD, App Protection Policies, VPP, Managed Google Play, MTD (Defender mobile).</div>
+                <div class="gc-footer"><span class="gc-tag m365">Mobile</span><span class="gc-arrow">→ Ouvrir</span></div>
+            </a>
+
+            <a class="guide-card" href="guides/m365-exchange.html" data-search="exchange online email security eop mdo anti-spam phishing transport rules audit mobile">
+                <div class="gc-title">Exchange Online — Messagerie &amp; Protection Email</div>
+                <div class="gc-desc">EOP/MDO, anti-spam/anti-malware, anti-phishing, transport rules, audit logs, Mobile Device Access Policies, connecteurs hybrides, autodiscover.</div>
+                <div class="gc-footer"><span class="gc-tag m365">Exchange</span><span class="gc-arrow">→ Ouvrir</span></div>
+            </a>
+
+            <a class="guide-card" href="guides/m365-sharepoint.html" data-search="sharepoint online sharing governance external access sensitivity labels dlp versioning sites">
+                <div class="gc-title">SharePoint Online — Partage &amp; Gouvernance</div>
+                <div class="gc-desc">Politiques de partage externe, gestion des sites, Conditional Access SharePoint, sensitivity labels, DLP, versioning, corbeille et rétention.</div>
+                <div class="gc-footer"><span class="gc-tag m365">SharePoint</span><span class="gc-arrow">→ Ouvrir</span></div>
+            </a>
+
+            <a class="guide-card" href="guides/m365-teams.html" data-search="microsoft teams security governance external guest meetings channels apps dlp recording compliance">
+                <div class="gc-title">Microsoft Teams — Collaboration &amp; Sécurité</div>
+                <div class="gc-desc">Accès guest/externe, politiques de réunion, gouvernance des canaux et équipes, APP policies, DLP Teams, enregistrement de conformité, information barriers.</div>
+                <div class="gc-footer"><span class="gc-tag m365">Teams</span><span class="gc-arrow">→ Ouvrir</span></div>
+            </a>
+
+            <a class="guide-card" href="guides/m365-power-platform.html" data-search="power platform power apps automate governance dlp environment tenant policies connectors coe">
+                <div class="gc-title">Power Platform — Gouvernance &amp; DLP</div>
+                <div class="gc-desc">Politiques DLP Power Platform, gestion des environnements, classification des connecteurs, admin center, Center of Excellence toolkit, audit logs.</div>
+                <div class="gc-footer"><span class="gc-tag m365">Power Platform</span><span class="gc-arrow">→ Ouvrir</span></div>
+            </a>
+
+            <a class="guide-card" href="guides/m365-backup.html" data-search="m365 backup microsoft 365 exchange onedrive sharepoint teams recovery granular restore vaulting">
+                <div class="gc-title">Microsoft 365 Backup — Sauvegarde &amp; Restauration</div>
+                <div class="gc-desc">Backup natif M365 (Exchange, OneDrive, SharePoint), rétention avancée, restauration granulaire, intégration Purview, règle 3-2-1 appliquée à M365.</div>
+                <div class="gc-footer"><span class="gc-tag m365">Backup</span><span class="gc-arrow">→ Ouvrir</span></div>
+            </a>
+
+            <a class="guide-card" href="guides/m365-copilot.html" data-search="microsoft 365 copilot ai governance sensitivity labels oversharing data security plugins agents audit">
+                <div class="gc-title">Microsoft 365 Copilot — Gouvernance &amp; Sécurité IA</div>
+                <div class="gc-desc">Contrôle de l'oversharing avant activation, sensitivity labels requis, audit des interactions Copilot, licences, data residency, gestion des plugins et agents.</div>
+                <div class="gc-footer"><span class="gc-tag m365">Copilot AI</span><span class="gc-arrow">→ Ouvrir</span></div>
+            </a>
+
+        </div>
+        <div class="no-results" id="no-m365">Aucun guide Microsoft 365 ne correspond à votre recherche.</div>
+    </div>
+
+    <!-- ════════════════════════ DEFENDER ════════════════════════ -->
+    <div class="section" id="defender">
+        <div class="cat-header def">
+            <div class="cat-icon def">🛡️</div>
+            <div>
+                <div class="cat-title">Microsoft Defender</div>
+                <div class="cat-count">6 guides — XDR, endpoint, identité, cloud, messagerie, applications cloud</div>
+            </div>
+        </div>
+        <div class="guides-grid" id="grid-defender">
+
+            <a class="guide-card" href="guides/defender-xdr.html" data-search="defender xdr soc microsoft 365 defender incidents alerts hunting air automated investigation response">
+                <div class="gc-title">Microsoft Defender XDR — SOC &amp; Réponse Intégrée</div>
+                <div class="gc-desc">Corrélation multi-signaux XDR, incidents automatiques, Advanced Hunting (KQL), réponse automatisée (AIR), MXDR, portail unifié security.microsoft.com.</div>
+                <div class="gc-footer"><span class="gc-tag def">XDR</span><span class="gc-arrow">→ Ouvrir</span></div>
+            </a>
+
+            <a class="guide-card" href="guides/defender-endpoint.html" data-search="defender endpoint edr mde antivirus asr rules attack surface reduction onboarding tamper protection intune">
+                <div class="gc-title">Defender for Endpoint — EDR &amp; Protection Postes</div>
+                <div class="gc-desc">Onboarding MDE, ASR Rules, antivirus, EDR en mode bloc, gestion des vulnérabilités TVM, Tamper Protection, intégration Intune/SCCM/Azure Arc.</div>
+                <div class="gc-footer"><span class="gc-tag def">Endpoint</span><span class="gc-arrow">→ Ouvrir</span></div>
+            </a>
+
+            <a class="guide-card" href="guides/defender-identity.html" data-search="defender identity mdi active directory domain controllers lateral movement pass the hash dcsync kerberoasting">
+                <div class="gc-title">Defender for Identity — Détection Active Directory</div>
+                <div class="gc-desc">Capteurs sur DCs, détection de mouvements latéraux (PtH, DCSync, Kerberoasting), intégration XDR, alertes d'identité compromise, actions de remédiation.</div>
+                <div class="gc-footer"><span class="gc-tag def">Identité AD</span><span class="gc-arrow">→ Ouvrir</span></div>
+            </a>
+
+            <a class="guide-card" href="guides/defender-office.html" data-search="defender office 365 mdo email protection safe links safe attachments anti-phishing campaign simulator">
+                <div class="gc-title">Defender for Office 365 — Protection Messagerie &amp; Collab</div>
+                <div class="gc-desc">Safe Links, Safe Attachments, anti-phishing impersonation, Campaign Views, Attack Simulator, reporting MDO, intégration XDR et Purview.</div>
+                <div class="gc-footer"><span class="gc-tag def">Email</span><span class="gc-arrow">→ Ouvrir</span></div>
+            </a>
+
+            <a class="guide-card" href="guides/defender-cloud.html" data-search="defender cloud mdc cspm cwpp secure score recommendations alerts azure workloads plans">
+                <div class="gc-title">Defender for Cloud — CSPM &amp; CWPP</div>
+                <div class="gc-desc">Secure Score, recommandations de durcissement, CSPM Cloud Security Posture, CWPP workloads, Defender Plans (Servers, Containers, SQL…), alertes cloud.</div>
+                <div class="gc-footer"><span class="gc-tag def">CSPM</span><span class="gc-arrow">→ Ouvrir</span></div>
+            </a>
+
+            <a class="guide-card" href="guides/defender-cloud-apps.html" data-search="defender cloud apps mcas casb shadow it app governance oauth conditional access session policy dlp">
+                <div class="gc-title">Defender for Cloud Apps — CASB &amp; Shadow IT</div>
+                <div class="gc-desc">Découverte Shadow IT, App governance OAuth, politiques de session/accès conditionnel, DLP dans les apps cloud (SaaS), intégration Entra ID/XDR.</div>
+                <div class="gc-footer"><span class="gc-tag def">CASB</span><span class="gc-arrow">→ Ouvrir</span></div>
+            </a>
+
+        </div>
+        <div class="no-results" id="no-defender">Aucun guide Defender ne correspond à votre recherche.</div>
+    </div>
+
+    <!-- ════════════════════════ ENTRA ════════════════════════ -->
+    <div class="section" id="entra">
+        <div class="cat-header entra">
+            <div class="cat-icon entra">🔑</div>
+            <div>
+                <div class="cat-title">Microsoft Entra ID</div>
+                <div class="cat-count">4 guides — IAM cloud, accès conditionnel, gouvernance des identités, synchronisation hybride</div>
+            </div>
+        </div>
+        <div class="guides-grid" id="grid-entra">
+
+            <a class="guide-card" href="guides/entra-id.html" data-search="entra id azure ad conditional access mfa privileged identity protection sign-in pim sspr named locations">
+                <div class="gc-title">Microsoft Entra ID — IAM Cloud &amp; Accès Conditionnel</div>
+                <div class="gc-desc">Conditional Access (named locations, compliance, MFA), Identity Protection, PIM (Privileged Identity Management), audit des connexions, SSPR, passwordless.</div>
+                <div class="gc-footer"><span class="gc-tag entra">Entra ID</span><span class="gc-arrow">→ Ouvrir</span></div>
+            </a>
+
+            <a class="guide-card" href="guides/entra-governance.html" data-search="entra governance access reviews entitlement management lifecycle workflows groups provisioning roles">
+                <div class="gc-title">Entra ID Governance — Cycles de Vie &amp; Accès</div>
+                <div class="gc-desc">Access Reviews automatisées, Entitlement Management (packages d'accès), Lifecycle Workflows (onboarding/offboarding), provisioning automatique SCIM.</div>
+                <div class="gc-footer"><span class="gc-tag entra">Governance</span><span class="gc-arrow">→ Ouvrir</span></div>
+            </a>
+
+            <a class="guide-card" href="guides/entra-connect.html" data-search="entra connect azure ad connect sync hybrid identity password hash seamless sso writeback staging server">
+                <div class="gc-title">Entra Connect — Synchronisation Hybride AD</div>
+                <div class="gc-desc">Password Hash Sync vs PTA vs ADFS, Seamless SSO, writeback (password, group, device), filtrage des OUs, haute disponibilité et staging server.</div>
+                <div class="gc-footer"><span class="gc-tag entra">Hybride</span><span class="gc-arrow">→ Ouvrir</span></div>
+            </a>
+
+            <a class="guide-card" href="guides/entra-external-id.html" data-search="entra external id b2b guest b2c external users cross-tenant access federation mssp inbound outbound">
+                <div class="gc-title">Entra External ID — B2B &amp; Identités Externes</div>
+                <div class="gc-desc">Invitation B2B, Cross-Tenant Access Settings (inbound/outbound), politiques d'accès externes, Conditional Access sur guests, scénarios MSSP.</div>
+                <div class="gc-footer"><span class="gc-tag entra">B2B</span><span class="gc-arrow">→ Ouvrir</span></div>
+            </a>
+
+        </div>
+        <div class="no-results" id="no-entra">Aucun guide Entra ne correspond à votre recherche.</div>
+    </div>
+
+    <!-- ════════════════════════ PURVIEW ════════════════════════ -->
+    <div class="section" id="purview">
+        <div class="cat-header purv">
+            <div class="cat-icon purv">🔒</div>
+            <div>
+                <div class="cat-title">Microsoft Purview</div>
+                <div class="cat-count">4 guides — conformité, DLP, protection des données, sécurité email</div>
+            </div>
+        </div>
+        <div class="guides-grid" id="grid-purview">
+
+            <a class="guide-card" href="guides/purview-compliance.html" data-search="purview compliance dlp retention labels records management ediscovery audit insider risk communication">
+                <div class="gc-title">Purview Compliance — DLP, Retention &amp; eDiscovery</div>
+                <div class="gc-desc">Sensitivity Labels, DLP policies multi-workload, Retention Policies/Labels, Records Management, Audit (Standard/Premium), Insider Risk Management.</div>
+                <div class="gc-footer"><span class="gc-tag purv">Conformité</span><span class="gc-arrow">→ Ouvrir</span></div>
+            </a>
+
+            <a class="guide-card" href="guides/purview-mip.html" data-search="purview mip sensitivity labels classification protection encryption rights management auto-labeling trainable">
+                <div class="gc-title">Purview MIP — Classification &amp; Protection des Données</div>
+                <div class="gc-desc">Taxonomie des sensitivity labels, auto-labeling (service &amp; client), chiffrement RMS, politiques de protection, trainable classifiers, étiquetage obligatoire.</div>
+                <div class="gc-footer"><span class="gc-tag purv">MIP / Labels</span><span class="gc-arrow">→ Ouvrir</span></div>
+            </a>
+
+            <a class="guide-card" href="guides/purview-email-security.html" data-search="purview email security eop mdo anti-spam dkim dmarc spf connectors quarantine policies">
+                <div class="gc-title">Purview Email Security — EOP &amp; Protection Messagerie</div>
+                <div class="gc-desc">SPF/DKIM/DMARC, anti-spam/anti-malware EOP, politiques de quarantaine, Safe Attachments/Links MDO, Attack Simulator, DMARC reporting.</div>
+                <div class="gc-footer"><span class="gc-tag purv">Email Auth</span><span class="gc-arrow">→ Ouvrir</span></div>
+            </a>
+
+            <a class="guide-card" href="guides/purview_compliance_guide_v2.html" data-search="purview compliance v2 extended communication data lifecycle compliance manager ediscovery premium irm">
+                <div class="gc-title">Purview Compliance Guide v2 — Périmètre Étendu</div>
+                <div class="gc-desc">Version étendue : Communication Compliance, Data Lifecycle Management, Compliance Manager, eDiscovery Premium, IRM avancé, Adaptive Protection.</div>
+                <div class="gc-footer"><span class="gc-tag purv">v2 — Étendu</span><span class="gc-arrow">→ Ouvrir</span></div>
+            </a>
+
+        </div>
+        <div class="no-results" id="no-purview">Aucun guide Purview ne correspond à votre recherche.</div>
+    </div>
+
+    <!-- ════════════════════════ SÉCURITÉ TRANSVERSE ════════════════════════ -->
+    <div class="section" id="securite">
+        <div class="cat-header sec">
+            <div class="cat-icon sec">🔍</div>
+            <div>
+                <div class="cat-title">Sécurité Transverse</div>
+                <div class="cat-count">3 guides — SIEM/SOAR, intégration CI/CD, IA pour le SOC</div>
+            </div>
+        </div>
+        <div class="guides-grid" id="grid-security">
+
+            <a class="guide-card" href="guides/sentinel.html" data-search="microsoft sentinel siem soar analytics rules hunting ueba playbooks connectors kql workspace">
+                <div class="gc-title">Microsoft Sentinel — SIEM/SOAR &amp; Threat Hunting</div>
+                <div class="gc-desc">Connecteurs de données, Analytics Rules (NRT/Scheduled), chasse aux menaces (Hunting KQL), UEBA, Playbooks d'automatisation, coût workspace Log Analytics.</div>
+                <div class="gc-footer"><span class="gc-tag sec">SIEM/SOAR</span><span class="gc-arrow">→ Ouvrir</span></div>
+            </a>
+
+            <a class="guide-card" href="guides/copilot-security.html" data-search="microsoft security copilot ai soc promptbook investigation incident response rbac plugins skills">
+                <div class="gc-title">Microsoft Security Copilot — IA pour le SOC</div>
+                <div class="gc-desc">Prompts efficaces pour le SOC, intégration Defender XDR/Sentinel, investigation d'incidents assistée IA, Promptbooks, contrôle d'accès RBAC Copilot.</div>
+                <div class="gc-footer"><span class="gc-tag sec">Copilot AI</span><span class="gc-arrow">→ Ouvrir</span></div>
+            </a>
+
+            <a class="guide-card" href="guides/devops-security.html" data-search="devops security devsecops pipeline sast dast iac secrets scanning supply chain sbom sigstore">
+                <div class="gc-title">DevSecOps — Intégration Sécurité dans le CI/CD</div>
+                <div class="gc-desc">SAST/DAST, scan de secrets (GitGuardian/TruffleHog), IaC security (tfsec/Checkov), supply chain security (SBOM, Sigstore), politiques de merge sécurisées.</div>
+                <div class="gc-footer"><span class="gc-tag sec">DevSecOps</span><span class="gc-arrow">→ Ouvrir</span></div>
+            </a>
+
+        </div>
+        <div class="no-results" id="no-security">Aucun guide de sécurité transverse ne correspond à votre recherche.</div>
+    </div>
+
+</div><!-- /container -->
+
+<!-- ════════════════════════ CTA BAND ════════════════════════ -->
+<section class="cta-band">
+    <h2>Audit, déploiement ou veille — un seul livrable.</h2>
+    <p>Décideur, admin ou architecte : chaque guide s'adresse aux trois audiences en parallèle. Scénarios d'attaque, étapes portail, sources réglementaires.</p>
+    <a href="#aws" class="btn-hero primary">Commencer maintenant →</a>
+</section>
+
+<!-- ════════════════════════ FOOTER ════════════════════════ -->
+<footer>
+    <div class="footer-inner">
+
+        <!-- Colonne 1 : marque + description + badges référentiels -->
+        <div>
+            <div class="footer-logo">📘 Documentation Sécurité Cloud</div>
+            <p class="footer-desc">
+                66 guides actionnables couvrant Microsoft 365, Azure, AWS, Entra ID, Defender,
+                Purview et Sentinel. Générés par agent IA, validés par audit factuel, maintenus à jour en continu.
+            </p>
+            <div class="footer-badges">
+                <span class="fbadge">CIS Benchmarks v8.1</span>
+                <span class="fbadge">NIST 800-53 Rev.5</span>
+                <span class="fbadge">ANSSI</span>
+                <span class="fbadge">RGPD</span>
+                <span class="fbadge">ISO 27001</span>
+            </div>
+        </div>
+
+        <!-- Colonne 2 : domaines en grille 2×3 -->
+        <div>
+            <h5>Domaines</h5>
+            <div class="footer-nav-grid">
+                <a href="#aws" class="flink">☁️ AWS</a>
+                <a href="#azure" class="flink">⚡ Azure</a>
+                <a href="#m365" class="flink">💼 M365</a>
+                <a href="#defender" class="flink">🛡️ Defender</a>
+                <a href="#entra" class="flink">🔑 Entra ID</a>
+                <a href="#purview" class="flink">🔒 Purview</a>
+                <a href="#securite" class="flink">🔍 Sécurité</a>
+            </div>
+        </div>
+
+        <!-- Colonne 3 : liens utiles -->
+        <div class="footer-resources">
+            <h5>Ressources</h5>
+            <a href="https://github.com/qlejard/Documentation" target="_blank" rel="noopener">↗ Dépôt source GitHub</a>
+            <a href="https://github.com/qlejard/docs-site" target="_blank" rel="noopener">↗ Site GitHub Pages</a>
+            <a href="#apropos">ℹ Méthodologie</a>
+            <a href="https://github.com/qlejard/Documentation/blob/main/standards/QUALITY_STANDARDS.md" target="_blank" rel="noopener">✔ Standards qualité</a>
+        </div>
+
+    </div>
+    <div class="footer-copy">
+        © 2025 · Maintenu à la main, propulsé par IA · Site statique HTML — aucune dépendance externe
+    </div>
+</footer>
+
+<script>
+    /* ── Recherche client-side ────────────────────────────────────── */
+    const CATEGORIES = ['aws', 'azure', 'm365', 'defender', 'entra', 'purview', 'security'];
+
+    function filterGuides(query) {
+        const q = query.trim().toLowerCase();
+
+        if (!q) {
+            document.querySelectorAll('.guide-card').forEach(c => c.classList.remove('hidden'));
+            CATEGORIES.forEach(cat => setNoResults(cat, false));
+            return;
+        }
+
+        CATEGORIES.forEach(cat => {
+            const grid = document.getElementById('grid-' + cat);
+            if (!grid) return;
+            let anyVisible = false;
+            grid.querySelectorAll('.guide-card').forEach(card => {
+                const text = [
+                    card.querySelector('.gc-title').textContent,
+                    card.querySelector('.gc-desc').textContent,
+                    card.dataset.search || ''
+                ].join(' ').toLowerCase();
+
+                const matches = q.split(/\s+/).every(word => text.includes(word));
+                card.classList.toggle('hidden', !matches);
+                if (matches) anyVisible = true;
+            });
+            setNoResults(cat, !anyVisible);
+        });
+    }
+
+    function setNoResults(cat, show) {
+        const el = document.getElementById('no-' + cat);
+        if (el) el.style.display = show ? 'block' : 'none';
+    }
+
+    /* ── Raccourci clavier "/" pour cibler la recherche ─────────── */
+    document.addEventListener('keydown', function (e) {
+        const input = document.getElementById('searchInput');
+        if (e.key === '/' && document.activeElement !== input) {
+            e.preventDefault();
+            input.focus();
+            input.select();
+        }
+        if (e.key === 'Escape' && document.activeElement === input) {
+            input.value = '';
+            filterGuides('');
+            input.blur();
+        }
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Guide Microsoft Security Copilot : architecture SCU, gouvernance, plugins, use cases SOC, promptbooks, co&ucirc;ts, conformit&eacute; et automatisation.">
+    <title>Microsoft Security Copilot &mdash; IA pour les SOC, Analyse des Incidents &amp; Chasse aux Menaces &mdash; Guide de Configuration &amp; Audit</title>
+    <style>
+        :root {
+            --azure-blue: #0078d4;
+            --azure-dark: #004578;
+            --azure-light: #deecf9;
+            --success-green: #107c10;
+            --warning-orange: #ff8c00;
+            --danger-red: #d13438;
+            --neutral-bg: #f3f2f1;
+            --neutral-dark: #323130;
+            --neutral-medium: #605e5c;
+            --white: #ffffff;
+            --shadow: 0 2px 8px rgba(0,0,0,0.12);
+            --radius: 8px;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--neutral-bg); color: var(--neutral-dark); line-height: 1.6; }
+        [id] { scroll-margin-top: 56px; }
+        a { color: var(--azure-blue); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        code { font-family: 'Cascadia Code', Consolas, 'Courier New', monospace; font-size: 0.88em; background: #e8e6e4; padding: 1px 6px; border-radius: 3px; }
+
+        .hero { background: var(--white); border-bottom: 3px solid var(--azure-blue); padding: 40px 36px 30px; text-align: center; max-width: 1400px; margin: 0 auto; }
+        .hero h1 { font-size: 1.6em; color: var(--azure-dark); margin-bottom: 8px; }
+        .hero .subtitle { font-size: 0.95em; color: var(--neutral-medium); max-width: 980px; margin: 0 auto; }
+        .badge-row { margin-top: 14px; display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; }
+        .badge { background: var(--neutral-bg); border: 1px solid #e1dfdd; color: var(--neutral-dark); padding: 3px 10px; border-radius: 4px; font-size: 0.78em; }
+        .meta-row { margin-top: 12px; display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; font-size: 0.8em; color: var(--neutral-medium); }
+
+        .nav-container { max-width: 1400px; margin: 0 auto; border-bottom: 1px solid #e1dfdd; position: sticky; top: 0; z-index: 100; background: var(--neutral-bg); }
+        .nav-container nav { display: flex; justify-content: flex-start; overflow-x: auto; }
+        .nav-container nav a { color: var(--neutral-medium); padding: 10px 14px; font-size: 0.8em; white-space: nowrap; border-bottom: 2px solid transparent; }
+        .nav-container nav a:hover { color: var(--azure-blue); border-bottom-color: var(--azure-blue); text-decoration: none; }
+
+        .container { max-width: 1400px; margin: 0 auto; padding: 30px 36px; }
+        .section { background: var(--white); border-radius: var(--radius); box-shadow: var(--shadow); padding: 26px 30px; margin-bottom: 24px; }
+        .section-header { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; padding-bottom: 12px; border-bottom: 2px solid var(--azure-blue); }
+        .section-header.red { border-bottom-color: var(--danger-red); }
+        .section-header.orange { border-bottom-color: var(--warning-orange); }
+        .section-header.green { border-bottom-color: var(--success-green); }
+        .section-number { background: var(--azure-blue); color: #fff; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; }
+        .section-number.red { background: var(--danger-red); }
+        .section-number.orange { background: var(--warning-orange); }
+        .section-number.green { background: var(--success-green); }
+        .section-title { font-size: 1.35em; color: var(--azure-dark); font-weight: 700; }
+        .section-desc { font-size: 0.9em; color: var(--neutral-medium); }
+
+        h3 { font-size: 1.02em; margin: 20px 0 10px; border-left: 3px solid var(--azure-blue); padding-left: 10px; }
+        .alert { border-radius: var(--radius); padding: 14px 16px; margin: 12px 0; font-size: 0.92em; }
+        .alert-info { background: #e6f2ff; border: 1px solid #b3d7ff; color: #004578; }
+        .alert-warn { background: #fff8e1; border: 1px solid #ffe082; color: #6d4c00; }
+        .alert-error { background: #fde7e9; border: 1px solid #f5c6cb; color: #721c24; }
+        .alert-ok { background: #e8f5e9; border: 1px solid #a5d6a7; color: #1b5e20; }
+
+        .lic { display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 0.72em; font-weight: 600; margin-left: 4px; }
+        .lic-azure-pay { background: #fff3cd; color: #6d4c00; }
+        .lic-std { background: var(--azure-light); color: var(--azure-blue); }
+        .lic-prem { background: #e8d4f0; color: #6b2fa0; }
+
+        .table-container { overflow-x: auto; border-radius: var(--radius); margin: 12px 0 16px; border: 1px solid #edebe9; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.9em; }
+        thead th { background: var(--azure-dark); color: #fff; text-align: left; padding: 10px 12px; font-size: 0.82em; text-transform: uppercase; }
+        tbody td { padding: 9px 12px; border-bottom: 1px solid #edebe9; vertical-align: top; }
+        tbody tr:last-child td { border-bottom: none; }
+        tr.row-ok { background: #f0fff0; }
+        tr.row-ko { background: #fff5f5; }
+        tr.row-warn { background: #fffdf0; }
+
+        .code-block { background: #1e1e1e; border-radius: var(--radius); overflow: hidden; margin: 10px 0 16px; }
+        .code-header { display: flex; justify-content: space-between; align-items: center; padding: 7px 12px; background: #2d2d2d; color: #a0a0a0; font-size: 0.78em; }
+        .copy-btn { background: var(--azure-blue); color: #fff; border: none; border-radius: 4px; padding: 3px 10px; cursor: pointer; font-size: 0.82em; }
+        .code-block pre { padding: 14px 16px; color: #d4d4d4; font-family: 'Cascadia Code', Consolas, monospace; font-size: 0.83em; overflow-x: auto; white-space: pre; line-height: 1.45; }
+        .code-block pre .comment { color: #6a9955; }
+        .code-block pre .keyword { color: #569cd6; }
+        .code-block pre .string  { color: #ce9178; }
+        .code-block pre .param   { color: #9cdcfe; }
+        .code-block pre .var     { color: #4ec9b0; }
+
+        .checklist-item { display: flex; align-items: flex-start; gap: 8px; padding: 6px 0; border-bottom: 1px solid #f3f2f1; }
+        .checklist-item:last-child { border-bottom: none; }
+        .checklist-item input { margin-top: 3px; }
+
+        .progress-bar { background: #e1dfdd; border-radius: 10px; height: 22px; overflow: hidden; margin: 12px 0 16px; }
+        .progress-fill { height: 100%; color: #fff; font-size: 0.78em; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+        .progress-fill.red { background: linear-gradient(90deg, #a01020, #d13438); }
+        .progress-fill.orange { background: linear-gradient(90deg, #d83b01, #ff8c00); }
+        .progress-fill.green { background: linear-gradient(90deg, #107c10, #2ea72e); }
+        .progress-fill.blue { background: linear-gradient(90deg, #004578, #0078d4); }
+
+        .level-comparison { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 14px 0; }
+        .level-card { border-radius: var(--radius); padding: 14px; text-align: center; }
+        .level-card.default { background: #f3f2f1; border: 2px solid #e1dfdd; }
+        .level-card.standard { background: #e6f2ff; border: 2px solid #b3d7ff; }
+        .level-card.strict { background: #e8f5e9; border: 2px solid #a5d6a7; }
+        .level-card.custom { background: #fff8e1; border: 2px solid #ffe082; }
+        .level-score { font-size: 2em; font-weight: 700; }
+
+        footer { text-align: center; padding: 24px; color: var(--neutral-medium); font-size: 0.82em; }
+        @media (max-width: 900px) {
+            .container { padding: 16px; }
+            .section { padding: 18px; }
+            .level-comparison { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+<style id="v1a-overlay">
+:root{--c:#0078d4;--azure-dark:#004578;--light:#deecf9;--bg:#f8f9fb;--surface:#fff;--border:#e3e6ec;--muted:#5b6478;--radius:14px}
+.nav-container,.back-to-index{display:none!important}
+body{background:var(--bg)}
+.v1a-layout{display:grid;grid-template-columns:280px 1fr;gap:0;align-items:start}
+.v1a-sidebar{position:sticky;top:0;height:100vh;overflow-y:auto;padding:18px 14px 24px;background:#fff;border-right:1px solid var(--border)}
+.v1a-main{min-width:0}
+.v1a-main .hero{max-width:none;margin:0;border-radius:0}
+.v1a-main .container{max-width:1200px}
+.back-index{display:inline-flex;align-items:center;gap:6px;margin:0 0 16px;padding:6px 10px;background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--muted);font-size:.78em;font-weight:500;text-decoration:none;transition:all .15s}
+.back-index:hover{background:transparent;border-color:var(--c);color:var(--azure-dark);text-decoration:none}
+.back-index .arr{font-size:1em;line-height:1;opacity:.85}
+.side-head{display:flex;align-items:center;gap:10px;padding:6px 6px 14px;border-bottom:1px solid var(--border);margin-bottom:12px}
+.side-head .ico{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--c),#50a4f0);display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.1em;flex-shrink:0}
+.side-head .t{font-weight:700;color:var(--azure-dark);font-size:.95em;line-height:1.15}
+.side-head .s{font-size:.72em;color:var(--muted);margin-top:2px;line-height:1.3}
+.acc{margin-bottom:6px;border-radius:10px;overflow:hidden}
+.acc>summary{list-style:none;cursor:pointer;padding:8px 10px;display:flex;align-items:center;gap:8px;color:var(--azure-dark);font-weight:600;font-size:.82em;border-radius:8px;user-select:none}
+.acc>summary::-webkit-details-marker{display:none}
+.acc>summary:hover{background:var(--bg)}
+.acc>summary .chev{margin-left:auto;font-size:.7em;transition:transform .15s;color:var(--muted)}
+.acc[open]>summary{background:var(--light);color:var(--c)}
+.acc[open]>summary .chev{transform:rotate(90deg)}
+.acc-body{padding:4px 0 6px 6px;display:flex;flex-direction:column;gap:2px}
+.acc-body a{display:flex;align-items:center;gap:8px;padding:6px 10px 6px 18px;border-radius:6px;font-size:.8em;color:var(--muted);text-decoration:none;border-left:2px solid transparent;transition:all .12s}
+.acc-body a:hover{color:var(--c);background:var(--bg);text-decoration:none}
+.acc-body a.active{color:var(--c);background:var(--light);border-left-color:var(--c);font-weight:600}
+.acc-body a .num{font-size:.7em;color:#9aa2b1;font-variant-numeric:tabular-nums;min-width:22px}
+.acc-body a.active .num{color:var(--c)}
+.side-foot{margin-top:14px;padding-top:12px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:4px}
+.side-foot a{display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:6px;font-size:.78em;color:var(--muted);text-decoration:none}
+.side-foot a:hover{color:var(--c);background:var(--bg);text-decoration:none}
+@media (max-width:900px){
+  .v1a-layout{grid-template-columns:1fr}
+  .v1a-sidebar{position:static;height:auto;border-right:none;border-bottom:1px solid var(--border)}
+}
+</style>
+<style id="theme-overlay" data-cat="sec">
+:root {
+  --azure-blue: #1a1f2e;
+  --azure-dark: #0a0d18;
+  --azure-light: #e3e6ec;
+  --c: #1a1f2e;
+}
+.v1a-topbar { background: linear-gradient(90deg, #1a1f2e, #1a1f2e) !important; }
+.v1a-side { --c: #1a1f2e !important; }
+</style>
+</head>
+<body>
+<div class="v1a-layout">
+<aside class="v1a-sidebar">
+  <a href="../index.html" class="back-index" title="Revenir à l'index"><span class="arr" aria-hidden="true">&#127968;</span> Index</a>
+  <div class="side-head">
+    <div class="ico">&#x1F4D8;</div>
+    <div>
+      <div class="t">Microsoft Security Copilot</div>
+      <div class="s">Guide de Configuration &amp; Audit : architecture SCU, gouvernance, plugins natifs, use&hellip;</div>
+    </div>
+  </div>
+  <details class="acc" open>
+    <summary>Introduction <span class="chev">&rsaquo;</span></summary>
+    <div class="acc-body">
+      <a href="#guide"><span class="num">&bull;</span> Mode d'emploi</a>
+      <a href="#licences"><span class="num">&bull;</span> Licences</a>
+    </div>
+  </details>
+  <details class="acc">
+    <summary>Sections <span class="chev">&rsaquo;</span></summary>
+    <div class="acc-body">
+      <a href="#s1"><span class="num">S1</span> Architecture</a>
+      <a href="#s2"><span class="num">S2</span> Gouvernance</a>
+      <a href="#s3"><span class="num">S3</span> Plugins natifs</a>
+      <a href="#s4"><span class="num">S4</span> Incident Response</a>
+      <a href="#s5"><span class="num">S5</span> Threat Hunting</a>
+      <a href="#s6"><span class="num">S6</span> Identit&eacute; &amp; Posture</a>
+      <a href="#s7"><span class="num">S7</span> Promptbooks</a>
+      <a href="#s8"><span class="num">S8</span> Plugins tiers</a>
+      <a href="#s9"><span class="num">S9</span> Co&ucirc;ts &amp; Capacit&eacute;</a>
+      <a href="#s10"><span class="num">S10</span> Compliance</a>
+    </div>
+  </details>
+  <details class="acc">
+    <summary>Annexes <span class="chev">&rsaquo;</span></summary>
+    <div class="acc-body">
+      <a href="#scores"><span class="num">&bull;</span> Scores</a>
+      <a href="#script"><span class="num">&bull;</span> Script</a>
+      <a href="#checklist"><span class="num">&bull;</span> Checklist</a>
+    </div>
+  </details>
+  <div class="side-foot">
+    <a href="#top">&uarr; Retour en haut</a>
+    <a href="#" onclick="window.print();return false;">&#x2B07; Imprimer / PDF</a>
+    <a href="#" onclick="navigator.clipboard.writeText(location.href);this.textContent='&#x2713; Lien copié';return false;">&#x2398; Copier le lien</a>
+  </div>
+</aside>
+<main class="v1a-main">
+
+
+<!-- ═══════════════════════ BACK TO INDEX ═══════════════════════ -->
+<a href="../index.html" class="back-to-index" style="position:fixed;top:16px;left:16px;z-index:1000;display:inline-flex;align-items:center;gap:6px;padding:8px 14px;background:#0078d4;color:#fff;text-decoration:none;border-radius:8px;font:600 14px/1 'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;box-shadow:0 2px 8px rgba(0,0,0,0.15);transition:background .2s" onmouseover="this.style.background='#004578'" onmouseout="this.style.background='#0078d4'" aria-label="Retour à l'index">&larr;&nbsp;Index</a>
+<header class="hero">
+    <h1>Microsoft Security Copilot &mdash; IA pour les SOC, Analyse des Incidents &amp; Chasse aux Menaces</h1>
+  <p class="subtitle">Guide de Configuration &amp; Audit : architecture de capacit&eacute;, gouvernance, plugins natifs, use cases SOC, promptbooks, int&eacute;grations custom, pilotage op&eacute;rationnel et conformit&eacute;.</p>
+    <div class="badge-row">
+        <span class="badge">securitycopilot.microsoft.com</span>
+        <span class="badge">security.microsoft.com</span>
+        <span class="badge">intune.microsoft.com</span>
+        <span class="badge">entra.microsoft.com</span>
+        <span class="badge">purview.microsoft.com</span>
+    </div>
+    <div class="meta-row">
+      <span>Version : <strong>1.1</strong></span>
+      <span>Derni&egrave;re MAJ : <strong>Mai 2026</strong></span>
+        <span>R&eacute;f. : <a href="https://learn.microsoft.com/security-copilot/" target="_blank">Microsoft Security Copilot documentation</a></span>
+    </div>
+</header>
+
+<div class="nav-container">
+    <nav>
+        <a href="#guide">Mode d'emploi</a>
+        <a href="#licences">Licences</a>
+        <a href="#s1">S1 Architecture</a>
+        <a href="#s2">S2 Gouvernance</a>
+        <a href="#s3">S3 Plugins natifs</a>
+        <a href="#s4">S4 Incident Response</a>
+        <a href="#s5">S5 Threat Hunting</a>
+        <a href="#s6">S6 Identit&eacute; &amp; Posture</a>
+        <a href="#s7">S7 Promptbooks</a>
+        <a href="#s8">S8 Plugins tiers</a>
+        <a href="#s9">S9 Co&ucirc;ts &amp; Capacit&eacute;</a>
+        <a href="#s10">S10 Compliance</a>
+        <a href="#scores">Scores</a>
+        <a href="#script">Script</a>
+        <a href="#checklist">Checklist</a>
+    </nav>
+</div>
+
+<div class="container">
+
+<div class="section" id="guide">
+    <div class="section-header blue">
+        <div class="section-number">📘</div>
+        <div>
+            <div class="section-title">Mode d'emploi de ce guide</div>
+            <div class="section-desc">Comment utiliser ce document pour piloter un d&eacute;ploiement Microsoft Security Copilot.</div>
+        </div>
+    </div>
+
+    <div class="alert alert-info">
+      Microsoft Security Copilot se comporte comme un <strong>assistant SOC orient&eacute; workflows</strong> avec une exp&eacute;rience de plus en plus centr&eacute;e sur les <strong>agents</strong>.
+      En 2026, deux parcours coexistent : les tenants <strong>Microsoft 365 E5 / E7 &eacute;ligibles</strong> peuvent &ecirc;tre auto-provisionn&eacute;s par Microsoft ; les autres clients doivent passer par un <strong>onboarding manuel avec capacit&eacute; SCU</strong>.
+    </div>
+
+    <div class="table-container">
+    <table>
+        <thead><tr><th>Dans le p&eacute;rim&egrave;tre</th><th>Hors-p&eacute;rim&egrave;tre</th><th>Renvoi</th></tr></thead>
+        <tbody>
+            <tr><td>Microsoft Security Copilot (portail standalone et exp&eacute;riences embarqu&eacute;es)</td><td>Microsoft 365 Copilot (productivit&eacute;)</td><td>Hors p&eacute;rim&egrave;tre du registre</td></tr>
+            <tr><td>Architecture SCU, gouvernance, plugins, SOC workflows</td><td>GitHub Copilot</td><td>Documentation GitHub Copilot</td></tr>
+            <tr><td>Int&eacute;gration Sentinel, Defender XDR, Entra, Intune, Purview</td><td>Azure OpenAI Service brut</td><td>Documentation Azure OpenAI</td></tr>
+            <tr><td>Promptbooks, KQL g&eacute;n&eacute;r&eacute;, automation API/PowerShell</td><td>Configuration compl&egrave;te Microsoft Sentinel</td><td><a href="sentinel.html">sentinel.html</a></td></tr>
+        </tbody>
+    </table>
+    </div>
+
+    <h3>Interactions avec les autres guides</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr><th>Guide consomm&eacute;</th><th>Usage par Microsoft Security Copilot</th></tr></thead>
+        <tbody>
+            <tr><td><a href="sentinel.html">sentinel.html</a></td><td>G&eacute;n&eacute;ration KQL, triage incidents, hunting queries</td></tr>
+            <tr><td><a href="defender-endpoint.html">defender-endpoint.html</a></td><td>Incidents Defender XDR, endpoints compromis, rem&eacute;diation</td></tr>
+            <tr><td><a href="defender-identity.html">defender-identity.html</a></td><td>Alertes identit&eacute;, investigation lat&eacute;rale, identit&eacute; compromise</td></tr>
+            <tr><td><a href="purview-email-security.html">purview-email-security.html</a></td><td>Phishing, BEC, compromis bo&icirc;te mail</td></tr>
+            <tr><td><a href="entra-id.html">entra-id.html</a></td><td>Risky users, sign-in risks, Conditional Access</td></tr>
+            <tr><td><a href="m365-intune.html">m365-intune.html</a></td><td>Device compliance et posture endpoint</td></tr>
+        </tbody>
+    </table>
+    </div>
+
+    <h3>Strat&eacute;gie de d&eacute;ploiement recommand&eacute;e</h3>
+    <div class="alert alert-ok">Quick Win : confirmer d'abord si le tenant est inclus et auto-provisionn&eacute; ; sinon provisionner une petite capacit&eacute; initiale, activer les plugins natifs essentiels et standardiser quelques promptbooks op&eacute;rationnels.</div>
+
+    <h3>Solutions &eacute;cart&eacute;es</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr><th>Alternative</th><th>Raison d'&eacute;limination</th></tr></thead>
+        <tbody>
+            <tr><td>D&eacute;ployer uniquement Microsoft Sentinel sans Copilot</td><td>Ne couvre pas l'acc&eacute;l&eacute;ration conversationnelle SOC ni la standardisation promptbook.</td></tr>
+            <tr><td>Cr&eacute;er un assistant g&eacute;n&eacute;rique Azure OpenAI sans plugins natifs</td><td>Int&eacute;gration s&eacute;curit&eacute; plus longue, gouvernance et tra&ccedil;abilit&eacute; moins imm&eacute;diates.</td></tr>
+            <tr><td>Conserver un fonctionnement 100% manuel L1/L2</td><td>Temps de triage plus long, variabilit&eacute; forte des analyses et difficult&eacute; &agrave; scaler.</td></tr>
+        </tbody>
+    </table>
+    </div>
+</div>
+
+<div class="section" id="licences">
+    <div class="section-header blue">
+        <div class="section-number">💳</div>
+        <div>
+            <div class="section-title">Matrice des licences et capacit&eacute;</div>
+      <div class="section-desc">Microsoft Security Copilot combine un parcours d'inclusion &eacute;ligible et un parcours de capacit&eacute; SCU.</div>
+        </div>
+    </div>
+
+    <div class="table-container">
+    <table>
+        <thead><tr><th>El&eacute;ment</th><th>D&eacute;tail</th><th>R&egrave;gle op&eacute;rationnelle</th></tr></thead>
+        <tbody>
+      <tr><td>Parcours client</td><td><span class="lic lic-std">M365 E5 / E7 &eacute;ligible</span> ou <span class="lic lic-azure-pay">onboarding manuel par SCU</span></td><td>V&eacute;rifier d'abord l'&eacute;ligibilit&eacute; et l'&eacute;tat d'auto-provisionnement du tenant</td></tr>
+      <tr><td>Capacit&eacute;</td><td>Parcours inclusion : <strong>400 SCUs / mois par 1 000 licences payantes</strong>, jusqu'&agrave; <strong>10 000 SCUs / mois</strong>. Parcours manuel : capacit&eacute; provisionn&eacute;e (minimum 1 SCU) avec overage facultatif.</td><td>Identifier le mod&egrave;le applicable avant tout dimensionnement</td></tr>
+      <tr><td>Provisioning</td><td>Azure resource type <code>microsoft.securitycopilot/capacities</code></td><td>Automatiser si vous suivez le parcours manuel SCU</td></tr>
+      <tr><td>Pricing</td><td>Parcours manuel : capacit&eacute; provisionn&eacute;e factur&eacute;e par <strong>heure pleine</strong>, overage factur&eacute; &agrave; l'usage. Parcours inclusion : consommation d&eacute;duite du quota mensuel inclus.</td><td>&Eacute;viter les montants fig&eacute;s ; documenter la m&eacute;thode de contr&ocirc;le des co&ucirc;ts et v&eacute;rifier le pricing courant</td></tr>
+      <tr><td>Performance</td><td>Pas de d&eacute;bit universel garanti par SCU dans la documentation de cadrage</td><td>&Eacute;tablir vos propres baselines de charge et surveiller usage/capacit&eacute;</td></tr>
+        </tbody>
+    </table>
+    </div>
+
+  <div class="alert alert-info">
+    <strong>Point de vigilance 2026 :</strong> l'inclusion dans Microsoft 365 E5 / E7 ne signifie pas un acc&egrave;s imm&eacute;diat sur tous les tenants : Microsoft parle d'<strong>&eacute;ligibilit&eacute;</strong>, de <strong>notification</strong> et d'<strong>auto-provisionnement</strong> progressif. Les tenants hors inclusion doivent provisionner des SCUs avant usage.
+  </div>
+</div>
+
+<div class="section" id="s1">
+    <div class="section-header red">
+        <div class="section-number red">1</div>
+        <div>
+            <div class="section-title">Architecture &amp; SCU Provisioning <span class="lic lic-azure-pay">SCU</span></div>
+      <div class="section-desc">Mod&egrave;les de capacit&eacute;, workspace, data residency et monitoring.</div>
+        </div>
+    </div>
+    <div class="progress-bar"><div class="progress-fill red" style="width: 15%;">2 / 15</div></div>
+
+  <div class="alert alert-error"><strong>Contexte :</strong> sans cadrage du mod&egrave;le de capacit&eacute;, vous m&eacute;langez facilement tenant auto-provisionn&eacute;, capacit&eacute; provisionn&eacute;e et overage, avec un risque simultan&eacute; de saturation et de surco&ucirc;t.</div>
+
+    <div class="table-container">
+    <table>
+        <thead><tr><th>Param&egrave;tre</th><th>D&eacute;faut</th><th>Quick Win</th><th>Avanc&eacute;</th><th>Optimal</th></tr></thead>
+        <tbody>
+          <tr class="row-ko"><td>Mod&egrave;le de capacit&eacute;</td><td>Non identifi&eacute;</td><td>Confirmer inclusion E5/E7 ou parcours manuel SCU</td><td>Provisioned + overage document&eacute;s</td><td>Right-sizing pilot&eacute; par usage r&eacute;el</td></tr>
+          <tr class="row-ko"><td>Capacit&eacute; initiale</td><td>Fix&eacute;e sans baseline</td><td>Minimum 1 SCU si parcours manuel</td><td>Provisioned capacity + overage plafonn&eacute;</td><td>Ajustement sur usage monitoring et charge horaire</td></tr>
+          <tr class="row-ko"><td>Workspace / g&eacute;o</td><td>Choix ad hoc</td><td>Valider g&eacute;o de stockage et prompt evaluation</td><td>R&eacute;gion conforme residency</td><td>R&eacute;gion primaire + gouvernance de cr&eacute;ation workspace</td></tr>
+          <tr class="row-warn"><td>Overage policy</td><td>Non document&eacute;e</td><td>Limiter ou d&eacute;sactiver l'overage</td><td>Seuils 75/90/100%</td><td>Runbook de throttling + budget</td></tr>
+          <tr class="row-ko"><td>Monitoring SCU</td><td>Pas de dashboard</td><td>Usage monitoring actif</td><td>Exports r&eacute;guliers</td><td>Corr&eacute;lation incident/SCU et tendance mensuelle</td></tr>
+        </tbody>
+    </table>
+    </div>
+
+      <div class="alert alert-info"><strong>Pourquoi chaque param&egrave;tre compte :</strong> la capacit&eacute; provisionn&eacute;e se recharge par <strong>heure pleine</strong>, l'overage absorbe les pics, et l'inclusion E5/E7 fonctionne avec un <strong>quota mensuel partag&eacute;</strong>. Le bon pilotage consiste donc &agrave; distinguer clairement le mod&egrave;le appliqu&eacute; avant de parler de sizing.</div>
+      <div class="alert alert-warn"><strong>Pi&egrave;ge :</strong> conserver des snippets ARM/CLI fig&eacute;s sans revalider l'API courante, ou surprovisionner sans baseline, cr&eacute;e plus de dette que de capacit&eacute; utile.</div>
+
+      <h3>Configuration (squelette IaC pour parcours manuel)</h3>
+    <div class="code-block">
+        <div class="code-header"><span>Terraform / AzAPI &mdash; Capacit&eacute; Microsoft Security Copilot</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div>
+<pre>terraform {
+  required_version = <span class="string">">= 1.6.0"</span>
+  required_providers {
+    azurerm = {
+      source  = <span class="string">"hashicorp/azurerm"</span>
+      version = <span class="string">">= 3.100.0"</span>
+    }
+  }
+}
+
+provider <span class="string">"azurerm"</span> {
+  features {}
+}
+
+locals {
+  # Revalider le type ARM exact et l'API version dans la doc Microsoft en vigueur.
+  security_copilot_capacity_type = <span class="string">"Microsoft.SecurityCopilot/capacities@&lt;API_VERSION_A_VALIDER&gt;"</span>
+}
+
+variable <span class="string">"location"</span> { type = string }
+variable <span class="string">"resource_group_name"</span> { type = string }
+variable <span class="string">"capacity_name"</span> { type = string }
+variable <span class="string">"scu_capacity"</span> { type = number }
+variable <span class="string">"tags"</span> { type = map(string) default = {} }
+
+resource <span class="string">"azurerm_resource_group"</span> <span class="string">"rg"</span> {
+  name     = var.resource_group_name
+  location = var.location
+  tags     = var.tags
+}
+
+resource <span class="string">"azapi_resource"</span> <span class="string">"security_copilot_capacity"</span> {
+  type      = local.security_copilot_capacity_type
+  name      = var.capacity_name
+  parent_id = azurerm_resource_group.rg.id
+  location  = var.location
+
+  # Ce bloc ne concerne que le parcours manuel SCU.
+  body = jsonencode({
+    sku = {
+      name = <span class="string">"SecurityCopilot"</span>
+    }
+    properties = {
+      numberOfUnits = var.scu_capacity
+    }
+    tags = var.tags
+  })
+}
+
+output <span class="string">"capacity_id"</span> {
+  value = azapi_resource.security_copilot_capacity.id
+}
+</pre>
+    </div>
+
+  <h3>Configuration (PowerShell + API, parcours manuel)</h3>
+    <div class="code-block">
+        <div class="code-header"><span>PowerShell &mdash; Provisioning et scaling SCU</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div>
+<pre><span class="var">$subscriptionId</span> = <span class="string">"00000000-0000-0000-0000-000000000000"</span>
+<span class="var">$resourceGroup</span>  = <span class="string">"rg-copilot-security-prod"</span>
+<span class="var">$location</span>       = <span class="string">"westeurope"</span>
+<span class="var">$capacityName</span>   = <span class="string">"cpsoc-prod"</span>
+<span class="var">$apiVersion</span>     = <span class="string">"&lt;API_VERSION_A_VALIDER&gt;"</span>
+
+# Revalider l'API version et le sch&eacute;ma ARM avant ex&eacute;cution.
+# Ne pas utiliser ce bloc pour un tenant E5/E7 auto-provisionn&eacute;.
+
+az account set --subscription <span class="var">$subscriptionId</span>
+az group create -n <span class="var">$resourceGroup</span> -l <span class="var">$location</span>
+
+# Provision 2 SCUs (capacit&eacute; manuelle)
+az resource create --resource-group <span class="var">$resourceGroup</span> --name <span class="var">$capacityName</span> `
+  --resource-type <span class="string">"Microsoft.SecurityCopilot/capacities"</span> --api-version <span class="var">$apiVersion</span> `
+  --location <span class="var">$location</span> --properties <span class="string">"{\"</span>numberOfUnits\<span class="string">":2}"</span> --sku <span class="string">"{\"</span>name\<span class="string">":\"</span>SecurityCopilot\<span class="string">"}"</span>
+
+# Scale to 3 SCUs
+<span class="var">$body</span> = @{ properties = @{ numberOfUnits = 3 } } | <span class="keyword">ConvertTo-Json</span> <span class="param">-Depth</span> 5
+<span class="var">$resourceId</span> = <span class="string">"/subscriptions/$subscriptionId/resourceGroups/$resourceGroup/providers/Microsoft.SecurityCopilot/capacities/$capacityName"</span>
+<span class="keyword">Invoke-AzRestMethod</span> <span class="param">-Method</span> PATCH <span class="param">-Path</span> <span class="string">"$resourceId?api-version=$apiVersion"</span> <span class="param">-Payload</span> <span class="var">$body</span>
+</pre>
+    </div>
+
+    <h3>V&eacute;rification</h3>
+    <div class="code-block">
+        <div class="code-header"><span>V&eacute;rifier capacit&eacute; active</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div>
+<pre># Portail : Security Copilot &gt; Home &gt; Owner settings &gt; Usage monitoring
+# Azure : v&eacute;rifier la capacit&eacute; li&eacute;e au workspace si vous utilisez le parcours manuel
+az resource show -g rg-copilot-security-prod -n cpsoc-prod `
+  --resource-type <span class="string">"Microsoft.SecurityCopilot/capacities"</span> --api-version <span class="string">"&lt;API_VERSION_A_VALIDER&gt;"</span> `
+  --query <span class="string">"{name:name, location:location, units:properties.numberOfUnits, sku:sku.name}"</span> -o table
+</pre>
+    </div>
+
+    <h3>Etat des lieux</h3>
+    <div class="checklist-item"><input type="checkbox"><label>Capacit&eacute; SCU provisionn&eacute;e en r&eacute;gion conforme</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Seuils d'alerte d'usage d&eacute;finis (75/90/100%)</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Runbook de scaling montant/descendant document&eacute;</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Data residency valid&eacute;e avec l'&eacute;quipe compliance</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Tableau de bord SCU actif</label></div>
+</div>
+
+<div class="section" id="s2">
+    <div class="section-header red">
+        <div class="section-number red">2</div>
+        <div><div class="section-title">Configuration &amp; Gouvernance</div><div class="section-desc">RBAC, Entra ID, audit sessions, partage de donn&eacute;es.</div></div>
+    </div>
+    <div class="progress-bar"><div class="progress-fill red" style="width: 15%;">2 / 15</div></div>
+    <div class="alert alert-error"><strong>Contexte :</strong> sans gouvernance, Copilot devient un canal d'acc&egrave;s transversal non ma&icirc;tris&eacute;.</div>
+    <div class="table-container"><table><thead><tr><th>Param&egrave;tre</th><th>D&eacute;faut</th><th>Quick Win</th><th>Avanc&eacute;</th><th>Optimal</th></tr></thead><tbody>
+    <tr class="row-ko"><td>RBAC Copilot Owner/Contributor</td><td>Acc&egrave;s h&eacute;rit&eacute; non revu</td><td>R&ocirc;les explicites</td><td>Groupes role-assignable</td><td>JIT + PIM + revues</td></tr>
+    <tr class="row-ko"><td>Acc&egrave;s Entra</td><td>Trop large</td><td>Groupe SOC unique</td><td>Groupes par L1/L2/L3</td><td>CA risk-based</td></tr>
+    <tr class="row-warn"><td>Owner settings (data sharing / acc&egrave;s M365)</td><td>Non revus</td><td>Politique explicite</td><td>Validation DPO</td><td>Revue semestrielle</td></tr>
+    <tr class="row-ko"><td>Usage monitoring / exports</td><td>Peu exploit&eacute;s</td><td>Revue hebdo</td><td>Exports p&eacute;riodiques</td><td>Corr&eacute;lation capacit&eacute; / usages / incidents</td></tr>
+    <tr class="row-ko"><td>Plugin governance</td><td>Activation ad hoc</td><td>Catalogue approuv&eacute;</td><td>Workflow d'approbation</td><td>Audit automatique</td></tr>
+    </tbody></table></div>
+    <div class="alert alert-info">Les r&ocirc;les <strong>Security Copilot owner / contributor</strong> contr&ocirc;lent la plateforme, pas l'acc&egrave;s aux donn&eacute;es de chaque plugin. Les plugins continuent d'exiger leurs r&ocirc;les de service (Sentinel, Intune, Defender, Purview, etc.).</div>
+    <div class="alert alert-warn">Pi&egrave;ge : activer tous les plugins &laquo; pour tester &raquo; ouvre des acc&egrave;s non n&eacute;cessaires.</div>
+    <div class="code-block"><div class="code-header"><span>PowerShell + portail &mdash; Gouvernance d'acc&egrave;s</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div><pre># Security Copilot &gt; Home &gt; Role assignment
+  # - conserver au moins deux owners
+  # - assigner les r&ocirc;les Copilot via groupes role-assignable
+  # - supprimer le groupe Everyone si son p&eacute;rim&egrave;tre est trop large
+  # - aligner les r&ocirc;les de service pour chaque plugin activ&eacute;
+  # Pour le provisioning manuel : Azure Contributor/Owner + Security Administrator (ou sup&eacute;rieur)
+
+  # Audit des connexions Entra
+<span class="keyword">Connect-MgGraph</span> <span class="param">-Scopes</span> <span class="string">"AuditLog.Read.All"</span>
+<span class="keyword">Get-MgAuditLogSignIn</span> <span class="param">-Top</span> 50 | <span class="keyword">Select-Object</span> CreatedDateTime, UserDisplayName, AppDisplayName, ConditionalAccessStatus</pre></div>
+    <div class="code-block"><div class="code-header"><span>V&eacute;rification</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div><pre># Security Copilot &gt; Home &gt; Role assignment
+  # - au moins 2 owners pr&eacute;sents
+  # - groupes role-assignable utilis&eacute;s pour les contributors
+  # - r&ocirc;les service sp&eacute;cifiques align&eacute;s avec les plugins activ&eacute;s
+  </pre></div>
+    <div class="checklist-item"><input type="checkbox"><label>Au moins deux Security Copilot owners conserv&eacute;s</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Contributor access align&eacute; sur groupes role-assignable / r&ocirc;les recommand&eacute;s</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Owner settings (data sharing + acc&egrave;s Microsoft 365) valid&eacute;s DPO/CISO</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Usage monitoring / exports revus par l'&eacute;quipe SOC</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Catalogue plugin approuv&eacute; et document&eacute;</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Revue d'acc&egrave;s trimestrielle planifi&eacute;e</label></div>
+</div>
+
+<div class="section" id="s3">
+    <div class="section-header red"><div class="section-number red">3</div><div><div class="section-title">Plugins Natifs Microsoft</div><div class="section-desc">Defender XDR, Sentinel, Entra, Intune, Purview, EASM, Threat Intelligence.</div></div></div>
+    <div class="progress-bar"><div class="progress-fill red" style="width: 12%;">1 / 12</div></div>
+    <div class="alert alert-error"><strong>Contexte :</strong> les plugins sont les capteurs de votre SOC IA; sans eux, Copilot r&eacute;pond de fa&ccedil;on g&eacute;n&eacute;rique.</div>
+    <div class="table-container"><table><thead><tr><th>Plugin</th><th>D&eacute;faut</th><th>Quick Win</th><th>Avanc&eacute;</th><th>Optimal</th></tr></thead><tbody>
+    <tr class="row-ko"><td>Defender XDR</td><td>D&eacute;sactiv&eacute;</td><td>Activer incidents/alerts</td><td>Playbooks guid&eacute;s</td><td>Rem&eacute;diation assist&eacute;e</td></tr>
+    <tr class="row-ko"><td>Sentinel</td><td>D&eacute;sactiv&eacute;</td><td>KQL g&eacute;n&eacute;r&eacute;</td><td>Hunts r&eacute;currents</td><td>Auto triage avec validation humaine</td></tr>
+    <tr class="row-ko"><td>Entra ID</td><td>D&eacute;sactiv&eacute;</td><td>Risky users</td><td>Sign-in risk corr&eacute;l&eacute;</td><td>Recommandations CA contextualis&eacute;es</td></tr>
+    <tr class="row-ko"><td>Intune</td><td>D&eacute;sactiv&eacute;</td><td>Compliance status</td><td>Drift config d&eacute;tect&eacute;</td><td>Rem&eacute;diation endpoint orchestr&eacute;e</td></tr>
+    <tr class="row-warn"><td>Purview + TI + EASM</td><td>Partiel</td><td>Activation cibl&eacute;e</td><td>Cas d'usage d&eacute;di&eacute;s</td><td>Vue unifi&eacute;e risque business</td></tr>
+    </tbody></table></div>
+    <div class="alert alert-info">Le plugin est votre int&eacute;gration outillage, mais son activation ne remplace pas les autorisations du service source. Les plugins pr&eacute;install&eacute;s peuvent &ecirc;tre ouverts &agrave; tous les utilisateurs ou restreints aux owners.</div>
+    <div class="alert alert-warn">Pi&egrave;ge : restreindre un plugin critique impacte aussi les exp&eacute;riences embarqu&eacute;es ; certains plugins avec <strong>Set up</strong> ou une roue dent&eacute;e se configurent en plus <strong>par utilisateur</strong>.</div>
+    <div class="code-block"><div class="code-header"><span>Proc&eacute;dure document&eacute;e &mdash; Contr&ocirc;le plugins</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div><pre># Security Copilot &gt; Home &gt; Owner settings &gt; Plugin settings
+  # 1. D&eacute;finir qui peut ajouter et g&eacute;rer des plugins custom pour soi
+  # 2. D&eacute;finir qui peut publier des plugins custom pour l'organisation
+  # 3. R&eacute;gler la disponibilit&eacute; des plugins pr&eacute;install&eacute;s : All users ou Owners only
+  # 4. Configurer les plugins marqu&eacute;s Set up / engrenage au niveau utilisateur
+  # 5. V&eacute;rifier l'acc&egrave;s aux donn&eacute;es Microsoft 365 si les sc&eacute;narios Purview / M365 sont attendus
+  </pre></div>
+    <div class="code-block"><div class="code-header"><span>V&eacute;rification</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div><pre># Contr&ocirc;ler dans Plugin settings :
+  # - Defender XDR, Sentinel, Entra ID, Intune, Purview
+  # - disponibilit&eacute; All users / Owners only
+  # - plugins n&eacute;cessaires aux agents activ&eacute;s
+</pre></div>
+    <div class="checklist-item"><input type="checkbox"><label>Plugins Defender XDR et Sentinel actifs</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Plugins Entra et Intune actifs</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Acc&egrave;s Microsoft 365 autoris&eacute; si les sc&eacute;narios Purview sont attendus</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Plugin TI/MSTIC valid&eacute; par Threat Intel team</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Plugin EASM activ&eacute; si p&eacute;rim&egrave;tre internet expos&eacute;</label></div>
+</div>
+
+<div class="section" id="s4">
+    <div class="section-header orange"><div class="section-number orange">4</div><div><div class="section-title">Use Cases SOC : Incident Response</div><div class="section-desc">R&eacute;sum&eacute; incident, patient z&eacute;ro, timeline, rem&eacute;diation.</div></div></div>
+    <div class="progress-bar"><div class="progress-fill orange" style="width: 10%;">2 / 10</div></div>
+  <div class="alert alert-error">Analogie : Copilot agit comme un <strong>assistant d'investigation</strong> qui acc&eacute;l&egrave;re la synth&egrave;se incident, mais les r&eacute;sultats doivent rester valid&eacute;s humainement.</div>
+    <div class="table-container"><table><thead><tr><th>Param&egrave;tre op&eacute;rationnel</th><th>D&eacute;faut</th><th>Quick Win</th><th>Avanc&eacute;</th><th>Optimal</th></tr></thead><tbody>
+    <tr class="row-ko"><td>Executive summary</td><td>Manuel</td><td>Prompt standardis&eacute;</td><td>Template automatique</td><td>Rapport pr&ecirc;t comit&eacute; de crise</td></tr>
+    <tr class="row-ko"><td>Patient z&eacute;ro</td><td>Investigation lente</td><td>Question guid&eacute;e Copilot</td><td>Corr&eacute;lation multi-sources</td><td>Preuves horodat&eacute;es pr&ecirc;tes audit</td></tr>
+    <tr class="row-warn"><td>Attack timeline</td><td>Partielle</td><td>Timeline auto g&eacute;n&eacute;r&eacute;e</td><td>Timeline enrichie IOC</td><td>Timeline export SOC + juridique</td></tr>
+    <tr class="row-ko"><td>Recommended remediation</td><td>Ad hoc</td><td>Check-list L1</td><td>Runbook L2/L3</td><td>Validation m&eacute;tier + rollback plan</td></tr>
+    <tr class="row-ko"><td>Incident report</td><td>R&eacute;dig&eacute; &agrave; la main</td><td>Draft auto</td><td>Template adapt&eacute; secteur</td><td>Version board-ready + annexes</td></tr>
+    </tbody></table></div>
+    <div class="alert alert-info">La valeur principale est la compression du temps d'analyse et la qualit&eacute; homog&egrave;ne des comptes-rendus.</div>
+    <div class="alert alert-warn">Pi&egrave;ge : publier le r&eacute;sum&eacute; Copilot sans validation humaine peut introduire des erreurs de contexte.</div>
+    <div class="code-block"><div class="code-header"><span>Prompt type IR</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div><pre><span class="string"></span>R&eacute;sume l'incident INC-2026-0041 en 10 lignes pour le CISO.
+Donne : patient z&eacute;ro probable, vecteur initial, impact m&eacute;tier, actions de confinement,
+preuves manquantes, et plan 24h/72h.</pre></div>
+    <div class="code-block"><div class="code-header"><span>V&eacute;rification</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div><pre><span class="string"></span># V&eacute;rifier que le r&eacute;sum&eacute; cite des sources incidents/alerts r&eacute;elles et non des hypoth&egrave;ses.</pre></div>
+    <div class="checklist-item"><input type="checkbox"><label>Template de r&eacute;sum&eacute; ex&eacute;cutif valid&eacute;</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Patient z&eacute;ro identifi&eacute; avec niveau de confiance</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Timeline d'attaque g&eacute;n&eacute;r&eacute;e</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Actions rem&eacute;diation prioris&eacute;es</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Rapport incident automatis&eacute; puis valid&eacute; humainement</label></div>
+</div>
+
+<div class="section" id="s5">
+    <div class="section-header orange"><div class="section-number orange">5</div><div><div class="section-title">Threat Hunting</div><div class="section-desc">Natural language to KQL, script malware analysis, IOC enrichment.</div></div></div>
+    <div class="progress-bar"><div class="progress-fill orange" style="width: 10%;">1 / 10</div></div>
+    <div class="alert alert-error">Analogie : la g&eacute;n&eacute;ration KQL est un <strong>traducteur analyste</strong> entre question m&eacute;tier et requ&ecirc;te technique exacte.</div>
+    <div class="table-container"><table><thead><tr><th>Capacit&eacute;</th><th>D&eacute;faut</th><th>Quick Win</th><th>Avanc&eacute;</th><th>Optimal</th></tr></thead><tbody>
+    <tr class="row-ko"><td>KQL generation</td><td>Manuel</td><td>Prompt en langage naturel</td><td>Optimisation performance</td><td>Biblioth&egrave;que de hunts pr&ecirc;ts &agrave; ex&eacute;cuter</td></tr>
+    <tr class="row-ko"><td>PowerShell obfusqu&eacute;</td><td>Analyse lente</td><td>D&eacute;obfuscation assist&eacute;e</td><td>Enrichissement TTP</td><td>MITRE mapping automatique</td></tr>
+    <tr class="row-warn"><td>Hash/IP/URL reputation</td><td>Sites multiples</td><td>Check unifi&eacute;</td><td>Corr&eacute;lation multi-source</td><td>Priorit&eacute; SOC auto-calcul&eacute;e</td></tr>
+    <tr class="row-ko"><td>Threat actor profile</td><td>Recherche manuelle</td><td>Profil initial guid&eacute;</td><td>Profil + campagne li&eacute;e</td><td>Profil + impacts m&eacute;tiers + playbook</td></tr>
+    <tr class="row-ko"><td>CVE analysis</td><td>Par outil isol&eacute;</td><td>R&eacute;sum&eacute; risque CVE</td><td>Exposition locale</td><td>Priorisation patch business-aware</td></tr>
+    </tbody></table></div>
+    <div class="alert alert-info">Le hunting gagne surtout sur le cycle &laquo; id&eacute;e de recherche &rarr; requ&ecirc;te &rarr; validation &raquo;.</div>
+    <div class="alert alert-warn">Pi&egrave;ge : ex&eacute;cuter une KQL g&eacute;n&eacute;r&eacute;e sans revue peut produire des faux positifs massifs.</div>
+    <div class="code-block"><div class="code-header"><span>Exemple natural language &rarr; KQL</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div><pre><span class="string"></span>G&eacute;n&egrave;re une requ&ecirc;te KQL Sentinel pour d&eacute;tecter des connexions impossibles
+sur 24h, exclure les comptes break-glass, et retourner user, pays, intervalle, score de risque.</pre></div>
+    <div class="code-block"><div class="code-header"><span>V&eacute;rification</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div><pre><span class="string"></span># V&eacute;rifier que la requ&ecirc;te inclut une fen&ecirc;tre temporelle, des exclusions explicites et un tri de risque.</pre></div>
+    <div class="checklist-item"><input type="checkbox"><label>Processus de revue KQL avant ex&eacute;cution</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Template d'analyse script obfusqu&eacute; valid&eacute;</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Workflow IOC reputation unifi&eacute;</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Mapping MITRE ATT&amp;CK int&eacute;gr&eacute; au rapport</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Profil acteur menace standardis&eacute;</label></div>
+</div>
+
+<div class="section" id="s6">
+    <div class="section-header orange"><div class="section-number orange">6</div><div><div class="section-title">Gestion des Identit&eacute;s &amp; Posture</div><div class="section-desc">Entra risky users, Conditional Access, Intune compliance, Purview DLP.</div></div></div>
+    <div class="progress-bar"><div class="progress-fill orange" style="width: 10%;">1 / 10</div></div>
+    <div class="alert alert-error">Analogie : Copilot est une tour de contr&ocirc;le unique pour identit&eacute;, poste et donn&eacute;e sensible.</div>
+    <div class="table-container"><table><thead><tr><th>Param&egrave;tre</th><th>D&eacute;faut</th><th>Quick Win</th><th>Avanc&eacute;</th><th>Optimal</th></tr></thead><tbody>
+    <tr class="row-ko"><td>Risky users review</td><td>Ad hoc</td><td>Revue quotidienne</td><td>Playbook investigation</td><td>Automatisation assist&eacute;e</td></tr>
+    <tr class="row-ko"><td>Suspicious sign-ins</td><td>Signal isol&eacute;</td><td>Corr&eacute;lation incident</td><td>Risque cumul&eacute;</td><td>Actions CA recommand&eacute;es</td></tr>
+    <tr class="row-warn"><td>Conditional Access recommendations</td><td>Peu utilis&eacute;</td><td>Recommandations Copilot</td><td>Exceptions document&eacute;es</td><td>Cycle d'am&eacute;lioration mensuel</td></tr>
+    <tr class="row-ko"><td>Intune non-compliance</td><td>Rapport manuel</td><td>Vue consolid&eacute;e</td><td>Priorisation par criticit&eacute;</td><td>Plan rem&eacute;diation automatique</td></tr>
+    <tr class="row-ko"><td>Purview DLP alerts</td><td>Triage lent</td><td>R&eacute;sum&eacute; cas insider</td><td>Corr&eacute;lation identit&eacute;</td><td>Escalade normalis&eacute;e</td></tr>
+    </tbody></table></div>
+    <div class="alert alert-info">L'int&eacute;r&ecirc;t op&eacute;rationnel est la fusion des signaux identit&eacute;/device/donn&eacute;e dans une seule investigation.</div>
+    <div class="alert alert-warn">Pi&egrave;ge : appliquer toutes les recommandations CA sans fen&ecirc;tre de test peut d&eacute;grader la continuit&eacute;.</div>
+    <div class="code-block"><div class="code-header"><span>Prompt type identit&eacute;</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div><pre><span class="string"></span>Analyse l'utilisateur user@contoso.com : sign-ins &agrave; risque, devices non conformes,
+alertes DLP associ&eacute;es, et propose un plan d'actions CA en 3 &eacute;tapes.</pre></div>
+    <div class="code-block"><div class="code-header"><span>V&eacute;rification</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div><pre><span class="string"></span># V&eacute;rifier que la recommandation inclut impact utilisateur, rollback, et crit&egrave;res de succ&egrave;s.</pre></div>
+    <div class="checklist-item"><input type="checkbox"><label>Template investigation risky user actif</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Couplage Entra + Intune + Purview op&eacute;rationnel</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Recommandations CA revues par IAM lead</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Flux d'escalade insider risk document&eacute;</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>KPI MTTR identit&eacute; suivi mensuellement</label></div>
+</div>
+
+<div class="section" id="s7">
+    <div class="section-header green"><div class="section-number green">7</div><div><div class="section-title">Promptbooks</div><div class="section-desc">Built-in et 5 templates custom pr&ecirc;ts &agrave; l'emploi.</div></div></div>
+    <div class="progress-bar"><div class="progress-fill green" style="width: 8%;">2 / 8</div></div>
+    <div class="alert alert-error">Analogie : un promptbook est une <strong>proc&eacute;dure SOC automatis&eacute;e</strong> qui impose une qualit&eacute; constante.</div>
+    <div class="table-container"><table><thead><tr><th>Param&egrave;tre</th><th>D&eacute;faut</th><th>Quick Win</th><th>Avanc&eacute;</th><th>Optimal</th></tr></thead><tbody>
+    <tr class="row-ko"><td>Built-in promptbooks</td><td>Usage ponctuel</td><td>Top 3 adopt&eacute;s</td><td>Catalogue &eacute;quipe</td><td>Catalogue par domaine SOC</td></tr>
+    <tr class="row-ko"><td>Custom promptbooks</td><td>Absents</td><td>5 templates pr&ecirc;ts</td><td>Versionn&eacute;s Git</td><td>Qualit&eacute; mesur&eacute;e</td></tr>
+    <tr class="row-warn"><td>Param&eacute;trage (IncidentId, UPN)</td><td>Manuel</td><td>Variables standard</td><td>Validation entr&eacute;es</td><td>Contr&ocirc;les robustesse</td></tr>
+    <tr class="row-ko"><td>Partage SOC</td><td>Informel</td><td>Biblioth&egrave;que commune</td><td>Workflow revue</td><td>Cycle d'am&eacute;lioration hebdo</td></tr>
+    <tr class="row-ko"><td>Qualit&eacute; output</td><td>Variable</td><td>Format impos&eacute;</td><td>Scoring de r&eacute;ponse</td><td>Eval continue</td></tr>
+    </tbody></table></div>
+    <div class="alert alert-info">Le promptbook transforme l'expertise implicite des seniors en proc&eacute;dure explicite pour toute l'&eacute;quipe.</div>
+    <div class="alert alert-warn">Pi&egrave;ge : templates trop longs ou trop ouverts produisent des r&eacute;ponses instables.</div>
+
+    <h3>5 Promptbooks custom pr&ecirc;ts &agrave; l'emploi</h3>
+    <div class="code-block"><div class="code-header"><span>PB1 Incident Investigation</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div><pre><span class="string"></span>Titre: PB-Incident-Investigation
+Entr&eacute;es: IncidentId, Priority
+T&acirc;ches: 1) R&eacute;sumer incident 2) Identifier patient z&eacute;ro 3) Timeline 4) Actions 24h/72h
+Sortie: executive_summary, evidence_gaps, remediation_plan, risk_score</pre></div>
+    <div class="code-block"><div class="code-header"><span>PB2 Phishing Analysis</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div><pre><span class="string"></span>Titre: PB-Phishing-Analysis
+Entr&eacute;es: MessageId, UserUPN
+T&acirc;ches: Header analysis, URL/IP/domain reputation, blast radius, mailbox actions
+Sortie: verdict, impacted_users, containment_steps, user_communication_template</pre></div>
+    <div class="code-block"><div class="code-header"><span>PB3 Threat Hunt</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div><pre><span class="string"></span>Titre: PB-Threat-Hunt
+Entr&eacute;es: Hypothesis, TimeWindow
+T&acirc;ches: G&eacute;n&eacute;rer KQL Sentinel + Defender XDR, ex&eacute;cuter, classer anomalies
+Sortie: hunt_query_pack, findings, false_positive_notes, next_hunts</pre></div>
+    <div class="code-block"><div class="code-header"><span>PB4 Identity Investigation</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div><pre><span class="string"></span>Titre: PB-Identity-Investigation
+Entr&eacute;es: UserUPN
+T&acirc;ches: Sign-in risks, risky user state, CA impact, devices associ&eacute;s, DLP context
+Sortie: identity_case_summary, recommended_ca_changes, rollback_plan</pre></div>
+    <div class="code-block"><div class="code-header"><span>PB5 Vulnerability Analysis</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div><pre><span class="string"></span>Titre: PB-Vulnerability-Analysis
+Entr&eacute;es: CVE, AssetScope
+T&acirc;ches: Criticit&eacute; CVE, exposition locale, indicateurs exploitation, priorisation patch
+Sortie: cve_brief, exposed_assets, mitigation_options, patch_priority_list</pre></div>
+
+    <div class="code-block"><div class="code-header"><span>V&eacute;rification</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div><pre><span class="string"></span># V&eacute;rifier que chaque promptbook produit un format de sortie stable et des sources cit&eacute;es.</pre></div>
+    <div class="checklist-item"><input type="checkbox"><label>5 promptbooks custom publi&eacute;s</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Variables d'entr&eacute;e standardis&eacute;es</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Sorties format&eacute;es et homog&egrave;nes</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Partage &eacute;quipe SOC activ&eacute;</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Revue hebdo des promptbooks en place</label></div>
+</div>
+
+<div class="section" id="s8">
+    <div class="section-header green"><div class="section-number green">8</div><div><div class="section-title">Plugins Tiers &amp; Custom</div><div class="section-desc">OpenAPI, Logic App, Azure Function, permissions minimales.</div></div></div>
+    <div class="progress-bar"><div class="progress-fill green" style="width: 6%;">1 / 6</div></div>
+    <div class="alert alert-error">Contexte : chaque plugin custom est une extension de confiance ; il doit suivre un principe de moindre privil&egrave;ge.</div>
+    <div class="table-container"><table><thead><tr><th>Param&egrave;tre</th><th>D&eacute;faut</th><th>Quick Win</th><th>Avanc&eacute;</th><th>Optimal</th></tr></thead><tbody>
+    <tr class="row-ko"><td>Plugin inventory</td><td>Incomplet</td><td>Inventaire central</td><td>CMDB li&eacute;e</td><td>Inventaire temps r&eacute;el</td></tr>
+    <tr class="row-ko"><td>Manifest quality</td><td>Variable</td><td>Template standard</td><td>Lint CI</td><td>Signature + attestations</td></tr>
+    <tr class="row-warn"><td>Permissions</td><td>Larges</td><td>Scopes minimaux</td><td>Revue mensuelle</td><td>Policy as code</td></tr>
+    <tr class="row-ko"><td>Audit plugin usage</td><td>Absent</td><td>Logs basiques</td><td>Corr&eacute;lation SIEM</td><td>Alertes sur abus</td></tr>
+    <tr class="row-ko"><td>Processus d'approbation</td><td>Informel</td><td>CAB s&eacute;curit&eacute;</td><td>Risk scoring</td><td>Workflow automatique</td></tr>
+    </tbody></table></div>
+    <div class="alert alert-info">Un plugin est utile seulement s'il est s&ucirc;r, audit&eacute; et r&eacute;versible.</div>
+    <div class="alert alert-warn">Pi&egrave;ge : manifests OpenAPI non contraints peuvent exposer des op&eacute;rations sensibles inutiles.</div>
+    <div class="code-block"><div class="code-header"><span>Exemple manifest minimal</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div><pre>{
+  <span class="string">"name"</span>: <span class="string">"servicenow-incident-readonly"</span>,
+  <span class="string">"description"</span>: <span class="string">"Read-only incident lookup"</span>,
+  <span class="string">"auth"</span>: <span class="string">"oauth2"</span>,
+  <span class="string">"permissions"</span>: [<span class="string">"incident.read"</span>],
+  <span class="string">"openapi"</span>: <span class="string">"https://example/api/openapi.json"</span>
+}</pre></div>
+    <div class="code-block"><div class="code-header"><span>V&eacute;rification</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div><pre># V&eacute;rifier que le plugin n<span class="string">'expose pas d'</span>op&eacute;ration write/delete sans approbation explicite.</pre></div>
+    <div class="checklist-item"><input type="checkbox"><label>Inventaire plugins tiers &agrave; jour</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Permissions minimales appliqu&eacute;es</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Manifest valid&eacute; par revue s&eacute;curit&eacute;</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Usage plugin revu p&eacute;riodiquement via les exports disponibles</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Plan de retrait plugin document&eacute;</label></div>
+</div>
+
+<div class="section" id="s9">
+    <div class="section-header blue"><div class="section-number">9</div><div><div class="section-title">Gestion des Co&ucirc;ts, Capacit&eacute; &amp; Suivi</div><div class="section-desc">Usage monitoring, right-sizing, budget et mesure d'impact.</div></div></div>
+    <div class="progress-bar"><div class="progress-fill blue" style="width: 8%;">1 / 8</div></div>
+    <div class="alert alert-error">Contexte : sans pilotage de la capacit&eacute;, vous ne distinguez plus correctement quota inclus, capacit&eacute; provisionn&eacute;e, overage et impact op&eacute;rationnel r&eacute;el.</div>
+    <div class="table-container"><table><thead><tr><th>Param&egrave;tre</th><th>D&eacute;faut</th><th>Quick Win</th><th>Avanc&eacute;</th><th>Optimal</th></tr></thead><tbody>
+    <tr class="row-ko"><td>Usage dashboard</td><td>Absent</td><td>Dashboard SCU quotidien</td><td>MTTR corr&eacute;l&eacute;</td><td>Dashboard exec + SOC</td></tr>
+    <tr class="row-ko"><td>Right-sizing</td><td>Statique</td><td>Revue hebdo</td><td>Profil charge par plage horaire</td><td>Plan capacity saisonnier</td></tr>
+    <tr class="row-warn"><td>Alertes budget</td><td>Faibles</td><td>Seuils adapt&eacute;s au budget</td><td>Budgets par environnement</td><td>Actions automatiques</td></tr>
+    <tr class="row-ko"><td>Prompt efficiency</td><td>Variable</td><td>Prompts courts</td><td>Promptbooks standards</td><td>Mesure de co&ucirc;t par workflow</td></tr>
+    <tr class="row-ko"><td>Mesure d'impact</td><td>A l'intuition</td><td>KPI temps gagn&eacute;</td><td>Suivi mensuel</td><td>Impact par use case SOC</td></tr>
+    </tbody></table></div>
+    <div class="alert alert-info">Le pilotage document&eacute; passe d'abord par <strong>Usage monitoring</strong> dans le portail Security Copilot, puis par l'export des donn&eacute;es d'usage et la corr&eacute;lation avec vos propres KPI SOC.</div>
+    <div class="alert alert-warn">Pi&egrave;ge : comparer seulement une facture ou un quota mensuel sans distinguer <strong>inclusion</strong>, <strong>provisioned capacity</strong> et <strong>overage</strong>.</div>
+
+    <h3>Exemple de mod&egrave;le d'&eacute;valuation</h3>
+    <div class="table-container"><table><thead><tr><th>Variable</th><th>Valeur &agrave; renseigner</th><th>Commentaire</th></tr></thead><tbody>
+    <tr><td>Co&ucirc;t analyste SOC</td><td>&Agrave; renseigner</td><td>Hypoth&egrave;se finance/interne</td></tr>
+    <tr><td>Temps gagn&eacute; / analyste / p&eacute;riode</td><td>&Agrave; mesurer</td><td>Bas&eacute; sur incidents, hunts, promptbooks ou agents r&eacute;els</td></tr>
+    <tr><td>Analystes concern&eacute;s</td><td>&Agrave; renseigner</td><td>Equipe ou cas d'usage cibl&eacute;</td></tr>
+    <tr><td>Fen&ecirc;tre d'observation</td><td>&Agrave; d&eacute;finir</td><td>Semaine, mois, campagne ou sprint</td></tr>
+    <tr><td>Co&ucirc;t SCU</td><td>Selon mod&egrave;le applicable</td><td>Inclusion, provisioned capacity ou overage</td></tr>
+    <tr><td>Impact net</td><td>Gains mesur&eacute;s - co&ucirc;ts observ&eacute;s</td><td>Comparer avec la tarification et l'usage r&eacute;els</td></tr>
+    </tbody></table></div>
+
+    <div class="code-block"><div class="code-header"><span>PowerShell &mdash; Gabarit de calcul interne</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div><pre><span class="var">$analystHourlyCost</span> = 0
+<span class="var">$hoursSaved</span>        = 0
+<span class="var">$analysts</span>          = 0
+<span class="var">$observedScuCost</span>   = 0
+<span class="var">$capacityModel</span>     = <span class="string">"Included|Provisioned|Overage"</span>
+
+<span class="var">$estimatedValue</span>  = <span class="var">$analystHourlyCost</span> * <span class="var">$hoursSaved</span> * <span class="var">$analysts</span>
+<span class="var">$estimatedImpact</span> = <span class="var">$estimatedValue</span> - <span class="var">$observedScuCost</span>
+
+[pscustomobject]@{
+  CapacityModel   = <span class="var">$capacityModel</span>
+  EstimatedValue  = [math]::Round(<span class="var">$estimatedValue</span>,2)
+  ObservedScuCost = [math]::Round(<span class="var">$observedScuCost</span>,2)
+  NetImpact       = [math]::Round(<span class="var">$estimatedImpact</span>,2)
+}</pre></div>
+    <div class="code-block"><div class="code-header"><span>V&eacute;rification</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div><pre><span class="string"></span># V&eacute;rifier les KPI: MTTR, nombre d'incidents trait&eacute;s, temps de r&eacute;daction rapport, usage SCU/heure.</pre></div>
+    <div class="checklist-item"><input type="checkbox"><label>Dashboard SCU + budget actif</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>M&eacute;thode de mesure d'impact valid&eacute;e finance/CISO</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>KPI MTTR avant/apr&egrave;s mesur&eacute;s</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Right-sizing SCU revu chaque semaine</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Mod&egrave;le de capacit&eacute; (inclusion, provisioned, overage) document&eacute;</label></div>
+</div>
+
+<div class="section" id="s10">
+    <div class="section-header blue"><div class="section-number">10</div><div><div class="section-title">Conformit&eacute;, S&eacute;curit&eacute; &amp; Privacy</div><div class="section-desc">Responsible AI, logs, r&eacute;tention, GDPR/ISO/SOC2, trust plugin.</div></div></div>
+    <div class="progress-bar"><div class="progress-fill blue" style="width: 6%;">1 / 6</div></div>
+    <div class="alert alert-error">Contexte : la valeur SOC ne suffit pas; sans preuves de conformit&eacute;, le d&eacute;ploiement reste fragile en audit.</div>
+    <div class="table-container"><table><thead><tr><th>Param&egrave;tre</th><th>D&eacute;faut</th><th>Quick Win</th><th>Avanc&eacute;</th><th>Optimal</th></tr></thead><tbody>
+    <tr class="row-ko"><td>Responsible AI policy</td><td>Connue partiellement</td><td>Policy interne publi&eacute;e</td><td>Formation SOC</td><td>Revue annuelle</td></tr>
+    <tr class="row-ko"><td>Prompt data usage</td><td>Mal comprise</td><td>Position officielle document&eacute;e</td><td>Clause contractuelle valid&eacute;e</td><td>Contr&ocirc;le juridique trimestriel</td></tr>
+    <tr class="row-warn"><td>Customer Data retention</td><td>Non align&eacute;e</td><td>R&egrave;gles de r&eacute;tention et de suppression document&eacute;es</td><td>Proc&eacute;dure d'offboarding</td><td>Politique globale harmonis&eacute;e</td></tr>
+    <tr class="row-ko"><td>Auditability</td><td>Partielle</td><td>Usage monitoring et exports document&eacute;s</td><td>Cha&icirc;ne de preuve interne</td><td>Pr&eacute;paration audit externe</td></tr>
+    <tr class="row-ko"><td>Plugin trust framework</td><td>Implicite</td><td>Crit&egrave;res minimaux</td><td>Scoring risque plugin</td><td>Contr&ocirc;les continus</td></tr>
+    </tbody></table></div>
+    <div class="alert alert-info">Par d&eacute;faut, les prompts ne servent pas &agrave; entra&icirc;ner le mod&egrave;le de base Azure OpenAI. Les r&eacute;glages de <strong>data sharing</strong> et d'<strong>acc&egrave;s aux donn&eacute;es Microsoft 365</strong> se pilotent dans Owner settings.</div>
+    <div class="alert alert-warn">Pi&egrave;ge : confondre obligations de conservation op&eacute;rationnelle et conservation l&eacute;gale.</div>
+    <div class="code-block"><div class="code-header"><span>Contr&ocirc;le conformit&eacute; op&eacute;rationnel</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div><pre><span class="string"></span># 1) Owner settings : v&eacute;rifier data sharing et acc&egrave;s Microsoft 365
+  # 2) Usage monitoring : exporter les donn&eacute;es utiles pour audit interne
+  # 3) Documenter les r&egrave;gles de suppression / offboarding et la fen&ecirc;tre de r&eacute;tention
+# 4) Archivage selon politique interne
+# 5) Revue DPO/CISO trimestrielle</pre></div>
+    <div class="code-block"><div class="code-header"><span>V&eacute;rification</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div><pre><span class="string"></span># V&eacute;rifier Owner settings, r&eacute;tention document&eacute;e, exports disponibles et statut des revues conformit&eacute;.</pre></div>
+    <div class="checklist-item"><input type="checkbox"><label>Policy Responsible AI valid&eacute;e et diffus&eacute;e</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Param&egrave;tre data sharing explicitement d&eacute;cid&eacute;</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>R&eacute;tention Customer Data align&eacute;e &agrave; la politique interne</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Exports d'usage et proc&eacute;dure d'audit document&eacute;s</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Framework de confiance plugin appliqu&eacute;</label></div>
+</div>
+
+<div class="section" id="scores">
+    <div class="section-header blue"><div class="section-number">📊</div><div><div class="section-title">Score de maturit&eacute;</div><div class="section-desc">Notation sur 100 points.</div></div></div>
+
+    <div class="table-container"><table><thead><tr><th>Section</th><th>Poids max</th><th>Score d&eacute;faut</th><th>Gain Quick Win</th></tr></thead><tbody>
+    <tr><td>S1 Architecture &amp; SCU</td><td>15</td><td>2</td><td>+5</td></tr>
+    <tr><td>S2 Gouvernance</td><td>15</td><td>2</td><td>+5</td></tr>
+    <tr><td>S3 Plugins natifs</td><td>12</td><td>1</td><td>+4</td></tr>
+    <tr><td>S4 Incident Response</td><td>10</td><td>2</td><td>+2</td></tr>
+    <tr><td>S5 Threat Hunting</td><td>10</td><td>1</td><td>+2</td></tr>
+    <tr><td>S6 Identit&eacute; &amp; posture</td><td>10</td><td>1</td><td>+2</td></tr>
+    <tr><td>S7 Promptbooks</td><td>8</td><td>2</td><td>+2</td></tr>
+    <tr><td>S8 Plugins tiers</td><td>6</td><td>1</td><td>+1</td></tr>
+    <tr><td>S9 Co&ucirc;ts &amp; capacit&eacute;</td><td>8</td><td>1</td><td>+1</td></tr>
+    <tr><td>S10 Compliance</td><td>6</td><td>1</td><td>+0</td></tr>
+    <tr class="row-ok"><td><strong>Total</strong></td><td><strong>100</strong></td><td><strong>14 / 100</strong></td><td><strong>+24</strong></td></tr>
+    </tbody></table></div>
+
+    <div class="level-comparison">
+        <div class="level-card default"><h4>D&eacute;faut</h4><div class="level-score">14</div><div>Produit r&eacute;cent, faible adoption</div></div>
+        <div class="level-card standard"><h4>Quick Win</h4><div class="level-score">38</div><div>SCU + plugins + promptbooks</div></div>
+        <div class="level-card strict"><h4>Avanc&eacute;</h4><div class="level-score">74</div><div>Gouvernance et workflows stabilis&eacute;s</div></div>
+        <div class="level-card custom"><h4>Optimal</h4><div class="level-score">95</div><div>Pilotage SOC + capacit&eacute; + compliance</div></div>
+    </div>
+</div>
+
+<div class="section" id="glossaire">
+    <div class="section-header blue"><div class="section-number">📚</div><div><div class="section-title">Glossaire</div><div class="section-desc">Termes et acronymes principaux.</div></div></div>
+    <div class="table-container"><table><thead><tr><th>Terme</th><th>D&eacute;finition</th></tr></thead><tbody>
+    <tr><td>SCU</td><td>Security Compute Unit, unit&eacute; de capacit&eacute; de Microsoft Security Copilot.</td></tr>
+    <tr><td>Promptbook</td><td>S&eacute;quence de prompts pr&eacute;-d&eacute;finis pour un workflow SOC.</td></tr>
+    <tr><td>MTTR</td><td>Mean Time To Respond / Recover apr&egrave;s un incident.</td></tr>
+    <tr><td>KQL</td><td>Kusto Query Language, langage de requ&ecirc;te Sentinel/Log Analytics.</td></tr>
+    <tr><td>TI</td><td>Threat Intelligence, renseignements sur les menaces.</td></tr>
+    <tr><td>EASM</td><td>External Attack Surface Management.</td></tr>
+    <tr><td>RBAC</td><td>Role-Based Access Control.</td></tr>
+    <tr><td>DLP</td><td>Data Loss Prevention.</td></tr>
+    <tr><td>CA</td><td>Conditional Access dans Microsoft Entra ID.</td></tr>
+    <tr><td>MSTIC</td><td>Microsoft Threat Intelligence Center.</td></tr>
+    </tbody></table></div>
+</div>
+
+<div class="section" id="matrice">
+    <div class="section-header blue"><div class="section-number">🔗</div><div><div class="section-title">Matrice d'interactions</div><div class="section-desc">D&eacute;pendances entre sections.</div></div></div>
+    <div class="table-container"><table><thead><tr><th>Source</th><th>Cible</th><th>Interaction</th></tr></thead><tbody>
+    <tr><td>S1 SCU</td><td>S4/S5</td><td>Capacit&eacute; dimensionne le d&eacute;bit incident response et hunting.</td></tr>
+    <tr><td>S2 Gouvernance</td><td>S3/S8</td><td>RBAC et approbation contr&ocirc;lent les plugins activ&eacute;s.</td></tr>
+    <tr><td>S3 Plugins natifs</td><td>S4/S5/S6</td><td>Source de donn&eacute;es pour investigations.</td></tr>
+    <tr><td>S7 Promptbooks</td><td>S4/S5/S6</td><td>Standardise les workflows SOC.</td></tr>
+    <tr><td>S9 Suivi d'impact</td><td>S1/S7</td><td>Mesure l'efficacit&eacute; du dimensionnement et de l'industrialisation.</td></tr>
+    <tr><td>S10 Compliance</td><td>Transverse</td><td>Encadre les preuves d'audit et la conservation.</td></tr>
+    </tbody></table></div>
+</div>
+
+<div class="section" id="routines">
+    <div class="section-header blue"><div class="section-number">🗓️</div><div><div class="section-title">Routines Op&eacute;rationnelles</div><div class="section-desc">Cadence recommand&eacute;e SOC.</div></div></div>
+    <div class="table-container"><table><thead><tr><th>Fr&eacute;quence</th><th>Routine</th><th>Sortie attendue</th></tr></thead><tbody>
+    <tr><td>Quotidien</td><td>Revue incidents Copilot + consommation SCU</td><td>Priorit&eacute;s de journ&eacute;e</td></tr>
+    <tr><td>Hebdomadaire</td><td>Revue promptbooks et faux positifs KQL</td><td>Version N+1 templates</td></tr>
+    <tr><td>Mensuel</td><td>Right-sizing SCU + revue usage/impact + budget</td><td>Rapport CISO/Finance</td></tr>
+    <tr><td>Trimestriel</td><td>Revue RBAC/plugin/conformit&eacute;</td><td>Plan de rem&eacute;diation gouvernance</td></tr>
+    <tr><td>Annuel</td><td>Audit global Microsoft Security Copilot</td><td>Roadmap de maturit&eacute;</td></tr>
+    </tbody></table></div>
+</div>
+
+<div class="section" id="script">
+    <div class="section-header blue"><div class="section-number">📜</div><div><div class="section-title">Script All-in-One (PowerShell + API)</div><div class="section-desc">Squelette op&eacute;rationnel pour le parcours manuel SCU, &agrave; revalider sur la r&eacute;f&eacute;rence ARM en vigueur.</div></div></div>
+    <div class="code-block"><div class="code-header"><span>copilot-security-allinone.ps1</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div><pre>param(
+  [string]<span class="var">$SubscriptionId</span>,
+  [string]<span class="var">$ResourceGroup</span> = <span class="string">"rg-copilot-security-prod"</span>,
+  [string]<span class="var">$Location</span> = <span class="string">"westeurope"</span>,
+  [string]<span class="var">$CapacityName</span> = <span class="string">"cpsoc-prod"</span>,
+  [int]<span class="var">$Scu</span> = 2
+)
+
+<span class="var">$apiVersion</span> = <span class="string">"&lt;API_VERSION_A_VALIDER&gt;"</span>
+
+<span class="keyword">Write-Host</span> <span class="string">"[1/6] Confirm customer path (manual SCU only)"</span>
+az account set --subscription <span class="var">$SubscriptionId</span>
+az group create -n <span class="var">$ResourceGroup</span> -l <span class="var">$Location</span>
+<span class="keyword">Write-Host</span> <span class="string">"[2/6] Provision SCU capacity"</span>
+az resource create --resource-group <span class="var">$ResourceGroup</span> --name <span class="var">$CapacityName</span> `
+  --resource-type <span class="string">"Microsoft.SecurityCopilot/capacities"</span> --api-version <span class="var">$apiVersion</span> `
+  --location <span class="var">$Location</span> --properties <span class="string">"{\"</span>numberOfUnits\<span class="string">":$Scu}"</span> --sku <span class="string">"{\"</span>name\<span class="string">":\"</span>SecurityCopilot\<span class="string">"}"</span>
+
+<span class="keyword">Write-Host</span> <span class="string">"[3/6] Baseline RBAC"</span>
+# Security Copilot &gt; Home &gt; Role assignment : owners, contributors, groupes role-assignable
+
+<span class="keyword">Write-Host</span> <span class="string">"[4/6] Validate native plugins"</span>
+# V&eacute;rifier Defender XDR, Sentinel, Entra, Intune, Purview
+
+<span class="keyword">Write-Host</span> <span class="string">"[5/6] Deploy 5 promptbook templates"</span>
+# Import templates PB1..PB5
+
+<span class="keyword">Write-Host</span> <span class="string">"[6/6] Enable monitoring + budget alerts"</span>
+# Configurer dashboards/alertes
+
+# Security Copilot &gt; Home &gt; Owner settings &gt; Usage monitoring
+az resource show -g <span class="var">$ResourceGroup</span> -n <span class="var">$CapacityName</span> `
+  --resource-type <span class="string">"Microsoft.SecurityCopilot/capacities"</span> --api-version <span class="var">$apiVersion</span> -o table
+<span class="keyword">Write-Host</span> <span class="string">"Done"</span>
+</pre></div>
+</div>
+
+<div class="section" id="checklist">
+    <div class="section-header blue"><div class="section-number">✅</div><div><div class="section-title">Checklist de D&eacute;ploiement</div><div class="section-desc">Par phase, pour audit et ex&eacute;cution.</div></div></div>
+    <div class="checklist-item"><input type="checkbox"><label>Phase 1 Quick Win : confirmer le parcours (inclusion ou manuel), puis activer plugins natifs et importer 5 promptbooks</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Phase 2 Gouvernance : RBAC, groupes Entra, plugin approval workflow</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Phase 3 Use cases : incident response, threat hunting, identity posture</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Phase 4 Co&ucirc;ts : dashboard SCU, budget alerts, suivi d'impact mensuel</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Phase 5 Compliance : logs, r&eacute;tention, revues DPO/CISO</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Phase 6 V&eacute;rification finale : scoring, preuves d'audit, plan d'am&eacute;lioration continue</label></div>
+</div>
+
+</div>
+
+<footer>
+  Microsoft Security Copilot &mdash; Guide de Configuration &amp; Audit &mdash; Version 1.1 (Mai 2026).<br>
+  Capacit&eacute; et tarification SCU &agrave; v&eacute;rifier sur la documentation et le pricing Microsoft en vigueur.
+</footer>
+  Microsoft Security Copilot &mdash; Guide de Configuration &amp; Audit &mdash; Version 1.1 (Mai 2026).<br>
+<script>
+function copyCode(button) {
+    const pre = button.closest('.code-block').querySelector('pre');
+    const text = pre.innerText;
+    navigator.clipboard.writeText(text).then(() => {
+        const prev = button.textContent;
+        button.textContent = 'Copie OK';
+        setTimeout(() => button.textContent = prev, 1200);
+    });
+}
+</script>
+<script id="v1a-script">
+(function(){
+  const sidebar = document.querySelector('.v1a-sidebar');
+  if(!sidebar) return;
+  const accs = [...sidebar.querySelectorAll('details.acc')];
+  accs.forEach(a => a.addEventListener('toggle', () => {
+    if(a.open) accs.forEach(o => { if(o!==a) o.open = false; });
+  }));
+  const links = [...sidebar.querySelectorAll('.acc-body a[href^="#"]')];
+  const map = new Map(links.map(a => [a.getAttribute('href').slice(1), a]));
+  const sections = [...document.querySelectorAll('.section[id], section[id]')];
+  function onScroll(){
+    const y = window.scrollY + 120;
+    let cur = null;
+    for(const s of sections){ if(s.offsetTop <= y) cur = s; else break; }
+    links.forEach(a => a.classList.remove('active'));
+    if(cur){
+      const a = map.get(cur.id);
+      if(a){
+        a.classList.add('active');
+        const det = a.closest('details.acc');
+        if(det && !det.open){ accs.forEach(o=>o.open=false); det.open = true; }
+      }
+    }
+  }
+  document.addEventListener('scroll', onScroll, {passive:true});
+  onScroll();
+})();
+</script>
+</main>
+</div>
+</body>
+</html>

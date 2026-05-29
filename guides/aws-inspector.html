@@ -1,0 +1,2406 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!--
+    ╔══════════════════════════════════════════════════════════════════════╗
+    ║  aws-inspector.html                                          ║
+    ║  Amazon Inspector — Gestion des Vulnérabilités, Analyse de         ║
+    ║  l'Exposition & Sécurité des Workloads                             ║
+    ║  Guide de Configuration & Audit                                    ║
+    ║  Version 1.0 — Avril 2026                                          ║
+    ╚══════════════════════════════════════════════════════════════════════╝
+    -->
+    <title>Amazon Inspector &mdash; Gestion des Vuln&eacute;rabilit&eacute;s, Analyse de l&apos;Exposition &amp; S&eacute;curit&eacute; des Workloads &mdash; Guide de Configuration &amp; Audit</title>
+    <style>
+        :root {
+            --azure-blue: #0078d4;
+            --azure-dark: #004578;
+            --azure-light: #deecf9;
+            --success-green: #107c10;
+            --warning-orange: #ff8c00;
+            --danger-red: #d13438;
+            --neutral-bg: #f3f2f1;
+            --neutral-dark: #323130;
+            --neutral-medium: #605e5c;
+            --white: #ffffff;
+            --shadow: 0 2px 8px rgba(0,0,0,0.12);
+            --shadow-hover: 0 4px 16px rgba(0,0,0,0.18);
+            --radius: 8px;
+            --aws-orange: #ff9900;
+            --aws-dark: #232f3e;
+            --aws-teal: #006b75;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--neutral-bg); color: var(--neutral-dark); line-height: 1.6; }
+        a { color: var(--azure-blue); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        code { font-family: 'Cascadia Code', Consolas, 'Courier New', monospace; font-size: 0.88em; background: #e8e6e4; padding: 1px 6px; border-radius: 3px; }
+        .hero { background: var(--white); border-bottom: 3px solid var(--aws-orange); padding: 40px 40px 32px; text-align: center; max-width: 1400px; margin: 0 auto; }
+        .hero h1 { font-size: 1.7em; font-weight: 700; color: var(--aws-dark); margin-bottom: 6px; letter-spacing: -0.3px; }
+        .hero .subtitle { font-size: 0.95em; color: var(--neutral-medium); max-width: 800px; margin: 0 auto; }
+        .hero .badge-row { margin-top: 16px; display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; }
+        .hero .badge { background: var(--neutral-bg); border: 1px solid #e1dfdd; color: var(--neutral-dark); padding: 4px 12px; border-radius: 4px; font-size: 0.78em; }
+        .hero .meta-row { margin-top: 14px; display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; font-size: 0.8em; color: var(--neutral-medium); }
+        .nav-container { max-width: 1400px; margin: 0 auto; border-bottom: 1px solid #e1dfdd; position: sticky; top: 0; z-index: 100; background: var(--neutral-bg); }
+        .nav-container nav { display: flex; justify-content: center; gap: 0; overflow-x: auto; padding: 0; }
+        .nav-container nav a { text-decoration: none; color: var(--neutral-medium); padding: 10px 14px; font-size: 0.78em; font-weight: 500; white-space: nowrap; border-bottom: 2px solid transparent; transition: all 0.2s; }
+        .nav-container nav a:hover { color: var(--aws-orange); border-bottom-color: var(--aws-orange); text-decoration: none; }
+        .container { max-width: 1400px; margin: 0 auto; padding: 30px 40px; }
+        .section { background: var(--white); border-radius: var(--radius); box-shadow: var(--shadow); padding: 28px 32px; margin-bottom: 28px; transition: box-shadow 0.2s; }
+        .section:hover { box-shadow: var(--shadow-hover); }
+        .section-header { display: flex; align-items: center; gap: 15px; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid var(--neutral-bg); }
+        .section-header.blue { border-bottom-color: var(--azure-blue); }
+        .section-header.red { border-bottom-color: var(--danger-red); }
+        .section-header.orange { border-bottom-color: var(--warning-orange); }
+        .section-header.green { border-bottom-color: var(--success-green); }
+        .section-header.teal { border-bottom-color: var(--aws-teal); }
+        .section-number { background: var(--aws-orange); color: white; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.1em; flex-shrink: 0; }
+        .section-number.red { background: var(--danger-red); }
+        .section-number.orange { background: var(--warning-orange); }
+        .section-number.green { background: var(--success-green); }
+        .section-number.blue { background: var(--azure-blue); }
+        .section-number.teal { background: var(--aws-teal); }
+        .section-title { font-size: 1.4em; color: var(--aws-dark); font-weight: 700; }
+        .section-desc { font-size: 0.92em; color: var(--neutral-medium); margin-top: 2px; }
+        h3 { font-size: 1.05em; font-weight: 600; margin: 24px 0 10px 0; padding-left: 12px; border-left: 3px solid var(--aws-orange); }
+        .badge-sm { font-size: 0.7em; padding: 2px 8px; border-radius: 3px; font-weight: 600; vertical-align: middle; }
+        .badge-critical { background: #fde7e9; color: var(--danger-red); }
+        .badge-high { background: #fff0e0; color: #d83b01; }
+        .badge-medium { background: #fff8e1; color: #6d4c00; }
+        .badge-low { background: #e8f5e9; color: var(--success-green); }
+        .badge-info { background: var(--azure-light); color: var(--azure-blue); }
+        .lic { display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 0.72em; font-weight: 600; vertical-align: middle; margin-left: 4px; }
+        .lic-aws-free { background: #dff6dd; color: var(--success-green); }
+        .lic-aws-pay { background: #fff3cd; color: #6d4c00; }
+        .lic-aws-trial { background: var(--azure-light); color: var(--azure-blue); }
+        .lic-aws-included { background: #e8e6e4; color: #605e5c; }
+        .alert { border-radius: var(--radius); padding: 16px 20px; margin: 15px 0; font-size: 0.93em; line-height: 1.6; }
+        .alert:has(.alert-icon) { display: flex; gap: 12px; align-items: flex-start; }
+        .alert-icon { font-size: 1.2em; flex-shrink: 0; margin-top: 2px; }
+        .alert-info { background: #e6f2ff; border: 1px solid #b3d7ff; color: #004578; }
+        .alert-warn { background: #fff8e1; border: 1px solid #ffe082; color: #6d4c00; }
+        .alert-error { background: #fde7e9; border: 1px solid #f5c6cb; color: #721c24; }
+        .alert-ok { background: #e8f5e9; border: 1px solid #a5d6a7; color: #1b5e20; }
+        .table-container { overflow-x: auto; border-radius: var(--radius); box-shadow: 0 1px 4px rgba(0,0,0,0.08); margin: 12px 0 18px 0; }
+        table { width: 100%; border-collapse: collapse; background: var(--white); font-size: 0.9em; }
+        thead th { background: var(--aws-dark); color: white; padding: 12px 14px; text-align: left; font-weight: 600; font-size: 0.85em; text-transform: uppercase; letter-spacing: .3px; }
+        tbody td { padding: 10px 14px; border-bottom: 1px solid #edebe9; vertical-align: top; }
+        tbody tr:hover { background: #f8f7f6; }
+        tbody tr:last-child td { border-bottom: none; }
+        tr.row-ok { background: #f0fff0; }
+        tr.row-ko { background: #fff5f5; }
+        tr.row-warn { background: #fffdf0; }
+        .code-block { background: #1e1e1e; border-radius: var(--radius); overflow: hidden; margin: 12px 0 18px 0; }
+        .code-header { display: flex; justify-content: space-between; align-items: center; padding: 8px 14px; background: #2d2d2d; font-size: 0.78em; color: #a0a0a0; }
+        .copy-btn { background: var(--aws-orange); color: white; border: none; padding: 4px 12px; border-radius: 4px; cursor: pointer; font-size: 0.85em; transition: background 0.2s; }
+        .copy-btn:hover { background: #e68a00; }
+        .code-block pre { padding: 16px 18px; color: #d4d4d4; font-family: 'Cascadia Code', Consolas, monospace; font-size: 0.85em; overflow-x: auto; white-space: pre; line-height: 1.55; }
+        .code-block pre .comment { color: #6a9955; }
+        .code-block pre .keyword { color: #569cd6; }
+        .code-block pre .string { color: #ce9178; }
+        .code-block pre .param { color: #9cdcfe; }
+        .code-block pre .var { color: #4ec9b0; }
+        .step { display: flex; gap: 12px; margin-bottom: 10px; padding: 14px 16px; background: #faf9f8; border-radius: var(--radius); border-left: 3px solid var(--aws-orange); font-size: 0.93em; }
+        .step.step-red { border-left-color: var(--danger-red); }
+        .step.step-green { border-left-color: var(--success-green); }
+        .step-n { min-width: 28px; height: 28px; border-radius: 50%; background: var(--aws-orange); color: white; display: flex; align-items: center; justify-content: center; font-size: 0.8em; font-weight: 700; flex-shrink: 0; }
+        .step-n.red { background: var(--danger-red); }
+        .step-n.green { background: var(--success-green); }
+        .step-c { flex: 1; }
+        .step-c ul, .step-c ol { margin-top: 6px; padding-left: 20px; }
+        .hl { background: #fff3cd; padding: 1px 6px; border-radius: 3px; font-weight: 600; }
+        .hl-blue { background: var(--azure-light); padding: 1px 6px; border-radius: 3px; font-weight: 600; color: var(--azure-dark); }
+        .hl-green { background: #dff6dd; padding: 1px 6px; border-radius: 3px; font-weight: 600; color: var(--success-green); }
+        .hl-red { background: #fde7e9; padding: 1px 6px; border-radius: 3px; font-weight: 600; color: var(--danger-red); }
+        .progress-bar { background: #e1dfdd; border-radius: 10px; height: 24px; overflow: hidden; margin: 12px 0; position: relative; }
+        .progress-fill { height: 100%; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 0.78em; font-weight: 700; color: white; transition: width 0.3s; }
+        .progress-fill.red { background: linear-gradient(90deg, #a01020, #d13438); }
+        .progress-fill.orange { background: linear-gradient(90deg, #d83b01, #ff8c00); }
+        .progress-fill.green { background: linear-gradient(90deg, #107c10, #2ea72e); }
+        .progress-fill.blue { background: linear-gradient(90deg, #004578, #0078d4); }
+        .checklist-item { display: flex; align-items: flex-start; gap: 10px; padding: 8px 0; border-bottom: 1px solid #f3f2f1; }
+        .checklist-item:last-child { border-bottom: none; }
+        .checklist-item input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--aws-orange); flex-shrink: 0; margin-top: 3px; }
+        .level-comparison { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 16px 0; }
+        .level-card { border-radius: var(--radius); padding: 16px; text-align: center; }
+        .level-card.default { background: #f3f2f1; border: 2px solid #e1dfdd; }
+        .level-card.standard { background: #e6f2ff; border: 2px solid #b3d7ff; }
+        .level-card.strict { background: #e8f5e9; border: 2px solid #a5d6a7; }
+        .level-card.custom { background: #fff8e1; border: 2px solid #ffe082; }
+        .level-card h4 { font-size: 1em; margin-bottom: 4px; }
+        .level-card .level-score { font-size: 2em; font-weight: 700; }
+        .level-card .level-desc { font-size: 0.8em; color: var(--neutral-medium); margin-top: 4px; }
+        .cross-ref { color: var(--azure-blue); font-size: 0.85em; font-style: italic; }
+        .sla-matrix { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin: 16px 0; }
+        .sla-card { border-radius: var(--radius); padding: 14px; text-align: center; border: 2px solid; }
+        .sla-card.critical { background: #fde7e9; border-color: var(--danger-red); }
+        .sla-card.high { background: #fff0e0; border-color: #d83b01; }
+        .sla-card.medium { background: #fff8e1; border-color: var(--warning-orange); }
+        .sla-card.low { background: #e8f5e9; border-color: var(--success-green); }
+        .sla-card.info { background: var(--azure-light); border-color: var(--azure-blue); }
+        .sla-card h4 { font-size: 0.9em; margin-bottom: 6px; font-weight: 700; }
+        .sla-time { font-size: 1.6em; font-weight: 800; }
+        .sla-detail { font-size: 0.72em; margin-top: 4px; color: var(--neutral-medium); }
+        footer { background: #faf9f8; color: var(--neutral-medium); text-align: center; padding: 24px; margin-top: 40px; font-size: 0.8em; border-top: 1px solid #e1dfdd; }
+        @media print {
+            body { background: white; font-size: 11px; }
+            .hero { padding: 16px; border-bottom-width: 2px; }
+            .nav-container { display: none; }
+            .container { max-width: 100%; padding: 0 16px; }
+            .section { box-shadow: none; border: 1px solid #ccc; break-inside: avoid; }
+            .code-block pre { font-size: 0.75em; }
+        }
+        @media (max-width: 768px) {
+            .hero { padding: 24px 16px 20px; }
+            .hero h1 { font-size: 1.3em; }
+            .container { padding: 16px; }
+            .section { padding: 20px; }
+            .level-comparison { grid-template-columns: repeat(2, 1fr); }
+            .sla-matrix { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+<style id="v1a-overlay">
+:root{--c:#0078d4;--azure-dark:#004578;--light:#deecf9;--bg:#f8f9fb;--surface:#fff;--border:#e3e6ec;--muted:#5b6478;--radius:14px}
+.nav-container,.back-to-index{display:none!important}
+body{background:var(--bg)}
+.v1a-layout{display:grid;grid-template-columns:280px 1fr;gap:0;align-items:start}
+.v1a-sidebar{position:sticky;top:0;height:100vh;overflow-y:auto;padding:18px 14px 24px;background:#fff;border-right:1px solid var(--border)}
+.v1a-main{min-width:0}
+.v1a-main .hero{max-width:none;margin:0;border-radius:0}
+.v1a-main .container{max-width:1200px}
+.back-index{display:inline-flex;align-items:center;gap:6px;margin:0 0 16px;padding:6px 10px;background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--muted);font-size:.78em;font-weight:500;text-decoration:none;transition:all .15s}
+.back-index:hover{background:transparent;border-color:var(--c);color:var(--azure-dark);text-decoration:none}
+.back-index .arr{font-size:1em;line-height:1;opacity:.85}
+.side-head{display:flex;align-items:center;gap:10px;padding:6px 6px 14px;border-bottom:1px solid var(--border);margin-bottom:12px}
+.side-head .ico{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--c),#50a4f0);display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.1em;flex-shrink:0}
+.side-head .t{font-weight:700;color:var(--azure-dark);font-size:.95em;line-height:1.15}
+.side-head .s{font-size:.72em;color:var(--muted);margin-top:2px;line-height:1.3}
+.acc{margin-bottom:6px;border-radius:10px;overflow:hidden}
+.acc>summary{list-style:none;cursor:pointer;padding:8px 10px;display:flex;align-items:center;gap:8px;color:var(--azure-dark);font-weight:600;font-size:.82em;border-radius:8px;user-select:none}
+.acc>summary::-webkit-details-marker{display:none}
+.acc>summary:hover{background:var(--bg)}
+.acc>summary .chev{margin-left:auto;font-size:.7em;transition:transform .15s;color:var(--muted)}
+.acc[open]>summary{background:var(--light);color:var(--c)}
+.acc[open]>summary .chev{transform:rotate(90deg)}
+.acc-body{padding:4px 0 6px 6px;display:flex;flex-direction:column;gap:2px}
+.acc-body a{display:flex;align-items:center;gap:8px;padding:6px 10px 6px 18px;border-radius:6px;font-size:.8em;color:var(--muted);text-decoration:none;border-left:2px solid transparent;transition:all .12s}
+.acc-body a:hover{color:var(--c);background:var(--bg);text-decoration:none}
+.acc-body a.active{color:var(--c);background:var(--light);border-left-color:var(--c);font-weight:600}
+.acc-body a .num{font-size:.7em;color:#9aa2b1;font-variant-numeric:tabular-nums;min-width:22px}
+.acc-body a.active .num{color:var(--c)}
+.side-foot{margin-top:14px;padding-top:12px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:4px}
+.side-foot a{display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:6px;font-size:.78em;color:var(--muted);text-decoration:none}
+.side-foot a:hover{color:var(--c);background:var(--bg);text-decoration:none}
+@media (max-width:900px){
+  .v1a-layout{grid-template-columns:1fr}
+  .v1a-sidebar{position:static;height:auto;border-right:none;border-bottom:1px solid var(--border)}
+}
+</style>
+<style id="theme-overlay" data-cat="aws">
+:root {
+  --c: #ff9900;
+}
+.v1a-topbar { background: linear-gradient(90deg, #ff9900, #ff9900) !important; }
+.v1a-side { --c: #ff9900 !important; }
+</style>
+</head>
+<body>
+<div class="v1a-layout">
+<aside class="v1a-sidebar">
+  <a href="../index.html" class="back-index" title="Revenir à l'index"><span class="arr" aria-hidden="true">&#127968;</span> Index</a>
+  <div class="side-head">
+    <div class="ico">&#x1F4D8;</div>
+    <div>
+      <div class="t">Amazon Inspector</div>
+      <div class="s">Guide de Configuration &amp; Audit &mdash; EC2 Scanning, ECR Container Scanning, Lambda&hellip;</div>
+    </div>
+  </div>
+  <details class="acc" open>
+    <summary>Introduction <span class="chev">&rsaquo;</span></summary>
+    <div class="acc-body">
+      <a href="#guide"><span class="num">&bull;</span> Mode d'emploi</a>
+      <a href="#perimetre"><span class="num">&bull;</span> P&eacute;rim&egrave;tre</a>
+      <a href="#licences"><span class="num">&bull;</span> Co&ucirc;ts</a>
+    </div>
+  </details>
+  <details class="acc">
+    <summary>Sections <span class="chev">&rsaquo;</span></summary>
+    <div class="acc-body">
+      <a href="#s1"><span class="num">S1</span> Activation</a>
+      <a href="#s2"><span class="num">S2</span> EC2 Scanning</a>
+      <a href="#s3"><span class="num">S3</span> ECR Scanning</a>
+      <a href="#s4"><span class="num">S4</span> Lambda Scanning</a>
+      <a href="#s5"><span class="num">S5</span> Findings</a>
+      <a href="#s6"><span class="num">S6</span> Rem&eacute;diation</a>
+      <a href="#s7"><span class="num">S7</span> Multi-Account</a>
+      <a href="#s8"><span class="num">S8</span> SBOM</a>
+      <a href="#s9"><span class="num">S9</span> Int&eacute;grations</a>
+      <a href="#s10"><span class="num">S10</span> Co&ucirc;ts</a>
+    </div>
+  </details>
+  <details class="acc">
+    <summary>Annexes <span class="chev">&rsaquo;</span></summary>
+    <div class="acc-body">
+      <a href="#scores"><span class="num">&bull;</span> Scores</a>
+      <a href="#script"><span class="num">&bull;</span> &#x1F4DC; Script</a>
+      <a href="#checklist"><span class="num">&bull;</span> Checklist</a>
+      <a href="#glossaire"><span class="num">&bull;</span> Glossaire</a>
+      <a href="#matrice"><span class="num">&bull;</span> Matrice</a>
+    </div>
+  </details>
+  <div class="side-foot">
+    <a href="#top">&uarr; Retour en haut</a>
+    <a href="#" onclick="window.print();return false;">&#x2B07; Imprimer / PDF</a>
+    <a href="#" onclick="navigator.clipboard.writeText(location.href);this.textContent='&#x2713; Lien copié';return false;">&#x2398; Copier le lien</a>
+  </div>
+</aside>
+<main class="v1a-main">
+
+
+
+<!-- ═══════════════════════ BACK TO INDEX ═══════════════════════ -->
+<a href="../index.html" class="back-to-index" style="position:fixed;top:16px;left:16px;z-index:1000;display:inline-flex;align-items:center;gap:6px;padding:8px 14px;background:#0078d4;color:#fff;text-decoration:none;border-radius:8px;font:600 14px/1 'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;box-shadow:0 2px 8px rgba(0,0,0,0.15);transition:background .2s" onmouseover="this.style.background='#004578'" onmouseout="this.style.background='#0078d4'" aria-label="Retour à l'index">&larr;&nbsp;Index</a>
+<!-- ═══════════════════════ HEADER ═══════════════════════ -->
+<header class="hero">
+    <h1>Amazon Inspector &mdash; Gestion des Vuln&eacute;rabilit&eacute;s, Analyse de l&apos;Exposition &amp; S&eacute;curit&eacute; des Workloads</h1>
+    <p class="subtitle">Guide de Configuration &amp; Audit &mdash; EC2 Scanning, ECR Container Scanning, Lambda Scanning, Findings Prioritization, SBOM, Multi-Account</p>
+    <div class="badge-row">
+        <span class="badge">Amazon Inspector v2</span>
+        <span class="badge">Amazon EC2</span>
+        <span class="badge">Amazon ECR</span>
+        <span class="badge">AWS Lambda</span>
+        <span class="badge">AWS Organizations</span>
+        <span class="badge">AWS Security Hub</span>
+        <span class="badge">AWS CLI</span>
+        <span class="badge">Terraform</span>
+    </div>
+    <div class="meta-row">
+        <span>Version : <strong>1.0</strong></span>
+        <span>Derni&egrave;re MAJ : <strong>Avril 2026</strong></span>
+        <span>Console : <a href="https://console.aws.amazon.com/inspector/v2/" target="_blank">console.aws.amazon.com &gt; Inspector</a></span>
+        <span><span class="lic lic-aws-pay">Pay-per-resource</span> <span class="lic lic-aws-trial">15 jours gratuits</span></span>
+    </div>
+</header>
+
+<!-- ═══════════════════════ NAV ═══════════════════════ -->
+<div class="nav-container">
+    <nav>
+        <a href="#guide">Mode d'emploi</a>
+        <a href="#perimetre">P&eacute;rim&egrave;tre</a>
+        <a href="#licences">Co&ucirc;ts</a>
+        <a href="#s1">S1 Activation</a>
+        <a href="#s2">S2 EC2 Scanning</a>
+        <a href="#s3">S3 ECR Scanning</a>
+        <a href="#s4">S4 Lambda Scanning</a>
+        <a href="#s5">S5 Findings</a>
+        <a href="#s6">S6 Rem&eacute;diation</a>
+        <a href="#s7">S7 Multi-Account</a>
+        <a href="#s8">S8 SBOM</a>
+        <a href="#s9">S9 Int&eacute;grations</a>
+        <a href="#s10">S10 Co&ucirc;ts</a>
+        <a href="#scores">Scores</a>
+        <a href="#script">&#x1F4DC; Script</a>
+        <a href="#checklist">Checklist</a>
+        <a href="#glossaire">Glossaire</a>
+        <a href="#matrice">Matrice</a>
+    </nav>
+</div>
+
+<div class="container">
+
+<!-- ═══════════════════════ MODE D'EMPLOI ═══════════════════════ -->
+<div class="section" id="guide">
+    <div class="section-header blue">
+        <div class="section-number blue">&#x1F4D6;</div>
+        <div>
+            <div class="section-title">Mode d'emploi de ce guide</div>
+            <div class="section-desc">Comment utiliser ce r&eacute;f&eacute;rentiel Amazon Inspector pour configurer et auditer la gestion des vuln&eacute;rabilit&eacute;s</div>
+        </div>
+    </div>
+
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x1F4CB;</span>
+        <div>
+            Ce document est un <strong>r&eacute;f&eacute;rentiel complet</strong> couvrant toutes les configurations Amazon Inspector v2 avec les best practices AWS.
+            Il peut &ecirc;tre utilis&eacute; tel quel en pr&eacute;sentation client ou adapt&eacute; en ajoutant les donn&eacute;es sp&eacute;cifiques d'un compte AWS.<br>
+            <strong>Analogie :</strong> Amazon Inspector est le <strong>m&eacute;decin l&eacute;giste de vos workloads</strong> &mdash; il examine chaque instance EC2, chaque image de container, chaque fonction Lambda pour d&eacute;tecter les faiblesses (CVE). Sans Inspector, c'est comme exploiter une salle de r&eacute;animation sans infirmi&egrave;re : les pathologies se d&eacute;veloppent silencieusement jusqu'&agrave; l'urgence vitale.
+        </div>
+    </div>
+
+    <h3>Convention des colonnes</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr><th>Colonne</th><th>Signification</th><th>Effort</th></tr></thead>
+        <tbody>
+            <tr><td><strong>D&eacute;faut AWS</strong></td><td>Valeur appliqu&eacute;e &agrave; la cr&eacute;ation du compte &mdash; aucune action. <span class="hl-red">Inspector v2 n'est PAS activ&eacute; par d&eacute;faut.</span></td><td>0 min</td></tr>
+            <tr><td><strong>&#x26A1; Quick Win</strong></td><td>Activer Inspector v2 pour EC2 + ECR + Lambda en une commande &mdash; <span class="hl-green">+22 pts en 10 min</span></td><td>~10 min</td></tr>
+            <tr><td><strong>&#x1F512; Avanc&eacute;</strong></td><td>Filtres, automatisation EventBridge, multi-compte Organizations, pipeline CI/CD avec gate</td><td>~1-2h</td></tr>
+            <tr><td><strong>&#x1F3AF; Optimal</strong></td><td>SBOM export, Lambda code scanning, Security Hub, routines de maintenance et reporting mensuel</td><td>Variable</td></tr>
+        </tbody>
+    </table>
+    </div>
+
+    <h3>Convention des badges de co&ucirc;t</h3>
+    <p>
+        <span class="lic lic-aws-free">Gratuit</span> Pas de co&ucirc;t suppl&eacute;mentaire (inclus dans le compte AWS)<br>
+        <span class="lic lic-aws-trial">Trial 15j</span> Gratuit pendant les 15 premiers jours, puis facturation &agrave; l'usage<br>
+        <span class="lic lic-aws-pay">Pay-per-resource</span> Factur&eacute; &agrave; l'usage : EC2 0,00157 $/instance-hour, ECR 0,09 $/image, Lambda 0,30 $/fonction/mois (tarifs indicatifs)<br>
+        <span class="lic lic-aws-included">Inclus</span> Inclus avec l'activation de base (sans surco&ucirc;t)
+    </p>
+
+    <h3>Strat&eacute;gie de d&eacute;ploiement recommand&eacute;e</h3>
+    <div class="step step-green">
+        <div class="step-n green">1</div>
+        <div class="step-c"><strong>Quick Win</strong> &mdash; Activer Inspector v2 pour EC2 + ECR + Lambda + Lambda Code (~10 min, +22 pts). Une seule commande AWS CLI.</div>
+    </div>
+    <div class="step step-green">
+        <div class="step-n green">2</div>
+        <div class="step-c"><strong>Findings &amp; prioritization</strong> &mdash; Configurer les filtres de suppression des faux positifs + alerte EventBridge sur les Critical (~30 min)</div>
+    </div>
+    <div class="step">
+        <div class="step-n">3</div>
+        <div class="step-c"><strong>Pipeline CI/CD</strong> &mdash; Int&eacute;grer le gate de d&eacute;ploiement ECR (bloquer si Critical non r&eacute;solu) dans GitHub Actions / CodePipeline (~1h)</div>
+    </div>
+    <div class="step">
+        <div class="step-n">4</div>
+        <div class="step-c"><strong>Multi-Account &amp; SBOM</strong> &mdash; Delegated admin via Organizations + export SBOM CycloneDX vers S3 + Security Hub (variable)</div>
+    </div>
+
+    <h3>Solutions &eacute;cart&eacute;es</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr><th>Alternative</th><th>Raison d'&eacute;limination</th></tr></thead>
+        <tbody>
+            <tr><td><strong>Inspector Classic (v1)</strong></td><td>D&eacute;pr&eacute;ci&eacute; et arr&ecirc;t&eacute; en novembre 2023. Ne g&egrave;re pas ECR ni Lambda. API <code>aws inspector</code> inactive.</td></tr>
+            <tr><td><strong>Trivy / Grype (open source)</strong></td><td>Pas d'int&eacute;gration native AWS (Security Hub, EventBridge, Organizations). Maintenance &agrave; charge de l'&eacute;quipe. Pas de network reachability context.</td></tr>
+            <tr><td><strong>Qualys / Rapid7 CSPM</strong></td><td>Co&ucirc;t licences &eacute;lev&eacute;, pas d'int&eacute;gration native EPSS + context AWS. Inspector v2 inclut le scoring contextuel &agrave; moindre co&ucirc;t.</td></tr>
+            <tr><td><strong>AWS Systems Manager Patch Manager seul</strong></td><td>Corrige mais ne d&eacute;tecte pas. SSM ne scanne pas les images ECR ni les packages Lambda. Compl&eacute;mentaire, pas substituable.</td></tr>
+        </tbody>
+    </table>
+    </div>
+</div>
+
+<!-- ═══════════════════════ PÉRIMÈTRE ═══════════════════════ -->
+<div class="section" id="perimetre">
+    <div class="section-header blue">
+        <div class="section-number blue">&#x1F3AF;</div>
+        <div>
+            <div class="section-title">P&eacute;rim&egrave;tre &amp; Hors-P&eacute;rim&egrave;tre</div>
+            <div class="section-desc">Ce que ce guide couvre et ce qu'il exclut explicitement</div>
+        </div>
+    </div>
+
+    <h3>Dans le p&eacute;rim&egrave;tre</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr><th>Section</th><th>#</th><th>Criticit&eacute;</th><th>Contenu cl&eacute;</th></tr></thead>
+        <tbody>
+            <tr><td><strong>Activation &amp; Scan Types</strong></td><td>S1</td><td><span class="badge-sm badge-critical">&#x1F534; Critique</span></td><td>Inspector v2 (distinct de Classic d&eacute;pr&eacute;ci&eacute;). Types de scan : EC2, ECR, Lambda standard, Lambda code. Auto-enable org. Coverage status.</td></tr>
+            <tr><td><strong>EC2 Vulnerability Scanning</strong></td><td>S2</td><td><span class="badge-sm badge-critical">&#x1F534; Critique</span></td><td>Agent-based (SSM) vs agentless (snapshot). OS packages (RPM, DEB). Network reachability. EPSS scoring. Scan frequency.</td></tr>
+            <tr><td><strong>ECR Container Image Scanning</strong></td><td>S3</td><td><span class="badge-sm badge-critical">&#x1F534; Critique</span></td><td>Enhanced scanning vs basic scanning. Push-based vs continuous. Base image CVE. Pipeline CI/CD avec gate. SBOM generation.</td></tr>
+            <tr><td><strong>Lambda Function Scanning</strong></td><td>S4</td><td><span class="badge-sm badge-high">&#x1F7E0; Haute</span></td><td>Lambda standard scanning (packages). Lambda code scanning (SAST). Runtimes support&eacute;s. Triggers de scan.</td></tr>
+            <tr><td><strong>Findings &amp; Prioritization</strong></td><td>S5</td><td><span class="badge-sm badge-high">&#x1F7E0; Haute</span></td><td>Inspector Score (CVSS + EPSS + network reachability). S&eacute;v&eacute;rit&eacute;s. Filtres. Suppression rules. Lifecycle.</td></tr>
+            <tr><td><strong>Remediation &amp; Workflows</strong></td><td>S6</td><td><span class="badge-sm badge-high">&#x1F7E0; Haute</span></td><td>SLA par s&eacute;v&eacute;rit&eacute;. SSM Patch Manager. EventBridge. Jira/ServiceNow. CIS correlations.</td></tr>
+            <tr><td><strong>Multi-Account &amp; Organizations</strong></td><td>S7</td><td><span class="badge-sm badge-medium">&#x1F7E1; Moyenne</span></td><td>Delegated administrator. Auto-enable. Aggregated findings. Coverage reporting.</td></tr>
+            <tr><td><strong>SBOM &amp; Supply Chain Security</strong></td><td>S8</td><td><span class="badge-sm badge-medium">&#x1F7E1; Moyenne</span></td><td>CycloneDX 1.4 et SPDX 2.3. Export S3. AWS Audit Manager. Vulnerable packages tracking.</td></tr>
+            <tr><td><strong>Integration &amp; Reporting</strong></td><td>S9</td><td><span class="badge-sm badge-low">&#x1F535; Basse</span></td><td>Security Hub. EventBridge routing. Amazon Detective. CloudWatch metrics. Reporting mensuel.</td></tr>
+            <tr><td><strong>Cost Optimization</strong></td><td>S10</td><td><span class="badge-sm badge-low">&#x1F535; Basse</span></td><td>D&eacute;sactiver scan types inutiles. Exclure vieilles images ECR. Coverage optimization. Free trial.</td></tr>
+        </tbody>
+    </table>
+    </div>
+
+    <h3>Hors-p&eacute;rim&egrave;tre (explicite)</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr><th>Sujet exclu</th><th>Raison</th><th>Renvoi</th></tr></thead>
+        <tbody>
+            <tr class="row-warn"><td><strong>Amazon GuardDuty</strong></td><td>Inspector = vuln&eacute;rabilit&eacute;s statiques (CVE). GuardDuty = menaces runtime (comportement suspect). Compl&eacute;mentaires, non substituables.</td><td><a href="aws-guardduty.html">aws-guardduty.html</a></td></tr>
+            <tr class="row-warn"><td><strong>Amazon Macie</strong></td><td>Macie = donn&eacute;es sensibles dans S3. Hors du p&eacute;rim&egrave;tre vuln&eacute;rabilit&eacute;s.</td><td><a href="aws-macie.html">aws-macie.html</a></td></tr>
+            <tr class="row-warn"><td><strong>AWS Security Hub</strong></td><td>Security Hub consomme les findings Inspector. Ce guide couvre uniquement l'int&eacute;gration sortante (S9).</td><td><a href="aws-security-hub.html">aws-security-hub.html</a></td></tr>
+            <tr class="row-warn"><td><strong>Inspector Classic (v1)</strong></td><td>D&eacute;pr&eacute;ci&eacute; en novembre 2023. API <code>aws inspector</code> inactive. Ce guide couvre exclusivement Inspector v2.</td><td>Hors scope</td></tr>
+            <tr class="row-warn"><td><strong>AWS Config (compliance rules)</strong></td><td>Config = conformit&eacute; de configuration. Inspector = vuln&eacute;rabilit&eacute;s logicielles (CVE). Distincts.</td><td>aws-config.html</td></tr>
+        </tbody>
+    </table>
+    </div>
+</div>
+
+<!-- ═══════════════════════ COÛTS ═══════════════════════ -->
+<div class="section" id="licences">
+    <div class="section-header blue">
+        <div class="section-number blue">&#x1F4B0;</div>
+        <div>
+            <div class="section-title">Mod&egrave;le de co&ucirc;t Amazon Inspector</div>
+            <div class="section-desc">Tarification par type de ressource scann&eacute;e &mdash; free trial 15 jours puis pay-per-resource (tarifs indicatifs)</div>
+        </div>
+    </div>
+
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x1F4A1;</span>
+        <div>
+            Amazon Inspector v2 utilise un mod&egrave;le <strong>pay-per-resource</strong> : vous payez par instance-heure scann&eacute;e (EC2), par image scann&eacute;e (ECR) et par fonction/mois (Lambda). Le free trial de <strong>15 jours</strong> couvre toutes les fonctionnalit&eacute;s sans restriction. Utilisez le <a href="https://aws.amazon.com/inspector/pricing/" target="_blank">AWS Pricing Calculator</a> pour estimer votre co&ucirc;t r&eacute;el.
+        </div>
+    </div>
+
+    <h3>Tarification par type de scan (tarifs indicatifs 2026)</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr><th>Type de scan</th><th>Unit&eacute; de facturation</th><th>Tarif indicatif</th><th>Notes</th></tr></thead>
+        <tbody>
+            <tr class="row-ok"><td><strong>EC2 &mdash; Agent-based (SSM)</strong></td><td>Par instance-heure scann&eacute;e</td><td>0,00157 $/instance-hour</td><td>SSM Agent requis. Continu ou event-based.</td></tr>
+            <tr class="row-ok"><td><strong>EC2 &mdash; Agentless (snapshot)</strong></td><td>Par instance scann&eacute;e (snapshot EBS)</td><td>~0,39 $/snapshot-scan</td><td>Pas de SSM requis. Snapshot EBS ponctuel scann&eacute; toutes les 24h. V&eacute;rifier le tarif r&eacute;gion via <a href="https://aws.amazon.com/inspector/pricing/" target="_blank">AWS Pricing</a>.</td></tr>
+            <tr class="row-ok"><td><strong>ECR &mdash; Enhanced scanning (initial)</strong></td><td>Par image scann&eacute;e (premier scan)</td><td>0,09 $/image scann&eacute;e</td><td>Scan initial au push. Continuous scan re-scanne si nouvelle CVE.</td></tr>
+            <tr class="row-ok"><td><strong>ECR &mdash; Continuous re-scan</strong></td><td>Par image/mois maintenue active</td><td>0,01 $/image/mois</td><td>Re-scan automatique si nouvelle CVE publi&eacute;e. Couverture continue.</td></tr>
+            <tr class="row-ok"><td><strong>Lambda &mdash; Standard scanning</strong></td><td>Par fonction/mois</td><td>0,30 $/fonction/mois</td><td>Packages du zip/layer. Scann&eacute; &agrave; chaque d&eacute;ploiement.</td></tr>
+            <tr class="row-warn"><td><strong>Lambda &mdash; Code scanning (SAST)</strong></td><td>Par fonction/mois</td><td>+0,30 $/fonction/mois suppl.</td><td>SAST sur le code source. Secrets hardcod&eacute;s, logique vuln&eacute;rable.</td></tr>
+        </tbody>
+    </table>
+    </div>
+
+    <h3>Estimation par taille d'environnement</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr><th>Environnement</th><th>EC2</th><th>ECR images actives</th><th>Lambda</th><th>Estimation mensuelle</th></tr></thead>
+        <tbody>
+            <tr><td><strong>Startup (small)</strong></td><td>10 instances</td><td>20 images</td><td>20 fonctions</td><td>~35-50 $/mois</td></tr>
+            <tr><td><strong>PME (medium)</strong></td><td>50 instances</td><td>100 images</td><td>100 fonctions</td><td>~100-180 $/mois</td></tr>
+            <tr><td><strong>Enterprise (large)</strong></td><td>500 instances</td><td>500 images</td><td>1 000 fonctions</td><td>~900-1 500 $/mois</td></tr>
+        </tbody>
+    </table>
+    </div>
+
+    <div class="alert alert-warn">
+        <span class="alert-icon">&#x26A0;&#xFE0F;</span>
+        <div>
+            <strong>Pi&egrave;ge co&ucirc;t ECR :</strong> le scan &laquo; continuous &raquo; re-scanne <em>toutes les images actives</em> quand une nouvelle CVE est publi&eacute;e. Dans un registre avec 5 000 images, un lot de CVE publi&eacute;es un vendredi peut g&eacute;n&eacute;rer des milliers de scans en quelques heures. Configurez des r&egrave;gles d'exclusion pour les images archiv&eacute;es (tags <code>:old</code>, <code>:deprecated</code>, date &gt; 6 mois).
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════ S1 ═══════════════════════ -->
+<div class="section" id="s1">
+    <div class="section-header orange">
+        <div class="section-number orange">S1</div>
+        <div>
+            <div class="section-title">Activation &amp; Types de Scan</div>
+            <div class="section-desc">Activer Amazon Inspector v2 pour EC2, ECR, Lambda et Lambda Code &mdash; 20 pts disponibles</div>
+        </div>
+    </div>
+
+    <div class="alert alert-error">
+        <span class="alert-icon">&#x1F6A8;</span>
+        <div>
+            <strong>Contexte :</strong> Amazon Inspector v2 est <strong>d&eacute;sactiv&eacute; par d&eacute;faut</strong> sur chaque nouveau compte AWS. Chaque jour sans activation est une fen&ecirc;tre aveugle o&ugrave; les CVE s'accumulent silencieusement sur vos workloads. <strong>Analogie :</strong> C'est comme op&eacute;rer une salle de r&eacute;animation sans monitoring &mdash; vous ne saurez qu'au moment du d&eacute;c&egrave;s (incident de production) qu'un patient (serveur) &eacute;tait malade depuis des semaines.
+            <br>Ne pas confondre avec <strong>Inspector Classic (v1)</strong>, arr&ecirc;t&eacute; en novembre 2023. L'API <code>aws inspector</code> (v1) est inactive &mdash; utiliser exclusivement <code>aws inspector2</code>.
+        </div>
+    </div>
+
+    <h3>Comparatif d&eacute;faut vs recommand&eacute;</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr><th>Param&egrave;tre</th><th>D&eacute;faut AWS</th><th>&#x26A1; Quick Win</th><th>&#x1F512; Avanc&eacute;</th><th>&#x1F3AF; Optimal</th></tr></thead>
+        <tbody>
+            <tr><td><strong>EC2 scanning</strong></td><td class="val-red">&#x274C; D&eacute;sactiv&eacute;</td><td class="val-green">&#x2705; Activ&eacute; (agent SSM)</td><td class="val-green">&#x2705; + agentless preview</td><td class="val-green">&#x2705; + agentless + filtres exclusion</td></tr>
+            <tr><td><strong>ECR scanning</strong></td><td class="val-red">&#x274C; D&eacute;sactiv&eacute;</td><td class="val-green">&#x2705; Enhanced scanning</td><td class="val-green">&#x2705; + exclusion images archiv&eacute;es</td><td class="val-green">&#x2705; + SBOM continuous</td></tr>
+            <tr><td><strong>Lambda standard scanning</strong></td><td class="val-red">&#x274C; D&eacute;sactiv&eacute;</td><td class="val-green">&#x2705; Activ&eacute;</td><td class="val-green">&#x2705; Activ&eacute;</td><td class="val-green">&#x2705; Activ&eacute;</td></tr>
+            <tr><td><strong>Lambda code scanning (SAST)</strong></td><td class="val-red">&#x274C; D&eacute;sactiv&eacute;</td><td class="val-red">&#x274C; &Eacute;valuer le co&ucirc;t d'abord</td><td class="val-green">&#x2705; Si code custom critique</td><td class="val-green">&#x2705; Activ&eacute; sur toutes fonctions</td></tr>
+            <tr><td><strong>Auto-enable Organizations</strong></td><td class="val-red">&#x274C; Non configur&eacute;</td><td class="val-red">&#x274C; Si compte seul</td><td class="val-green">&#x2705; Delegated admin configur&eacute;</td><td class="val-green">&#x2705; Auto-enable nouveaux membres</td></tr>
+            <tr><td><strong>Score S1 (pts)</strong></td><td class="val-red">5/20</td><td class="val-warn">15/20</td><td class="val-green">18/20</td><td class="val-green">20/20</td></tr>
+        </tbody>
+    </table>
+    </div>
+
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x1F4A1;</span>
+        <div>
+            <strong>Pourquoi chaque param&egrave;tre :</strong><br>
+            &bull; <strong>EC2 scanning</strong> : couvre ~80% de la surface CVE (OS packages, kernel). Principal vecteur d'attaque ransomware (Eternal Blue, Log4Shell sur hosts).<br>
+            &bull; <strong>ECR scanning</strong> : les containers embarquent souvent des bases images vuln&eacute;rables (Ubuntu 20.04). D&eacute;tect&eacute; au push, avant d&eacute;ploiement Kubernetes ou ECS.<br>
+            &bull; <strong>Lambda standard</strong> : packages Python/Node.js dans les zips ont des CVE (ex: <code>requests</code> &lt; 2.31.0). Lambda n'a pas d'OS vu par l'admin &mdash; sans scan = angle mort total.<br>
+            &bull; <strong>Lambda code (SAST)</strong> : d&eacute;tecte secrets hardcod&eacute;s, command injection, path traversal. Requis si code custom critique.<br>
+            &bull; <strong>Auto-enable Organizations</strong> : garantit que chaque nouveau compte AWS cr&eacute;&eacute; soit couvert automatiquement sans action manuelle.
+        </div>
+    </div>
+
+    <div class="alert alert-warn">
+        <span class="alert-icon">&#x26A0;&#xFE0F;</span>
+        <div>
+            <strong>Pi&egrave;ge Organizations :</strong> Activer Inspector v2 sur le Management Account sans configurer <code>auto-enable</code> laisse les comptes membres <strong>non couverts</strong>. Vous avez l'illusion d'une couverture globale alors que 80% de vos comptes AWS sont aveugles. Configurer le delegated administrator (section S7) en priorit&eacute; dans un contexte multi-comptes.
+        </div>
+    </div>
+
+    <h3>Configuration &mdash; Console AWS</h3>
+    <div class="code-block">
+        <button class="copy-btn" onclick="copyCode(this)">Copier</button>
+        <pre><code># === CONSOLE AWS ===
+# 1. Ouvrir : https://console.aws.amazon.com/inspector/v2/home
+# 2. Cliquer <span class="string">"Get started"</span> ou <span class="string">"Enable Amazon Inspector"</span>
+# 3. Cocher les 4 types de scan :
+#    ☑ Amazon EC2 scanning
+#    ☑ Amazon ECR container image scanning
+#    ☑ AWS Lambda standard scanning
+#    ☑ AWS Lambda code scanning
+# 4. Cliquer <span class="string">"Enable Amazon Inspector"</span>
+# 5. Vérifier Dashboard > Coverage > statut ACTIVE
+# NB: Inspector Classic (v1) = déprécié nov 2023, ne pas utiliser</code></pre>
+    </div>
+
+    <h3>Configuration &mdash; AWS CLI</h3>
+    <div class="code-block">
+        <button class="copy-btn" onclick="copyCode(this)">Copier</button>
+        <pre><code># === AWS CLI (inspector2, pas inspector) ===
+# Activer les 4 types de scan en une commande
+aws inspector2 enable \
+  --resource-types EC2 ECR LAMBDA LAMBDA_CODE \
+  --region eu-west-1
+
+# Vérifier le statut d'activation
+aws inspector2 batch-get-account-status \
+  --account-ids <span class="string">"$(aws sts get-caller-identity --query Account --output text)"</span> \
+  --query <span class="string">'accounts[*].{Account:accountId,EC2:resourceState.ec2.status,ECR:resourceState.ecr.status,Lambda:resourceState.lambda.status}'</span> \
+  --output table
+
+# Vérifier la couverture globale
+aws inspector2 get-configuration \
+  --query <span class="string">'[ec2Configuration,ecrConfiguration,lambdaConfiguration]'</span> \
+  --output json
+
+# Lister les ressources couvertes / non couvertes
+aws inspector2 list-coverage \
+  --filter-criteria <span class="string">'{ STR0 :[{ STR1 : STR2 , STR3 : STR4 }]}'</span> \
+  --query <span class="string">'coveredResources[*].{Id:resourceId,Scan:scanStatus.statusCode}'</span> \
+  --output table</code></pre>
+    </div>
+
+    <h3>V&eacute;rification</h3>
+    <div class="code-block">
+        <button class="copy-btn" onclick="copyCode(this)">Copier</button>
+        <pre><code># Vérifier status ENABLED pour tous les types
+aws inspector2 batch-get-account-status \
+  --account-ids <span class="string">"$(aws sts get-caller-identity --query Account --output text)"</span> \
+  --output table
+# Attendu : status = ENABLED, tous resourceState = ENABLED
+
+# Compter les findings actifs par sévérité
+aws inspector2 get-findings-statistics \
+  --query <span class="string">'findingStatistics.countBySeverity'</span> \
+  --output table
+
+# Vérifier coverage percentage
+aws inspector2 get-coverage-statistics \
+  --output table</code></pre>
+    </div>
+
+    <h3>Checklist S1 &#x2611;</h3>
+    <div class="checklist">
+        <label class="check-item"><input type="checkbox"> &#x2610; Inspector v2 activ&eacute; (commande <code>aws inspector2</code>, pas <code>aws inspector</code>)</label>
+        <label class="check-item"><input type="checkbox"> &#x2610; EC2 scanning actif &mdash; statut SCANNING dans coverage</label>
+        <label class="check-item"><input type="checkbox"> &#x2610; ECR enhanced scanning actif (pas basic scanning)</label>
+        <label class="check-item"><input type="checkbox"> &#x2610; Lambda standard scanning actif</label>
+        <label class="check-item"><input type="checkbox"> &#x2610; Lambda code scanning &eacute;valu&eacute; (activ&eacute; si code custom sensible)</label>
+        <label class="check-item"><input type="checkbox"> &#x2610; Inspector Classic (v1) confirm&eacute; arr&ecirc;t&eacute; (d&eacute;pr&eacute;ci&eacute; nov 2023)</label>
+        <label class="check-item"><input type="checkbox"> &#x2610; Coverage &gt; 90% des ressources attendues (EC2 avec SSM agent install&eacute;)</label>
+        <label class="check-item"><input type="checkbox"> &#x2610; Si multi-comptes : delegated admin configur&eacute; (S7)</label>
+    </div>
+</div>
+
+<!-- ═══════════════════════ S2 ═══════════════════════ -->
+<div class="section" id="s2">
+    <div class="section-header orange">
+        <div class="section-number orange">S2</div>
+        <div>
+            <div class="section-title">EC2 Vulnerability Scanning</div>
+            <div class="section-desc">Scan des instances Amazon EC2 &mdash; packages OS, network reachability, EPSS scoring &mdash; 20 pts</div>
+        </div>
+    </div>
+
+    <div class="alert alert-error">
+        <span class="alert-icon">&#x1F6A8;</span>
+        <div>
+            <strong>Contexte :</strong> Une instance EC2 accumule en moyenne <strong>150+ CVE connues</strong> dans les 6 mois suivant sa cr&eacute;ation sans patch. Sans Inspector, la d&eacute;tection n'est possible que lors d'un incident. <strong>Analogie :</strong> Chaque CVE non corrig&eacute;e est une <em>maladie connue</em> avec un traitement documentd &mdash; le rapport m&eacute;dical (finding Inspector) indique le diagnostic (CVE ID), la gravit&eacute; (Inspector Score), et l'ordonnance (SSM Patch Manager, kernel update).
+        </div>
+    </div>
+
+    <h3>Comparatif modes de scan EC2</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr><th>Param&egrave;tre</th><th>D&eacute;faut AWS</th><th>&#x26A1; Quick Win</th><th>&#x1F512; Avanc&eacute;</th><th>&#x1F3AF; Optimal</th></tr></thead>
+        <tbody>
+            <tr><td><strong>Mode de scan EC2</strong></td><td class="val-red">D&eacute;sactiv&eacute;</td><td class="val-green">Agent SSM (EC2_SSM_AGENT_BASED)</td><td class="val-green">Agent + agentless preview</td><td class="val-green">Agent + agentless + scheduled</td></tr>
+            <tr><td><strong>Packages OS scann&eacute;s</strong></td><td class="val-red">&mdash;</td><td class="val-green">RPM (RHEL/Amazon Linux), DEB (Ubuntu/Debian)</td><td class="val-green">+ packages overlay containers</td><td class="val-green">+ scan de packages custom</td></tr>
+            <tr><td><strong>Network reachability</strong></td><td class="val-red">&mdash;</td><td class="val-green">&#x2705; Activ&eacute; automatiquement</td><td class="val-green">&#x2705; + contexte port/sg</td><td class="val-green">&#x2705; + reporting par VPC</td></tr>
+            <tr><td><strong>EPSS scoring</strong></td><td class="val-red">&mdash;</td><td class="val-green">&#x2705; Inclus dans Inspector Score</td><td class="val-green">&#x2705; Filtre EPSS &gt; 0.1</td><td class="val-green">&#x2705; Alerte EPSS &gt; 0.5 auto</td></tr>
+            <tr><td><strong>Fr&eacute;quence de scan</strong></td><td class="val-red">&mdash;</td>
+                <td class="val-warn">Continu (event-based: au d&eacute;marrage + nouvelle CVE publi&eacute;e NVD)</td>
+                <td class="val-green">+ scan forc&eacute; mensuel</td><td class="val-green">+ scan post-patch SSM</td></tr>
+            <tr><td><strong>Score S2 (pts)</strong></td><td class="val-red">0/20</td><td class="val-warn">10/20</td><td class="val-green">16/20</td><td class="val-green">20/20</td></tr>
+        </tbody>
+    </table>
+    </div>
+
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x1F4A1;</span>
+        <div>
+            <strong>Pourquoi chaque param&egrave;tre :</strong><br>
+            &bull; <strong>SSM Agent</strong> : requis pour le scan agent-based. Sans SSM, l'instance est en statut <code>NO_INVENTORY</code>. Installation via User Data ou Systems Manager Run Command.<br>
+            &bull; <strong>Network reachability</strong> : type de finding d&eacute;di&eacute; qui d&eacute;tecte les chemins r&eacute;seau ouverts depuis Internet (0.0.0.0/0 dans Security Group, NACL, route IGW). Combin&eacute; aux findings de vuln&eacute;rabilit&eacute; packages, il enrichit le <em>contexte d'exposition</em> du finding et p&egrave;se dans l'Inspector Score : un port expos&eacute; sur une CVE CVSSv3 7.0 sera priorit&eacute; sup&eacute;rieure &agrave; la m&ecirc;me CVE sur un port interne.<br>
+            &bull; <strong>EPSS (Exploit Prediction Scoring System)</strong> : probabilit&eacute; qu'une CVE soit exploit&eacute;e dans les 30 prochains jours. CVE avec CVSS 9.8 mais EPSS 0.001 = th&eacute;orique. CVE CVSS 7.0 EPSS 0.95 = urgente.<br>
+            &bull; <strong>Scan continu event-based</strong> : Inspector re-scanne automatiquement quand le NVD publie une nouvelle CVE matchant les packages inventori&eacute;s. Pas de scan p&eacute;riodique &agrave; planifier.
+        </div>
+    </div>
+
+    <div class="alert alert-warn">
+        <span class="alert-icon">&#x26A0;&#xFE0F;</span>
+        <div>
+            <strong>Pi&egrave;ge SSM :</strong> Inspector ne peut pas scanner une EC2 sans SSM Agent actif ET avec le r&ocirc;le IAM <code>AmazonSSMManagedInstanceCore</code>. Les instances lanc&eacute;es depuis des AMI communautaires ou anciennes n'ont pas SSM pr&eacute;install&eacute;. V&eacute;rifier le coverage avec la liste des instances en statut <code>NO_INVENTORY</code> avant de consid&eacute;rer la couverture EC2 comme compl&egrave;te.
+        </div>
+    </div>
+
+    <h3>Configuration &mdash; Console AWS</h3>
+    <div class="code-block">
+        <button class="copy-btn" onclick="copyCode(this)">Copier</button>
+        <pre><code># === CONSOLE AWS ===
+# Inspector v2 > Settings > EC2 scanning
+# Mode : <span class="string">"EC2 SSM agent based"</span> OU <span class="string">"Agentless (preview)"</span>
+# Inspector > Dashboard > Coverage > filtrer <span class="string">"NOT_SCANNING"</span>
+# Pour chaque instance NON couverte : vérifier SSM Agent + IAM role
+#
+# Rôle IAM requis sur les instances EC2 :
+# Policy : AmazonSSMManagedInstanceCore (managed policy)
+# Ou custom avec : ssm:DescribeInstanceInformation, ssm:ListInventory</code></pre>
+    </div>
+
+    <h3>Configuration &mdash; AWS CLI</h3>
+    <div class="code-block">
+        <button class="copy-btn" onclick="copyCode(this)">Copier</button>
+        <pre><code># === AWS CLI ===
+# Activer EC2 scanning (si pas déjà fait via enable global)
+aws inspector2 enable \
+  --resource-types EC2 \
+  --region eu-west-1
+
+# Lister instances EC2 non couvertes (statut NOT_SCANNING)
+aws inspector2 list-coverage \
+  --filter-criteria '{
+    <span class="string">"resourceType"</span>:[{<span class="string">"comparison"</span>:<span class="string">"EQUALS"</span>,<span class="string">"value"</span>:<span class="string">"AWS_EC2_INSTANCE"</span>}],
+    <span class="string">"ec2InstanceTags"</span>:[]
+  }' \
+  --query <span class="string">'coveredResources[?scanStatus.statusCode!=`SCANNING`].{Id:resourceId,Status:scanStatus.statusCode,Reason:scanStatus.reason}'</span> \
+  --output table
+
+# Lister les findings EC2 Critical/High
+aws inspector2 list-findings \
+  --filter-criteria '{
+    <span class="string">"resourceType"</span>:[{<span class="string">"comparison"</span>:<span class="string">"EQUALS"</span>,<span class="string">"value"</span>:<span class="string">"AWS_EC2_INSTANCE"</span>}],
+    <span class="string">"severity"</span>:[{<span class="string">"comparison"</span>:<span class="string">"EQUALS"</span>,<span class="string">"value"</span>:<span class="string">"CRITICAL"</span>},{<span class="string">"comparison"</span>:<span class="string">"EQUALS"</span>,<span class="string">"value"</span>:<span class="string">"HIGH"</span>}]
+  }' \
+  --query <span class="string">'findings[*].{Title:title,Score:inspectorScore,CVE:packageVulnerabilityDetails.vulnerabilityId,Instance:resources[0].id}'</span> \
+  --output table \
+  --max-results 50
+
+# Filtrer par EPSS > 0.5 (exploits très probables)
+aws inspector2 list-findings \
+  --filter-criteria '{
+    <span class="string">"ecrImagePushedAt"</span>:[],
+    <span class="string">"epssScore"</span>:[{<span class="string">"lowerInclusive"</span>:0.5,<span class="string">"upperInclusive"</span>:1.0}]
+  }' \
+  --output table</code></pre>
+    </div>
+
+    <h3>Terraform (optionnel)</h3>
+    <div class="code-block">
+        <button class="copy-btn" onclick="copyCode(this)">Copier</button>
+        <pre><code># Terraform - Activer Inspector v2 EC2 scanning
+resource <span class="string">"aws_inspector2_enabler"</span> <span class="string">"ec2"</span> {
+  account_ids    = [data.aws_caller_identity.current.account_id]
+  resource_types = [<span class="string">"EC2"</span>, <span class="string">"ECR"</span>, <span class="string">"LAMBDA"</span>, <span class="string">"LAMBDA_CODE"</span>]
+}
+
+# Rôle IAM pour les instances EC2 (SSM requis)
+resource <span class="string">"aws_iam_role_policy_attachment"</span> <span class="string">"ssm_core"</span> {
+  role       = aws_iam_role.ec2_instance_role.name
+  policy_arn = <span class="string">"arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"</span>
+}</code></pre>
+    </div>
+
+    <h3>V&eacute;rification</h3>
+    <div class="code-block">
+        <button class="copy-btn" onclick="copyCode(this)">Copier</button>
+        <pre><code># Vérifier le pourcentage de couverture EC2
+aws inspector2 get-coverage-statistics \
+  --filter-criteria <span class="string">'{ STR0 :[{ STR1 : STR2 , STR3 : STR4 }]}'</span> \
+  --output table
+# Attendu : countsByResourceType EC2 avec statusCode SCANNING > 90% des instances
+
+# Top 10 CVE les plus critiques sur EC2
+aws inspector2 list-findings \
+  --filter-criteria <span class="string">'{ STR0 :[{ STR1 : STR2 , STR3 : STR4 }]}'</span> \
+  --sort-criteria <span class="string">'{ STR0 : STR1 , STR2 : STR3 }'</span> \
+  --query <span class="string">'findings[0:10].{Score:inspectorScore,CVE:packageVulnerabilityDetails.vulnerabilityId,Title:title}'</span> \
+  --output table</code></pre>
+    </div>
+
+    <h3>Checklist S2 &#x2611;</h3>
+    <div class="checklist">
+        <label class="check-item"><input type="checkbox"> &#x2610; EC2 scanning actif &mdash; statut <code>ENABLED</code></label>
+        <label class="check-item"><input type="checkbox"> &#x2610; SSM Agent install&eacute; sur toutes les instances cibles</label>
+        <label class="check-item"><input type="checkbox"> &#x2610; R&ocirc;le IAM <code>AmazonSSMManagedInstanceCore</code> attach&eacute; aux instances</label>
+        <label class="check-item"><input type="checkbox"> &#x2610; Coverage EC2 &gt; 90% (instances avec statut SCANNING)</label>
+        <label class="check-item"><input type="checkbox"> &#x2610; Network reachability activ&eacute; (automatique avec Inspector v2)</label>
+        <label class="check-item"><input type="checkbox"> &#x2610; Instances en statut <code>NO_INVENTORY</code> identifi&eacute;es et corrig&eacute;es</label>
+        <label class="check-item"><input type="checkbox"> &#x2610; Findings Critical/High list&eacute;s et assign&eacute;s (SLA matrix S6)</label>
+    </div>
+</div>
+
+<!-- ═══════════════════════ S3 ═══════════════════════ -->
+<div class="section" id="s3">
+    <div class="section-header orange">
+        <div class="section-number orange">S3</div>
+        <div>
+            <div class="section-title">ECR Container Image Scanning</div>
+            <div class="section-desc">Scan des images Amazon ECR &mdash; enhanced scanning, pipeline CI/CD gate, SBOM &mdash; 15 pts</div>
+        </div>
+    </div>
+
+    <div class="alert alert-error">
+        <span class="alert-icon">&#x1F6A8;</span>
+        <div>
+            <strong>Contexte :</strong> 75% des images de containers en production contiennent des CVE connues, dont ~25% sont Critical ou High. Sans scan, chaque <code>docker push</code> d&eacute;ploie potentiellement une <em>maladie connue</em> vers vos clusters ECS ou EKS. Le scan Inspector enhanced sur ECR d&eacute;tecte les vuln&eacute;rabilit&eacute;s <strong>au moment du push</strong> et re-scanne <strong>en continu</strong> si une nouvelle CVE est publi&eacute;e pour les images d&eacute;j&agrave; publi&eacute;es.
+        </div>
+    </div>
+
+    <h3>Comparatif enhanced scanning vs basic scanning</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr><th>Param&egrave;tre</th><th>D&eacute;faut AWS (Basic)</th><th>&#x26A1; Quick Win (Enhanced)</th><th>&#x1F512; Avanc&eacute;</th><th>&#x1F3AF; Optimal</th></tr></thead>
+        <tbody>
+            <tr><td><strong>Moteur de scan</strong></td><td class="val-warn">Clair (open source, limité)</td><td class="val-green">Amazon Inspector v2 (NVD + EPSS)</td><td class="val-green">Inspector v2 + filtres repo</td><td class="val-green">Inspector v2 + SBOM export</td></tr>
+            <tr><td><strong>D&eacute;clencheur</strong></td><td class="val-warn">Push only</td><td class="val-green">Push + continuous (re-scan si CVE publi&eacute;e)</td><td class="val-green">Push + continuous + manual</td><td class="val-green">+ pipeline gate CI/CD</td></tr>
+            <tr><td><strong>Inspector Score</strong></td><td class="val-red">&#x274C; Non disponible</td><td class="val-green">&#x2705; CVSS + EPSS + network context</td><td class="val-green">&#x2705; + alerte EventBridge</td><td class="val-green">&#x2705; + Security Hub findings</td></tr>
+            <tr><td><strong>Pipeline gate</strong></td><td class="val-red">&#x274C; Inexistant</td><td class="val-red">&#x274C; Non configur&eacute;</td><td class="val-green">&#x2705; GitHub Actions / CodePipeline</td><td class="val-green">&#x2705; Gate auto + exception flow</td></tr>
+            <tr><td><strong>Co&ucirc;t</strong></td><td class="val-green">Inclus (basique)</td><td class="val-warn">0,09 $/image + 0,01 $/image/mois</td><td class="val-warn">Id. + filtres r&eacute;duisent le co&ucirc;t</td><td class="val-warn">Id.</td></tr>
+            <tr><td><strong>Score S3 (pts)</strong></td><td class="val-red">5/15</td><td class="val-warn">10/15</td><td class="val-green">12/15</td><td class="val-green">15/15</td></tr>
+        </tbody>
+    </table>
+    </div>
+
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x1F4A1;</span>
+        <div>
+            <strong>Pourquoi chaque param&egrave;tre :</strong><br>
+            &bull; <strong>Enhanced vs Basic</strong> : Basic scanning utilise Clair (moteur open source limit&eacute;). Enhanced utilise Amazon Inspector v2 avec base NVD compl&egrave;te, EPSS, contexte r&eacute;seau. Passage &agrave; Enhanced = d&eacute;tection 3x plus de CVE.<br>
+            &bull; <strong>Continuous scan</strong> : une image push&eacute;e propre en janvier peut devenir vuln&eacute;rable en mars si Log4Shell est publi&eacute;. Continuous re-scan garantit d&eacute;tection r&eacute;troactive sans nouveau push.<br>
+            &bull; <strong>Pipeline gate</strong> : bloque le d&eacute;ploiement si une CVE Critical est d&eacute;tect&eacute;e. Le d&eacute;veloppeur est notifi&eacute; imm&eacute;diatement apr&egrave;s le <code>docker push</code>, avant que l'image atteigne la production.<br>
+            &bull; <strong>Filtres de repo</strong> : exclure les registres d'images archiv&eacute;es ou les environnements dev pour r&eacute;duire le co&ucirc;t de scan.
+        </div>
+    </div>
+
+    <div class="alert alert-warn">
+        <span class="alert-icon">&#x26A0;&#xFE0F;</span>
+        <div>
+            <strong>Pi&egrave;ge continuous scan + registre &eacute;norme :</strong> Si votre registre ECR contient 5 000 images actives et qu'un lot de 20 CVE est publi&eacute; le vendredi soir, Inspector va re-scanner <em>toutes</em> les images concern&eacute;es. Cela peut g&eacute;n&eacute;rer 100 000 scans en quelques heures. Configurer des r&egrave;gles d'inclusion (continuous scan uniquement sur repos prod, pas sur repos dev/test) pour ma&icirc;triser le co&ucirc;t.
+        </div>
+    </div>
+
+    <h3>Configuration &mdash; Console AWS</h3>
+    <div class="code-block">
+        <button class="copy-btn" onclick="copyCode(this)">Copier</button>
+        <pre><code># === CONSOLE AWS ===
+# 1. Amazon ECR > Registries > votre registre > Scanning configuration
+# 2. Scan type : sélectionner <span class="string">"Enhanced scanning"</span>
+# 3. Scan frequency : <span class="string">"Continuous scanning"</span> (recommandé) OU <span class="string">"Scan on push"</span>
+# 4. Optionnel : ajouter des règles pour cibler des repos spécifiques
+#    ex: règle <span class="string">"repos contenant 'prod-' → Continuous"</span>
+#         règle <span class="string">"repos contenant 'dev-' → Scan on push only"</span>
+# 5. Sauvegarder
+#
+# Inspector v2 > Dashboard > ECR coverage : vérifier statut SCANNING</code></pre>
+    </div>
+
+    <h3>Configuration &mdash; AWS CLI</h3>
+    <div class="code-block">
+        <button class="copy-btn" onclick="copyCode(this)">Copier</button>
+        <pre><code># === AWS CLI ===
+# Activer Enhanced scanning sur le registre ECR
+aws ecr put-registry-scanning-configuration \
+  --scan-type ENHANCED \
+  --rules '[
+    {
+      <span class="string">"repositoryFilters"</span>: [{<span class="string">"filter"</span>:<span class="string">"*"</span>,<span class="string">"filterType"</span>:<span class="string">"WILDCARD"</span>}],
+      <span class="string">"scanFrequency"</span>: <span class="string">"CONTINUOUS_SCAN"</span>
+    }
+  ]' \
+  --region eu-west-1
+
+# Vérifier la configuration ECR
+aws ecr get-registry-scanning-configuration \
+  --query <span class="string">'[scanType,rules]'</span> \
+  --output table
+
+# Vérifier les findings ECR récents
+aws inspector2 list-findings \
+  --filter-criteria '{
+    <span class="string">"resourceType"</span>:[{<span class="string">"comparison"</span>:<span class="string">"EQUALS"</span>,<span class="string">"value"</span>:<span class="string">"AWS_ECR_CONTAINER_IMAGE"</span>}],
+    <span class="string">"severity"</span>:[{<span class="string">"comparison"</span>:<span class="string">"EQUALS"</span>,<span class="string">"value"</span>:<span class="string">"CRITICAL"</span>}]
+  }' \
+  --query <span class="string">'findings[*].{Repo:resources[0].details.awsEcrContainerImage.repositoryName,Tag:resources[0].details.awsEcrContainerImage.imageTags[0],CVE:packageVulnerabilityDetails.vulnerabilityId,Score:inspectorScore}'</span> \
+  --output table
+
+# Lister les images ECR actuellement scannées
+aws inspector2 list-coverage \
+  --filter-criteria <span class="string">'{ STR0 :[{ STR1 : STR2 , STR3 : STR4 }]}'</span> \
+  --query <span class="string">'coveredResources[*].{Repo:resourceId,Status:scanStatus.statusCode}'</span> \
+  --output table</code></pre>
+    </div>
+
+    <h3>Pipeline CI/CD Gate (GitHub Actions)</h3>
+    <div class="code-block">
+        <button class="copy-btn" onclick="copyCode(this)">Copier</button>
+        <pre><code># === GITHUB ACTIONS - Pipeline gate ECR Inspector ===
+# .github/workflows/deploy.yml
+
+name: Build, Push, and Inspector Gate
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build-and-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: eu-west-1
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push image
+        id: build
+        run: |
+          IMAGE_URI=<span class="string">"${{ steps.login-ecr.outputs.registry }}/my-app:${{ github.sha }}"</span>
+          docker build -t <span class="var">$IMAGE_URI</span> .
+          docker push <span class="var">$IMAGE_URI</span>
+          echo <span class="string">"image_uri=$IMAGE_URI"</span> >> <span class="var">$GITHUB_OUTPUT</span>
+
+      - name: Wait for Inspector scan completion
+        run: |
+          echo <span class="string">"Waiting 60s for Inspector to scan the pushed image..."</span>
+          sleep 60
+
+      - name: Check Inspector findings - Block on Critical
+        run: |
+          IMAGE_DIGEST=$(aws ecr describe-images \
+            --repository-name my-app \
+            --image-ids imageTag=${{ github.sha }} \
+            --query <span class="string">'imageDetails[0].imageDigest'</span> --output text)
+
+          CRITICAL_COUNT=$(aws inspector2 list-findings \
+            --filter-criteria "{
+              \<span class="string">"resourceType\"</span>:[{\<span class="string">"comparison\"</span>:\<span class="string">"EQUALS\"</span>,\<span class="string">"value\"</span>:\<span class="string">"AWS_ECR_CONTAINER_IMAGE\"</span>}],
+              \<span class="string">"ecrImageHash\"</span>:[{\<span class="string">"comparison\"</span>:\<span class="string">"EQUALS\"</span>,\<span class="string">"value\"</span>:\<span class="string">"$IMAGE_DIGEST\"</span>}],
+              \<span class="string">"severity\"</span>:[{\<span class="string">"comparison\"</span>:\<span class="string">"EQUALS\"</span>,\<span class="string">"value\"</span>:\<span class="string">"CRITICAL\"</span>}]
+            }" \
+            --query <span class="string">'length(findings)'</span> --output text)
+
+          echo <span class="string">"Critical CVE count: $CRITICAL_COUNT"</span>
+          if [ <span class="string">"$CRITICAL_COUNT"</span> -gt <span class="string">"0"</span> ]; then
+            echo <span class="string">"::error::DEPLOYMENT BLOCKED - $CRITICAL_COUNT Critical CVE(s) found by Amazon Inspector"</span>
+            exit 1
+          fi
+          echo <span class="string">"Inspector gate PASSED - no Critical CVE found"</span>
+
+      - name: Deploy to ECS (only if gate passed)
+        run: |
+          echo <span class="string">"Deploying ${{ steps.build.outputs.image_uri }} to ECS..."</span>
+          # aws ecs update-service --cluster my-cluster --service my-service ...</code></pre>
+    </div>
+
+    <h3>Terraform (optionnel)</h3>
+    <div class="code-block">
+        <button class="copy-btn" onclick="copyCode(this)">Copier</button>
+        <pre><code># Terraform - ECR Enhanced Scanning
+resource <span class="string">"aws_ecr_registry_scanning_configuration"</span> <span class="string">"enhanced"</span> {
+  scan_type = <span class="string">"ENHANCED"</span>
+
+  rule {
+    scan_frequency = <span class="string">"CONTINUOUS_SCAN"</span>
+    repository_filter {
+      filter      = <span class="string">"*prod*"</span>
+      filter_type = <span class="string">"WILDCARD"</span>
+    }
+  }
+
+  rule {
+    scan_frequency = <span class="string">"SCAN_ON_PUSH"</span>
+    repository_filter {
+      filter      = <span class="string">"*dev*"</span>
+      filter_type = <span class="string">"WILDCARD"</span>
+    }
+  }
+}</code></pre>
+    </div>
+
+    <h3>V&eacute;rification</h3>
+    <div class="code-block">
+        <button class="copy-btn" onclick="copyCode(this)">Copier</button>
+        <pre><code># Vérifier que ECR Enhanced Scanning est actif
+aws ecr get-registry-scanning-configuration \
+  --query <span class="string">'scanningConfiguration.scanType'</span>
+# Attendu : <span class="string">"ENHANCED"</span>
+
+# Compter les findings ECR par sévérité
+aws inspector2 get-findings-statistics \
+  --filter-criteria <span class="string">'{ STR0 :[{ STR1 : STR2 , STR3 : STR4 }]}'</span> \
+  --query <span class="string">'findingStatistics.countBySeverity'</span> \
+  --output table</code></pre>
+    </div>
+
+    <h3>Checklist S3 &#x2611;</h3>
+    <div class="checklist">
+        <label class="check-item"><input type="checkbox"> &#x2610; ECR Enhanced Scanning activ&eacute; (pas Basic Scanning)</label>
+        <label class="check-item"><input type="checkbox"> &#x2610; Continuous scan configur&eacute; sur les repos de production</label>
+        <label class="check-item"><input type="checkbox"> &#x2610; Pipeline CI/CD gate impl&eacute;ment&eacute; (bloquer si Critical CVE)</label>
+        <label class="check-item"><input type="checkbox"> &#x2610; R&egrave;gles d'exclusion configur&eacute;es pour repos archiv&eacute;s / dev (ma&icirc;trise co&ucirc;t)</label>
+        <label class="check-item"><input type="checkbox"> &#x2610; Images ECR Critical/High identifi&eacute;es et rebuild planifi&eacute;</label>
+        <label class="check-item"><input type="checkbox"> &#x2610; Coverage ECR v&eacute;rifi&eacute;e (images avec statut SCANNING)</label>
+    </div>
+</div>
+
+<!-- ═══════════════════════ S4 ═══════════════════════ -->
+<div class="section" id="s4">
+    <div class="section-header orange">
+        <div class="section-number orange">S4</div>
+        <div>
+            <div class="section-title">Lambda Function Scanning</div>
+            <div class="section-desc">Scan des fonctions AWS Lambda &mdash; packages et code SAST &mdash; 10 pts</div>
+        </div>
+    </div>
+
+    <div class="alert alert-error">
+        <span class="alert-icon">&#x1F6A8;</span>
+        <div>
+            <strong>Contexte :</strong> AWS Lambda est souvent l'angle mort de la gestion des CVE. Sans acc&egrave;s OS direct, les &eacute;quipes oublient que les packages embarqu&eacute;s dans les zips de d&eacute;ploiement (<code>requirements.txt</code>, <code>package.json</code>, layers) peuvent contenir des vuln&eacute;rabilit&eacute;s critiques. Inspector v2 scanne les packages ET le code source (SAST) sans agent &mdash; d&eacute;clench&eacute; automatiquement &agrave; chaque d&eacute;ploiement.
+        </div>
+    </div>
+
+    <h3>Comparatif Lambda standard vs code scanning</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr><th>Param&egrave;tre</th><th>D&eacute;faut AWS</th><th>&#x26A1; Quick Win</th><th>&#x1F512; Avanc&eacute;</th><th>&#x1F3AF; Optimal</th></tr></thead>
+        <tbody>
+            <tr><td><strong>Lambda standard scanning</strong></td><td class="val-red">&#x274C; D&eacute;sactiv&eacute;</td><td class="val-green">&#x2705; Activ&eacute; (packages zip/layer)</td><td class="val-green">&#x2705; + alerte si Critical</td><td class="val-green">&#x2705; + pipeline gate</td></tr>
+            <tr><td><strong>Lambda code scanning (SAST)</strong></td><td class="val-red">&#x274C; D&eacute;sactiv&eacute;</td><td class="val-red">&#x274C; &Eacute;valuer co&ucirc;t d'abord</td><td class="val-green">&#x2705; Sur fonctions code custom</td><td class="val-green">&#x2705; Toutes fonctions custom</td></tr>
+            <tr><td><strong>Runtimes support&eacute;s</strong></td><td class="val-red">&mdash;</td><td class="val-green">Python, Node.js, Java, .NET, Go, Ruby</td><td class="val-green">Idem</td><td class="val-green">Idem</td></tr>
+            <tr><td><strong>D&eacute;clencheur scan</strong></td><td class="val-red">&mdash;</td><td class="val-green">Automatique &agrave; chaque update de fonction</td><td class="val-green">+ re-scan si CVE NVD publi&eacute;e</td><td class="val-green">Idem</td></tr>
+            <tr><td><strong>SAST d&eacute;tections</strong></td><td class="val-red">&mdash;</td><td class="val-red">N/A</td><td class="val-green">Secrets hardcod&eacute;s, injection, path traversal</td><td class="val-green">Idem + custom rules</td></tr>
+            <tr><td><strong>Score S4 (pts)</strong></td><td class="val-red">0/10</td><td class="val-warn">5/10</td><td class="val-green">8/10</td><td class="val-green">10/10</td></tr>
+        </tbody>
+    </table>
+    </div>
+
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x1F4A1;</span>
+        <div>
+            <strong>Pourquoi chaque param&egrave;tre :</strong><br>
+            &bull; <strong>Lambda standard</strong> : scanne les packages du zip de d&eacute;ploiement et des Lambda Layers. Ex: <code>boto3==1.26.0</code> avec CVE connue. Pas d'agent requis &mdash; Inspector analyse l'artefact directement.<br>
+            &bull; <strong>Lambda code (SAST)</strong> : analyse statique du code source. D&eacute;tecte <code>os.system(user_input)</code> (command injection), <code>open(path)</code> depuis un param&egrave;tre HTTP (path traversal), cl&eacute;s AWS hardcod&eacute;es. Co&ucirc;t: 0,30 $/fonction/mois suppl&eacute;mentaire.<br>
+            &bull; <strong>Runtimes</strong> : Python, Node.js, Java, .NET 6+, Go, Ruby support&eacute;s. Custom runtimes (provided.al2) : seul standard scanning disponible (pas de SAST).<br>
+            &bull; <strong>Layers</strong> : Inspector scanne les packages des Lambda Layers partag&eacute;s. Une CVE dans un layer peut impacter des dizaines de fonctions simultan&eacute;ment.
+        </div>
+    </div>
+
+    <div class="alert alert-warn">
+        <span class="alert-icon">&#x26A0;&#xFE0F;</span>
+        <div>
+            <strong>Pi&egrave;ge layers partag&eacute;s :</strong> Si vous utilisez un Lambda Layer CVE-vuln&eacute;rable partag&eacute; par 50 fonctions, Inspector cr&eacute;e un finding par fonction. Vous vous retrouvez avec 50 findings identiques. Corriger le layer et forcer un <code>update-function-configuration</code> sur toutes les fonctions d&eacute;pendantes. Utiliser des filtres de groupe par layer ARN pour g&eacute;rer ce cas.
+        </div>
+    </div>
+
+    <h3>Configuration &mdash; Console AWS</h3>
+    <div class="code-block">
+        <button class="copy-btn" onclick="copyCode(this)">Copier</button>
+        <pre><code># === CONSOLE AWS ===
+# Inspector v2 > Settings > Lambda function scanning
+# Activer :
+#   ☑ Lambda standard scanning (packages)
+#   ☑ Lambda code scanning (SAST - optionnel, évaluer le coût)
+#
+# Amazon Lambda > Functions > [votre fonction]
+# > onglet <span class="string">"Configuration"</span> > <span class="string">"Amazon Inspector scan"</span>
+# Vérifier : <span class="string">"Scan status: Active"</span></code></pre>
+    </div>
+
+    <h3>Configuration &mdash; AWS CLI</h3>
+    <div class="code-block">
+        <button class="copy-btn" onclick="copyCode(this)">Copier</button>
+        <pre><code># === AWS CLI ===
+# Activer Lambda scanning (standard + code)
+aws inspector2 enable \
+  --resource-types LAMBDA LAMBDA_CODE \
+  --region eu-west-1
+
+# Vérifier le statut Lambda scanning
+aws inspector2 batch-get-account-status \
+  --account-ids <span class="string">"$(aws sts get-caller-identity --query Account --output text)"</span> \
+  --query <span class="string">'accounts[0].resourceState.{Lambda:lambda,LambdaCode:lambdaCode}'</span> \
+  --output json
+
+# Lister les findings Lambda Critical/High
+aws inspector2 list-findings \
+  --filter-criteria '{
+    <span class="string">"resourceType"</span>:[
+      {<span class="string">"comparison"</span>:<span class="string">"EQUALS"</span>,<span class="string">"value"</span>:<span class="string">"AWS_LAMBDA_FUNCTION"</span>}
+    ],
+    <span class="string">"severity"</span>:[
+      {<span class="string">"comparison"</span>:<span class="string">"EQUALS"</span>,<span class="string">"value"</span>:<span class="string">"CRITICAL"</span>},
+      {<span class="string">"comparison"</span>:<span class="string">"EQUALS"</span>,<span class="string">"value"</span>:<span class="string">"HIGH"</span>}
+    ]
+  }' \
+  --query <span class="string">'findings[*].{Function:resources[0].id,CVE:packageVulnerabilityDetails.vulnerabilityId,Score:inspectorScore,Package:packageVulnerabilityDetails.vulnerablePackages[0].name}'</span> \
+  --output table
+
+# Lister les fonctions Lambda non couvertes
+aws inspector2 list-coverage \
+  --filter-criteria <span class="string">'{ STR0 :[{ STR1 : STR2 , STR3 : STR4 }]}'</span> \
+  --query <span class="string">'coveredResources[?scanStatus.statusCode!=`SCANNING`].{Function:resourceId,Status:scanStatus.statusCode}'</span> \
+  --output table</code></pre>
+    </div>
+
+    <h3>V&eacute;rification</h3>
+    <div class="code-block">
+        <button class="copy-btn" onclick="copyCode(this)">Copier</button>
+        <pre><code># Vérifier coverage Lambda
+aws inspector2 get-coverage-statistics \
+  --filter-criteria <span class="string">'{ STR0 :[{ STR1 : STR2 , STR3 : STR4 }]}'</span> \
+  --output table
+# Attendu : countsByResourceType LAMBDA avec statusCode SCANNING
+
+# Top findings Lambda par score
+aws inspector2 list-findings \
+  --filter-criteria <span class="string">'{ STR0 :[{ STR1 : STR2 , STR3 : STR4 }]}'</span> \
+  --sort-criteria <span class="string">'{ STR0 : STR1 , STR2 : STR3 }'</span> \
+  --query <span class="string">'findings[0:5].{Score:inspectorScore,Function:resources[0].id,CVE:packageVulnerabilityDetails.vulnerabilityId}'</span> \
+  --output table</code></pre>
+    </div>
+
+    <h3>Checklist S4 &#x2611;</h3>
+    <div class="checklist">
+        <label class="check-item"><input type="checkbox"> &#x2610; Lambda standard scanning activ&eacute; (packages zip + layers)</label>
+        <label class="check-item"><input type="checkbox"> &#x2610; Lambda code scanning &eacute;valu&eacute; (co&ucirc;t vs b&eacute;n&eacute;fice selon code custom)</label>
+        <label class="check-item"><input type="checkbox"> &#x2610; Toutes fonctions en statut SCANNING dans coverage</label>
+        <label class="check-item"><input type="checkbox"> &#x2610; Findings Lambda Critical/High identifi&eacute;s et packages mis &agrave; jour</label>
+        <label class="check-item"><input type="checkbox"> &#x2610; Lambda Layers vuln&eacute;rables identifi&eacute;s et mis &agrave; jour (impact multi-fonctions)</label>
+        <label class="check-item"><input type="checkbox"> &#x2610; Pipeline de d&eacute;ploiement Lambda int&egrave;gre un check Inspector post-d&eacute;ploiement</label>
+    </div>
+</div>
+
+<!-- ═══════════════════════ S5 ═══════════════════════ -->
+<div class="section" id="s5">
+    <div class="section-header orange">
+        <div class="section-number orange">S5</div>
+        <div>
+            <div class="section-title">Findings &amp; Prioritization</div>
+            <div class="section-desc">Inspector Score, EPSS, filtres et suppression des faux positifs &mdash; 15 pts</div>
+        </div>
+    </div>
+
+    <div class="alert alert-error">
+        <span class="alert-icon">&#x1F6A8;</span>
+        <div>
+            <strong>Contexte :</strong> Un environnement AWS typique g&eacute;n&egrave;re des milliers de findings Inspector. Sans priorisation intelligente, les &eacute;quipes SecOps sont submerg&eacute;es et traitent les CVE dans le mauvais ordre. <strong>Analogie :</strong> L'Inspector Score est un <em>indice de gravit&eacute; m&eacute;dicale</em> (comme l'ISS en traumatologie) : il combine la pathologie connue (CVSS), la probabilit&eacute; de contamination (EPSS), et la proximit&eacute; du patient avec la zone d'infection (network reachability). Un score 9.5 = soins intensifs imm&eacute;diats. Un score 2.0 = consultation planifi&eacute;e.
+        </div>
+    </div>
+
+    <h3>Formule Inspector Score</h3>
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x1F4CA;</span>
+        <div>
+            <strong>Inspector Score = f(CVSS v3.1 base + EPSS weight + network reachability weight + exploit-in-wild weight)</strong><br><br>
+            &bull; <strong>CVSS v3.1 base</strong> : score NVD officiel (0-10). Composante principale.<br>
+            &bull; <strong>EPSS</strong> (<em>Exploit Prediction Scoring System</em>) : probabilit&eacute; d'exploitation dans les 30 jours (0-1). EPSS 0.97 = 97% de probabilit&eacute;. Augmente le score Inspector.<br>
+            &bull; <strong>Network reachability</strong> : si le port vuln&eacute;rable est expos&eacute; sur Internet (0.0.0.0/0 dans Security Group), le score est major&eacute;.<br>
+            &bull; <strong>Exploit in the wild</strong> : si la CVE a un exploit connu et actif (CISA KEV, Metasploit), le score est major&eacute;.<br><br>
+            <strong>Exemple Log4Shell :</strong> CVE-2021-44228 &mdash; CVSS 10.0 + EPSS 0.97 + port 8080 ouvert + exploit in wild &rarr; Inspector Score <strong>9.5 Critical</strong>.<br>
+            <strong>Contre-exemple :</strong> CVE-2023-XXXXX &mdash; CVSS 9.8 + EPSS 0.001 + port non expos&eacute; + no exploit in wild &rarr; Inspector Score <strong>5.0 Medium</strong> (th&eacute;orique, non prioritaire).
+        </div>
+    </div>
+
+    <h3>Comparatif gestion des findings</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr><th>Param&egrave;tre</th><th>D&eacute;faut AWS</th><th>&#x26A1; Quick Win</th><th>&#x1F512; Avanc&eacute;</th><th>&#x1F3AF; Optimal</th></tr></thead>
+        <tbody>
+            <tr><td><strong>Filtres actifs</strong></td><td class="val-red">Aucun (tout s'affiche)</td><td class="val-green">Filtre Critical + High + EPSS &gt; 0.1</td><td class="val-green">+ filtre par resource tag (env=prod)</td><td class="val-green">+ filtre par VPC ID / subnet</td></tr>
+            <tr><td><strong>R&egrave;gles de suppression</strong></td><td class="val-red">Aucune</td><td class="val-green">Supprimer CVE basses si EPSS &lt; 0.01</td><td class="val-green">+ supprimer packages syst&egrave;me OS acceptables</td><td class="val-green">+ expiration des suppressions (90j)</td></tr>
+            <tr><td><strong>Alerte EventBridge</strong></td><td class="val-red">Aucune</td><td class="val-green">&#x2705; SNS sur Critical</td><td class="val-green">&#x2705; + Jira/ServiceNow ticketing auto</td><td class="val-green">&#x2705; + PagerDuty si score &gt; 9.0</td></tr>
+            <tr><td><strong>Lifecycle findings</strong></td><td class="val-warn">ACTIVE jusqu'&agrave; correction</td><td class="val-warn">Idem</td><td class="val-green">+ SUPPRESSED avec justification</td><td class="val-green">+ CLOSED auto via SSM Patch</td></tr>
+            <tr><td><strong>Score S5 (pts)</strong></td><td class="val-red">5/15</td><td class="val-warn">8/15</td><td class="val-green">12/15</td><td class="val-green">15/15</td></tr>
+        </tbody>
+    </table>
+    </div>
+
+    <div class="alert alert-warn">
+        <span class="alert-icon">&#x26A0;&#xFE0F;</span>
+        <div>
+            <strong>Pi&egrave;ge suppression permanente :</strong> Supprimer un finding sans date d'expiration cr&eacute;e une dette technique invisible. Une CVE suppress&eacute;e "provisoirement" en janvier est oubli&eacute;e en d&eacute;cembre. Toujours ajouter une <strong>expiration de 90 jours max</strong> sur les r&egrave;gles de suppression et une justification m&eacute;tier. Inspector v2 permet de d&eacute;finir une date d'expiration sur les filtres de suppression.
+        </div>
+    </div>
+
+    <h3>Configuration &mdash; Console AWS</h3>
+    <div class="code-block">
+        <button class="copy-btn" onclick="copyCode(this)">Copier</button>
+        <pre><code># === CONSOLE AWS ===
+# Inspector v2 > Findings > utiliser les filtres :
+#   Severity : CRITICAL, HIGH
+#   EPSS score : > 0.10
+#   Resource tags : Env = production
+#   Status : ACTIVE
+#
+# Inspector v2 > Filter rules > Create filter rule
+#   Nom : <span class="string">"Suppress low EPSS informational"</span>
+#   Action : SUPPRESS
+#   Critères : Severity = INFORMATIONAL, EPSS < 0.01
+#   Expiration : 90 jours
+#
+# EventBridge : Inspector > Settings > EventBridge integration
+# Ou créer une règle manuellement dans EventBridge console</code></pre>
+    </div>
+
+    <h3>Configuration &mdash; AWS CLI</h3>
+    <div class="code-block">
+        <button class="copy-btn" onclick="copyCode(this)">Copier</button>
+        <pre><code># === AWS CLI ===
+# Lister les findings critiques actifs triés par Inspector Score
+aws inspector2 list-findings \
+  --filter-criteria '{
+    <span class="string">"severity"</span>:[{<span class="string">"comparison"</span>:<span class="string">"EQUALS"</span>,<span class="string">"value"</span>:<span class="string">"CRITICAL"</span>}],
+    <span class="string">"findingStatus"</span>:[{<span class="string">"comparison"</span>:<span class="string">"EQUALS"</span>,<span class="string">"value"</span>:<span class="string">"ACTIVE"</span>}]
+  }' \
+  --sort-criteria <span class="string">'{ STR0 : STR1 , STR2 : STR3 }'</span> \
+  --query <span class="string">'findings[*].{Score:inspectorScore,CVE:packageVulnerabilityDetails.vulnerabilityId,Resource:resources[0].id,EPSS:packageVulnerabilityDetails.epss.score}'</span> \
+  --output table \
+  --max-results 20
+
+# Créer une règle de suppression (faux positifs basse priorité)
+aws inspector2 create-filter \
+  --name <span class="string">"Suppress-LowEPSS-Informational"</span> \
+  --action SUPPRESS \
+  --filter-criteria '{
+    <span class="string">"severity"</span>:[{<span class="string">"comparison"</span>:<span class="string">"EQUALS"</span>,<span class="string">"value"</span>:<span class="string">"INFORMATIONAL"</span>}],
+    <span class="string">"epssScore"</span>:[{<span class="string">"upperInclusive"</span>:0.01}]
+  }' \
+  --description <span class="string">"Supprime les findings informationnels avec EPSS < 1% - Expire dans 90 jours"</span>
+
+# Créer une alerte EventBridge pour les Critical
+aws events put-rule \
+  --name <span class="string">"InspectorCriticalFindings"</span> \
+  --event-pattern '{
+    <span class="string">"source"</span>:[<span class="string">"aws.inspector2"</span>],
+    <span class="string">"detail-type"</span>:[<span class="string">"Inspector2 Finding"</span>],
+    <span class="string">"detail"</span>:{
+      <span class="string">"severity"</span>:[<span class="string">"CRITICAL"</span>],
+      <span class="string">"status"</span>:[<span class="string">"ACTIVE"</span>]
+    }
+  }' \
+  --state ENABLED
+
+# Statistiques des findings par sévérité
+aws inspector2 get-findings-statistics \
+  --query <span class="string">'findingStatistics.countBySeverity'</span> \
+  --output table</code></pre>
+    </div>
+
+    <h3>V&eacute;rification</h3>
+    <div class="code-block">
+        <button class="copy-btn" onclick="copyCode(this)">Copier</button>
+        <pre><code># Vérifier le nombre de Critical ACTIVE
+aws inspector2 list-findings \
+  --filter-criteria <span class="string">'{ STR0 :[{ STR1 : STR2 , STR3 : STR4 }], STR5 :[{ STR6 : STR7 , STR8 : STR9 }]}'</span> \
+  --query <span class="string">'length(findings)'</span> \
+  --output text
+# Objectif : réduire à 0 Critical ACTIVE via patch ou suppression justifiée
+
+# Vérifier les règles de suppression actives
+aws inspector2 list-filters \
+  --query <span class="string">'filters[*].{Name:name,Action:action,Criteria:filterCriteria}'</span> \
+  --output table</code></pre>
+    </div>
+
+    <h3>Checklist S5 &#x2611;</h3>
+    <div class="checklist">
+        <label class="check-item"><input type="checkbox"> &#x2610; Filtre actif Critical + High + EPSS &gt; 0.1 configur&eacute;</label>
+        <label class="check-item"><input type="checkbox"> &#x2610; Inspector Score compris (CVSS + EPSS + network reachability)</label>
+        <label class="check-item"><input type="checkbox"> &#x2610; R&egrave;gles de suppression cr&eacute;&eacute;es avec date d'expiration &le; 90 jours</label>
+        <label class="check-item"><input type="checkbox"> &#x2610; Alerte EventBridge + SNS sur Critical ACTIVE</label>
+        <label class="check-item"><input type="checkbox"> &#x2610; 0 Critical ACTIVE non assign&eacute; (ou justification de suppression)</label>
+        <label class="check-item"><input type="checkbox"> &#x2610; Findings Critical/High assign&eacute;s avec SLA (voir S6)</label>
+    </div>
+</div>
+
+<!-- ═══════════════════════ S6 ═══════════════════════ -->
+<div class="section" id="s6">
+    <div class="section-header orange">
+        <div class="section-number orange">S6</div>
+        <div>
+            <div class="section-title">Remediation &amp; Workflows</div>
+            <div class="section-desc">SLA par s&eacute;v&eacute;rit&eacute;, SSM Patch Manager, EventBridge et int&eacute;gration ITSM &mdash; 8 pts</div>
+        </div>
+    </div>
+
+    <div class="alert alert-error">
+        <span class="alert-icon">&#x1F6A8;</span>
+        <div>
+            <strong>Contexte :</strong> D&eacute;tecter les CVE sans processus de correction structur&eacute; ne r&eacute;duit pas le risque. Les findings Inspector doivent &ecirc;tre transform&eacute;s en tickets assign&eacute;s, avec un SLA clair par s&eacute;v&eacute;rit&eacute; et un outil de correction adapt&eacute;. Sans workflow, les Critical restent &laquo; ouverts &raquo; ind&eacute;finiment car personne n'en est responsable.
+        </div>
+    </div>
+
+    <h3>Matrice SLA de rem&eacute;diation</h3>
+    <div class="sla-matrix">
+        <div class="sla-card critical">
+            <div class="sla-badge">&#x1F534; CRITICAL (9-10)</div>
+            <div class="sla-sla">SLA : <strong>24 heures</strong></div>
+            <div class="sla-owner">Owner : <strong>SecOps</strong></div>
+            <div class="sla-tool">Outil : SSM Patch Manager (patch group CRITICAL)</div>
+            <div class="sla-action">Action : Patcher imm&eacute;diatement ou isoler l'instance. Ouvrir un incident P1.</div>
+        </div>
+        <div class="sla-card high">
+            <div class="sla-badge">&#x1F7E0; HIGH (7-8.9)</div>
+            <div class="sla-sla">SLA : <strong>7 jours</strong></div>
+            <div class="sla-owner">Owner : <strong>DevOps</strong></div>
+            <div class="sla-tool">Outil : CI/CD rebuild + reploiement de l'image ECR / Lambda</div>
+            <div class="sla-action">Action : Rebuild de l'image avec base image mise &agrave; jour. Ticket Jira P2.</div>
+        </div>
+        <div class="sla-card medium">
+            <div class="sla-badge">&#x1F7E1; MEDIUM (4-6.9)</div>
+            <div class="sla-sla">SLA : <strong>30 jours</strong></div>
+            <div class="sla-owner">Owner : <strong>Dev</strong></div>
+            <div class="sla-tool">Outil : Package update PR (npm update, pip install --upgrade)</div>
+            <div class="sla-action">Action : PR de mise &agrave; jour des d&eacute;pendances vuln&eacute;rables. Code review + merge.</div>
+        </div>
+        <div class="sla-card low">
+            <div class="sla-badge">&#x26AA; LOW (1-3.9)</div>
+            <div class="sla-sla">SLA : <strong>90 jours</strong></div>
+            <div class="sla-owner">Owner : <strong>Dev</strong></div>
+            <div class="sla-tool">Outil : Tech debt backlog (sprint planning)</div>
+            <div class="sla-action">Action : Ajouter au backlog technique. Traiter lors du sprint de r&eacute;duction de dette.</div>
+        </div>
+        <div class="sla-card info">
+            <div class="sla-badge">&#x2139;&#xFE0F; INFORMATIONAL</div>
+            <div class="sla-sla">SLA : <strong>Best effort</strong></div>
+            <div class="sla-owner">Owner : <strong>Dev</strong></div>
+            <div class="sla-tool">Outil : Documentation / suppression justifi&eacute;e</div>
+            <div class="sla-action">Action : Documenter la d&eacute;cision d'acceptation du risque ou supprimer avec justification.</div>
+        </div>
+    </div>
+
+    <h3>Comparatif configuration rem&eacute;diation</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr><th>Outil</th><th>D&eacute;faut AWS</th><th>&#x26A1; Quick Win</th><th>&#x1F512; Avanc&eacute;</th><th>&#x1F3AF; Optimal</th></tr></thead>
+        <tbody>
+            <tr><td><strong>SSM Patch Manager</strong></td><td class="val-warn">Non configur&eacute;</td><td class="val-green">Patch group "Critical" + Maintenance Window auto</td><td class="val-green">+ patch group par env (prod/dev)</td><td class="val-green">+ v&eacute;rification post-patch Inspector</td></tr>
+            <tr><td><strong>EventBridge routing</strong></td><td class="val-red">Aucun</td><td class="val-green">SNS email sur Critical</td><td class="val-green">+ Lambda routing vers Jira/ServiceNow</td><td class="val-green">+ PagerDuty si score &gt; 9.0 + SLA escalation</td></tr>
+            <tr><td><strong>ITSM integration</strong></td><td class="val-red">Aucune</td><td class="val-red">Manuelle</td><td class="val-green">Jira auto via EventBridge + Lambda</td><td class="val-green">ServiceNow CMDB sync + SLA tracking</td></tr>
+            <tr><td><strong>Patch Compliance report</strong></td><td class="val-red">&#x274C; Non g&eacute;n&eacute;r&eacute;</td><td class="val-warn">SSM Compliance report manuel</td><td class="val-green">Rapport automatis&eacute; post-Maintenance Window</td><td class="val-green">+ rapport mensuel envoy&eacute; au CISO</td></tr>
+            <tr><td><strong>Score S6 (pts)</strong></td><td class="val-red">0/8</td><td class="val-warn">3/8</td><td class="val-green">6/8</td><td class="val-green">8/8</td></tr>
+        </tbody>
+    </table>
+    </div>
+
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x1F4A1;</span>
+        <div>
+            <strong>Pourquoi chaque param&egrave;tre :</strong><br>
+            &bull; <strong>SSM Patch Manager</strong> : automatise le patching OS (Windows/Linux) sur EC2 selon les Patch Groups. Int&egrave;gre un Compliance Report qui confirme le patch appliqu&eacute;. Inspector re-scanne apr&egrave;s le patch et cl&ocirc;t le finding automatiquement si CVE corrig&eacute;e.<br>
+            &bull; <strong>EventBridge</strong> : chaque nouveau finding Critical g&eacute;n&egrave;re un &eacute;v&eacute;nement Inspector2 Finding dans EventBridge. Une r&egrave;gle peut router vers SNS (email), Lambda (cr&eacute;ation de ticket Jira), ou Step Functions (workflow de rem&eacute;diation automatis&eacute;).<br>
+            &bull; <strong>Jira / ServiceNow</strong> : tracer chaque CVE Critical/High dans l'ITSM permet le SLA tracking, l'audit de conformit&eacute;, et la preuve de rem&eacute;diation pour les audits ISO 27001 / SOC2.
+        </div>
+    </div>
+
+    <div class="alert alert-warn">
+        <span class="alert-icon">&#x26A0;&#xFE0F;</span>
+        <div>
+            <strong>Pi&egrave;ge SSM Patch non configur&eacute; :</strong> Activer Inspector v2 sans configurer SSM Patch Manager revient &agrave; faire des bilans de sant&eacute; sans prescrire de traitement. Les findings restent ACTIVE ind&eacute;finiment. Configurer a minima un Patch Baseline + Maintenance Window pour les instances EC2 Critical.
+        </div>
+    </div>
+
+    <h3>Configuration &mdash; Console AWS</h3>
+    <div class="code-block">
+        <button class="copy-btn" onclick="copyCode(this)">Copier</button>
+        <pre><code># === CONSOLE AWS ===
+# AWS Systems Manager > Patch Manager > Patch Baselines
+# Créer une Patch Baseline <span class="string">"Critical-Baseline"</span> :
+#   OS : Amazon Linux 2 / RHEL / Ubuntu
+#   Auto-approve : CRITICAL after 0 days
+#   Auto-approve : IMPORTANT after 7 days
+#
+# Patch Groups : tagger les instances EC2 avec
+#   Tag : Patch Group = <span class="string">"critical-prod"</span>
+#
+# Maintenance Windows > Create :
+#   Schedule : cron(0 2 ? * SUN *) (dimanche 2h UTC)
+#   Duration : 2 hours
+#   Target : tag Patch Group = critical-prod
+#   Task : AWS-RunPatchBaseline (SSM Command)
+#
+# EventBridge > Rules > Create
+#   Event pattern : source = aws.inspector2 + severity = CRITICAL
+#   Target : SNS topic <span class="string">"inspector-critical-alerts"</span></code></pre>
+    </div>
+
+    <h3>Configuration &mdash; AWS CLI</h3>
+    <div class="code-block">
+        <button class="copy-btn" onclick="copyCode(this)">Copier</button>
+        <pre><code># === AWS CLI ===
+# Créer une Patch Baseline pour Amazon Linux 2
+aws ssm create-patch-baseline \
+  --name <span class="string">"InspectorCriticalBaseline-AmazonLinux2"</span> \
+  --operating-system AMAZON_LINUX_2 \
+  --approval-rules '{
+    <span class="string">"PatchRules"</span>:[{
+      <span class="string">"PatchFilterGroup"</span>:{<span class="string">"PatchFilters"</span>:[{<span class="string">"Key"</span>:<span class="string">"SEVERITY"</span>,<span class="string">"Values"</span>:[<span class="string">"Critical"</span>]}]},
+      <span class="string">"ApproveAfterDays"</span>:0,
+      <span class="string">"ComplianceLevel"</span>:<span class="string">"CRITICAL"</span>
+    },{
+      <span class="string">"PatchFilterGroup"</span>:{<span class="string">"PatchFilters"</span>:[{<span class="string">"Key"</span>:<span class="string">"SEVERITY"</span>,<span class="string">"Values"</span>:[<span class="string">"Important"</span>]}]},
+      <span class="string">"ApproveAfterDays"</span>:7,
+      <span class="string">"ComplianceLevel"</span>:<span class="string">"HIGH"</span>
+    }]
+  }' \
+  --description <span class="string">"Baseline Inspector - Critical 0j, Important 7j"</span>
+
+# Créer une alerte EventBridge Critical → SNS
+aws events put-rule \
+  --name <span class="string">"InspectorCriticalAlert"</span> \
+  --event-pattern '{
+    <span class="string">"source"</span>:[<span class="string">"aws.inspector2"</span>],
+    <span class="string">"detail-type"</span>:[<span class="string">"Inspector2 Finding"</span>],
+    <span class="string">"detail"</span>:{
+      <span class="string">"severity"</span>:[<span class="string">"CRITICAL"</span>],
+      <span class="string">"status"</span>:[<span class="string">"ACTIVE"</span>]
+    }
+  }' \
+  --state ENABLED
+
+# Attacher la target SNS (remplacer l'ARN)
+aws events put-targets \
+  --rule <span class="string">"InspectorCriticalAlert"</span> \
+  --targets '[{
+    <span class="string">"Id"</span>:<span class="string">"1"</span>,
+    <span class="string">"Arn"</span>:<span class="string">"arn:aws:sns:eu-west-1:123456789012:inspector-critical-alerts"</span>
+  }]'
+
+# Lancer un scan de conformité patch sur une instance
+aws ssm send-command \
+  --document-name <span class="string">"AWS-RunPatchBaseline"</span> \
+  --parameters <span class="string">'{ STR0 :[ STR1 ]}'</span> \
+  --targets <span class="string">'[{ STR0 : STR1 , STR2 :[ STR3 ]}]'</span> \
+  --comment <span class="string">"Inspector post-patch compliance check"</span></code></pre>
+    </div>
+
+    <h3>V&eacute;rification</h3>
+    <div class="code-block">
+        <button class="copy-btn" onclick="copyCode(this)">Copier</button>
+        <pre><code># Vérifier la Patch Compliance des instances EC2
+aws ssm describe-patch-compliance-details \
+  --instance-id <span class="string">"i-1234567890abcdef0"</span> \
+  --query <span class="string">'[complianceSummaryItem]'</span> \
+  --output table
+
+# Vérifier les findings qui ont été CLOSED (CVE corrigée)
+aws inspector2 list-findings \
+  --filter-criteria <span class="string">'{ STR0 :[{ STR1 : STR2 , STR3 : STR4 }]}'</span> \
+  --sort-criteria <span class="string">'{ STR0 : STR1 , STR2 : STR3 }'</span> \
+  --query <span class="string">'findings[0:10].{CVE:packageVulnerabilityDetails.vulnerabilityId,Resource:resources[0].id,Updated:updatedAt}'</span> \
+  --output table</code></pre>
+    </div>
+
+    <h3>Checklist S6 &#x2611;</h3>
+    <div class="checklist">
+        <label class="check-item"><input type="checkbox"> &#x2610; Matrice SLA d&eacute;finie et communiqu&eacute;e (Critical 24h, High 7j, Medium 30j, Low 90j)</label>
+        <label class="check-item"><input type="checkbox"> &#x2610; SSM Patch Manager configur&eacute; avec Patch Baseline + Maintenance Window</label>
+        <label class="check-item"><input type="checkbox"> &#x2610; Alerte EventBridge + SNS activ&eacute;e sur Critical ACTIVE</label>
+        <label class="check-item"><input type="checkbox"> &#x2610; 0 Critical ACTIVE sans ticket assign&eacute; dans l'ITSM</label>
+        <label class="check-item"><input type="checkbox"> &#x2610; Processus de v&eacute;rification post-patch d&eacute;fini (Inspector re-scanne apr&egrave;s SSM)</label>
+        <label class="check-item"><input type="checkbox"> &#x2610; Escalation d&eacute;finie si SLA d&eacute;pass&eacute; (manager + CISO)</label>
+    </div>
+</div>
+
+<!-- ═══════════════════════ S7 ═══════════════════════ -->
+<div class="section" id="s7">
+    <div class="section-header orange">
+        <div class="section-number orange">S7</div>
+        <div>
+            <div class="section-title">Multi-Account &amp; AWS Organizations</div>
+            <div class="section-desc">Delegated administrator, auto-enable, coverage centralis&eacute;e &mdash; 5 pts</div>
+        </div>
+    </div>
+
+    <div class="alert alert-error">
+        <span class="alert-icon">&#x1F6A8;</span>
+        <div>
+            <strong>Contexte :</strong> Dans une organisation AWS multi-comptes (Landing Zone, Control Tower), chaque compte member est une fen&ecirc;tre aveugle ind&eacute;pendante si Inspector n'est pas configur&eacute; via Organizations. Le Delegated Administrator centralise tous les findings sur un seul compte (g&eacute;n&eacute;ralement le Security/Audit account) et active Inspector automatiquement sur les nouveaux comptes membres.
+        </div>
+    </div>
+
+    <h3>Comparatif organisation multi-comptes</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr><th>Param&egrave;tre</th><th>D&eacute;faut AWS</th><th>&#x26A1; Quick Win</th><th>&#x1F512; Avanc&eacute;</th><th>&#x1F3AF; Optimal</th></tr></thead>
+        <tbody>
+            <tr><td><strong>Delegated admin</strong></td><td class="val-red">&#x274C; Non configur&eacute;</td><td class="val-red">N/A (compte seul)</td><td class="val-green">&#x2705; Security Account d&eacute;l&eacute;gu&eacute;</td><td class="val-green">&#x2705; Security Account + audit r&eacute;gulier</td></tr>
+            <tr><td><strong>Auto-enable membres</strong></td><td class="val-red">&#x274C; Non</td><td class="val-red">N/A</td><td class="val-green">&#x2705; EC2 + ECR + Lambda auto</td><td class="val-green">&#x2705; + Lambda Code auto</td></tr>
+            <tr><td><strong>Coverage centralis&eacute;e</strong></td><td class="val-red">&#x274C; Par compte</td><td class="val-red">N/A</td><td class="val-green">&#x2705; Findings agr&eacute;g&eacute;s admin account</td><td class="val-green">&#x2705; + reporting mensuel multi-comptes</td></tr>
+            <tr><td><strong>Membres existants activ&eacute;s</strong></td><td class="val-red">&#x274C; Non</td><td class="val-red">N/A</td><td class="val-green">&#x2705; Activation forc&eacute;e via <code>associate-member</code></td><td class="val-green">&#x2705; + v&eacute;rification cron mensuel coverage org</td></tr>
+            <tr><td><strong>Score S7 (pts)</strong></td><td class="val-red">0/5</td><td class="val-warn">2/5 (compte seul)</td><td class="val-green">4/5</td><td class="val-green">5/5</td></tr>
+        </tbody>
+    </table>
+    </div>
+
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x1F4A1;</span>
+        <div>
+            <strong>Pourquoi chaque param&egrave;tre :</strong><br>
+            &bull; <strong>Delegated admin</strong> : le Management Account ne devrait pas &ecirc;tre utilis&eacute; pour les op&eacute;rations. D&eacute;l&eacute;guer au Security Account concentre tous les findings sans acc&egrave;s Management Account aux analysts.<br>
+            &bull; <strong>Auto-enable</strong> : garantit que chaque nouveau compte AWS (cr&eacute;&eacute; via Control Tower ou manuellement) active Inspector v2 imm&eacute;diatement, sans action manuelle de l'&eacute;quipe s&eacute;curit&eacute;.<br>
+            &bull; <strong>Coverage report</strong> : depuis le Delegated Admin, <code>list-coverage</code> retourne les ressources de TOUS les comptes membres. Un seul appel pour voir les angles morts de toute l'organisation.
+        </div>
+    </div>
+
+    <div class="alert alert-warn">
+        <span class="alert-icon">&#x26A0;&#xFE0F;</span>
+        <div>
+            <strong>Pi&egrave;ge delegated admin unique :</strong> Un seul compte peut &ecirc;tre delegated administrator Inspector dans une organisation. Si vous changez de Security Account, vous devez d&eacute;sactiver l'ancien admin avant d'en activer un nouveau. Cette op&eacute;ration d&eacute;sactive temporairement la visibilit&eacute; centralis&eacute;e. Planifier la migration en dehors des heures critiques.
+        </div>
+    </div>
+
+    <h3>Configuration &mdash; Console AWS</h3>
+    <div class="code-block">
+        <button class="copy-btn" onclick="copyCode(this)">Copier</button>
+        <pre><code># === CONSOLE AWS (Management Account) ===
+# Inspector v2 > Settings > General > Delegated administrator
+# Entrer l'Account ID du Security Account
+# Cliquer <span class="string">"Delegate"</span>
+#
+# (Dans le Security Account)
+# Inspector v2 > Settings > General > Organization management
+# Auto-enable :
+#   ☑ EC2 scanning - NEW ACCOUNTS
+#   ☑ ECR scanning - NEW ACCOUNTS
+#   ☑ Lambda standard - NEW ACCOUNTS
+#   ☑ Lambda code - NEW ACCOUNTS (optionnel)
+# Sauvegarder
+#
+# Inspector v2 > Findings > Account filter : voir TOUS les comptes</code></pre>
+    </div>
+
+    <h3>Configuration &mdash; AWS CLI</h3>
+    <div class="code-block">
+        <button class="copy-btn" onclick="copyCode(this)">Copier</button>
+        <pre><code># === AWS CLI (Management Account) ===
+# Désigner le delegated administrator Inspector
+aws inspector2 enable-delegated-admin-account \
+  --delegated-admin-account-id <span class="string">"111122223333"</span> \
+  --region eu-west-1
+
+# Vérifier le delegated admin désigné
+aws inspector2 list-delegated-admin-accounts \
+  --query <span class="string">'delegatedAdminAccounts[*].{Account:accountId,Status:status}'</span> \
+  --output table
+
+# === AWS CLI (Security Account - Delegated Admin) ===
+# Configurer l'auto-enable pour les nouveaux comptes membres
+aws inspector2 update-organization-configuration \
+  --auto-enable '{
+    <span class="string">"ec2"</span>:true,
+    <span class="string">"ecr"</span>:true,
+    <span class="string">"lambda"</span>:true,
+    <span class="string">"lambdaCode"</span>:false
+  }' \
+  --region eu-west-1
+
+# Vérifier la configuration d'organisation
+aws inspector2 describe-organization-configuration \
+  --query <span class="string">'autoEnable'</span> \
+  --output table
+
+# Lister la coverage de TOUS les comptes membres
+aws inspector2 list-coverage \
+  --query <span class="string">'coveredResources[*].{Account:accountId,Resource:resourceId,Status:scanStatus.statusCode}'</span> \
+  --output table
+
+# Lister les membres actifs Inspector dans l'org
+aws inspector2 list-members \
+  --query <span class="string">'members[*].{Account:accountId,Status:relationshipStatus}'</span> \
+  --output table</code></pre>
+    </div>
+
+    <h3>V&eacute;rification</h3>
+    <div class="code-block">
+        <button class="copy-btn" onclick="copyCode(this)">Copier</button>
+        <pre><code># Vérifier que le delegated admin est bien configuré
+aws inspector2 list-delegated-admin-accounts \
+  --output table
+
+# Depuis le Security Account : compter les ressources couvertes par compte
+aws inspector2 get-coverage-statistics \
+  --query <span class="string">'countsByResourceType'</span> \
+  --output table
+# Attendu : comptes membres apparaissent dans les résultats</code></pre>
+    </div>
+
+    <h3>Checklist S7 &#x2611;</h3>
+    <div class="checklist">
+        <label class="check-item"><input type="checkbox"> &#x2610; Delegated admin configur&eacute; (Security Account, pas Management Account)</label>
+        <label class="check-item"><input type="checkbox"> &#x2610; Auto-enable activ&eacute; sur EC2 + ECR + Lambda pour les nouveaux comptes</label>
+        <label class="check-item"><input type="checkbox"> &#x2610; Tous les comptes membres existants ont Inspector activ&eacute;</label>
+        <label class="check-item"><input type="checkbox"> &#x2610; Coverage report multi-comptes visible depuis Security Account</label>
+        <label class="check-item"><input type="checkbox"> &#x2610; Processus d'onboarding nouveau compte inclut v&eacute;rification Inspector (voir Routines)</label>
+    </div>
+</div>
+
+<!-- ═══════════════════════ S8 ═══════════════════════ -->
+<div class="section" id="s8">
+    <div class="section-header orange">
+        <div class="section-number orange">S8</div>
+        <div>
+            <div class="section-title">SBOM &amp; Supply Chain Security</div>
+            <div class="section-desc">Export CycloneDX / SPDX, Software Bill of Materials, vulnerable packages &mdash; 4 pts</div>
+        </div>
+    </div>
+
+    <div class="alert alert-error">
+        <span class="alert-icon">&#x1F6A8;</span>
+        <div>
+            <strong>Contexte :</strong> Le SBOM (<em>Software Bill of Materials</em>) est la <strong>liste des ingr&eacute;dients de vos logiciels</strong>. Comme une &eacute;tiquette alimentaire, il permet de savoir exactement quelles librairies sont embarqu&eacute;es dans vos workloads &mdash; et d'identifier imm&eacute;diatement l'impact d'une nouvelle CVE publi&eacute;e (ex: &laquo; combien de nos 500 images utilisent Log4j 2.14 ? &raquo;). Amazon Inspector v2 g&eacute;n&egrave;re des SBOM aux formats CycloneDX 1.4 et SPDX 2.3 et les exporte vers S3.
+        </div>
+    </div>
+
+    <h3>Comparatif SBOM &amp; supply chain</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr><th>Param&egrave;tre</th><th>D&eacute;faut AWS</th><th>&#x26A1; Quick Win</th><th>&#x1F512; Avanc&eacute;</th><th>&#x1F3AF; Optimal</th></tr></thead>
+        <tbody>
+            <tr><td><strong>SBOM export</strong></td><td class="val-red">&#x274C; Non configur&eacute;</td><td class="val-red">&#x274C; Pas n&eacute;cessaire au d&eacute;marrage</td><td class="val-green">&#x2705; Export CycloneDX vers S3</td><td class="val-green">&#x2705; + SPDX + automatisation mensuelle</td></tr>
+            <tr><td><strong>Format SBOM</strong></td><td class="val-red">&mdash;</td><td class="val-red">&mdash;</td><td class="val-green">CycloneDX 1.4 (standard industrie)</td><td class="val-green">+ SPDX 2.3 (Linux Foundation)</td></tr>
+            <tr><td><strong>Scope SBOM</strong></td><td class="val-red">&mdash;</td><td class="val-red">&mdash;</td><td class="val-green">ECR images + Lambda functions</td><td class="val-green">+ EC2 OS packages</td></tr>
+            <tr><td><strong>Vulnerable packages tracking</strong></td><td class="val-red">&mdash;</td><td class="val-green">Inclus dans findings Inspector</td><td class="val-green">+ Athena queries sur SBOM S3</td><td class="val-green">+ AWS Audit Manager</td></tr>
+            <tr><td><strong>Score S8 (pts)</strong></td><td class="val-red">0/4</td><td class="val-warn">1/4</td><td class="val-green">3/4</td><td class="val-green">4/4</td></tr>
+        </tbody>
+    </table>
+    </div>
+
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x1F4A1;</span>
+        <div>
+            <strong>Pourquoi chaque param&egrave;tre :</strong><br>
+            &bull; <strong>CycloneDX 1.4</strong> : format SBOM le plus adopt&eacute; dans l'&eacute;cosyst&egrave;me DevSecOps (OWASP, Dependency-Track). Compatible avec les outils tiers d'analyse.<br>
+            &bull; <strong>SPDX 2.3</strong> : format Linux Foundation, requis dans certains contextes r&eacute;glementaires (US Executive Order 14028, NIS2 supply chain clause).<br>
+            &bull; <strong>Export S3</strong> : le SBOM est export&eacute; en JSON vers S3. Configurer des Athena queries pour rechercher &laquo; toutes les ressources contenant log4j &lt; 2.17 &raquo; en quelques secondes.<br>
+            &bull; <strong>AWS Audit Manager</strong> : mapper les SBOM findings aux contr&ocirc;les de conformit&eacute; (CIS, PCI-DSS, ISO 27001).
+        </div>
+    </div>
+
+    <div class="alert alert-warn">
+        <span class="alert-icon">&#x26A0;&#xFE0F;</span>
+        <div>
+            <strong>Pi&egrave;ge co&ucirc;t SBOM export :</strong> Un export SBOM couvre <em>toutes les ressources scann&eacute;es</em> par Inspector v2 &mdash; les packages inclus. Dans un grand environnement, un SBOM complet peut peser plusieurs Go en JSON. Configurer des filtres de scope (par tag, par repo, par r&eacute;gion) et ne pas planifier d'export quotidien. Export mensuel suffisant pour la plupart des cas.
+        </div>
+    </div>
+
+    <h3>Configuration &mdash; Console AWS</h3>
+    <div class="code-block">
+        <button class="copy-btn" onclick="copyCode(this)">Copier</button>
+        <pre><code># === CONSOLE AWS ===
+# Inspector v2 > SBOM exports > Export SBOM
+# Format : CycloneDX_1_4 ou SPDX_2_3
+# S3 destination : s3://mon-bucket-sbom/inspector/
+# KMS key : optionnel (recommandé pour données sensibles)
+# Filter : optionnel (filtrer par tag ou compte)
+#
+# Vérifier après quelques minutes :
+# Inspector v2 > SBOM exports > statut <span class="string">"SUCCEEDED"</span>
+# S3 bucket : fichier JSON présent dans le préfixe spécifié</code></pre>
+    </div>
+
+    <h3>Configuration &mdash; AWS CLI</h3>
+    <div class="code-block">
+        <button class="copy-btn" onclick="copyCode(this)">Copier</button>
+        <pre><code># === AWS CLI ===
+# Créer un bucket S3 pour les exports SBOM
+aws s3 mb s3://mon-org-sbom-exports --region eu-west-1
+
+# Politique S3 permettant à Inspector d'écrire
+aws s3api put-bucket-policy \
+  --bucket mon-org-sbom-exports \
+  --policy '{
+    <span class="string">"Version"</span>:<span class="string">"2012-10-17"</span>,
+    <span class="string">"Statement"</span>:[{
+      <span class="string">"Effect"</span>:<span class="string">"Allow"</span>,
+      <span class="string">"Principal"</span>:{<span class="string">"Service"</span>:<span class="string">"inspector2.amazonaws.com"</span>},
+      <span class="string">"Action"</span>:<span class="string">"s3:PutObject"</span>,
+      <span class="string">"Resource"</span>:<span class="string">"arn:aws:s3:::mon-org-sbom-exports/*"</span>
+    }]
+  }'
+
+# Lancer un export SBOM CycloneDX 1.4
+aws inspector2 create-sbom-export \
+  --report-format CycloneDX_1_4 \
+  --s3-destination '{
+    <span class="string">"bucketName"</span>:<span class="string">"mon-org-sbom-exports"</span>,
+    <span class="string">"keyPrefix"</span>:<span class="string">"inspector/sbom/cyclonedx/"</span>
+  }' \
+  --region eu-west-1
+
+# Surveiller le statut de l'export
+aws inspector2 get-sbom-export \
+  --report-id <span class="string">"$(aws inspector2 list-findings-reports --query 'reports[0].reportId' --output text)"</span> \
+  --query <span class="string">'[reportId,status,s3Destination]'</span> \
+  --output table
+
+# Export SPDX 2.3 (deuxième format)
+aws inspector2 create-sbom-export \
+  --report-format SPDX_2_3 \
+  --s3-destination '{
+    <span class="string">"bucketName"</span>:<span class="string">"mon-org-sbom-exports"</span>,
+    <span class="string">"keyPrefix"</span>:<span class="string">"inspector/sbom/spdx/"</span>
+  }'
+
+# Rechercher un package spécifique dans le SBOM (via Athena ou jq local)
+# Exemple : trouver toutes les ressources avec log4j
+aws s3 cp s3://mon-org-sbom-exports/inspector/sbom/cyclonedx/latest.json - \
+  | jq <span class="string">'.components[] | select(.name | contains( STR0 )) | {name, version, purl}'</span></code></pre>
+    </div>
+
+    <h3>V&eacute;rification</h3>
+    <div class="code-block">
+        <button class="copy-btn" onclick="copyCode(this)">Copier</button>
+        <pre><code># Lister les exports SBOM récents
+aws inspector2 list-findings-reports \
+  --filter-criteria <span class="string">'{ STR0 :[{ STR1 : STR2 , STR3 : STR4 }]}'</span> \
+  --query <span class="string">'reports[*].{Id:reportId,Status:status,Created:createdAt}'</span> \
+  --output table
+# Attendu : au moins 1 export avec statut SUCCEEDED</code></pre>
+    </div>
+
+    <h3>Checklist S8 &#x2611;</h3>
+    <div class="checklist">
+        <label class="check-item"><input type="checkbox"> &#x2610; Export SBOM CycloneDX 1.4 r&eacute;alis&eacute; et stock&eacute; dans S3</label>
+        <label class="check-item"><input type="checkbox"> &#x2610; Bucket S3 SBOM chiffr&eacute; (SSE-KMS ou SSE-S3)</label>
+        <label class="check-item"><input type="checkbox"> &#x2610; Routine mensuelle d'export SBOM planifi&eacute;e (EventBridge Scheduler ou Lambda)</label>
+        <label class="check-item"><input type="checkbox"> &#x2610; Format SPDX 2.3 export&eacute; si requis (r&eacute;glementaire NIS2 / EO 14028)</label>
+        <label class="check-item"><input type="checkbox"> &#x2610; Recherche de package vuln&eacute;rable dans le SBOM test&eacute;e (jq ou Athena)</label>
+    </div>
+</div>
+
+<!-- ═══════════════════════ S9 ═══════════════════════ -->
+<div class="section" id="s9">
+    <div class="section-header orange">
+        <div class="section-number orange">S9</div>
+        <div>
+            <div class="section-title">Int&eacute;gration &amp; Reporting</div>
+            <div class="section-desc">Security Hub, EventBridge, Amazon Detective, CloudWatch dashboards &mdash; 2 pts</div>
+        </div>
+    </div>
+
+    <div class="alert alert-error">
+        <span class="alert-icon">&#x1F6A8;</span>
+        <div>
+            <strong>Contexte :</strong> Amazon Inspector v2 ne vit pas en silo &mdash; ses findings alimentent l'&eacute;cosyst&egrave;me de s&eacute;curit&eacute; AWS. L'int&eacute;gration avec <strong>AWS Security Hub</strong> consolide tous les findings de s&eacute;curit&eacute; (Inspector + GuardDuty + Macie + Config) dans une vue unifi&eacute;e. <strong>Amazon Detective</strong> permet d'investiguer les findings critiques avec graphes de comportement. <strong>CloudWatch</strong> fournit des m&eacute;triques et dashboards de suivi.
+        </div>
+    </div>
+
+    <h3>Comparatif int&eacute;grations</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr><th>Int&eacute;gration</th><th>D&eacute;faut AWS</th><th>&#x26A1; Quick Win</th><th>&#x1F512; Avanc&eacute;</th><th>&#x1F3AF; Optimal</th></tr></thead>
+        <tbody>
+            <tr><td><strong>Security Hub</strong></td><td class="val-warn">Auto si Security Hub actif</td><td class="val-green">&#x2705; Activer Security Hub + v&eacute;rifier flux</td><td class="val-green">&#x2705; + Custom Insights Inspector</td><td class="val-green">&#x2705; + Automation Rules suppression</td></tr>
+            <tr><td><strong>EventBridge</strong></td><td class="val-red">&#x274C; Pas de r&egrave;gles</td><td class="val-warn">Couvert en S6 (Critical &rarr; SNS)</td><td class="val-green">Couvert en S6 (Critical &rarr; Jira)</td><td class="val-green">Couvert en S6 (full ITSM)</td></tr>
+            <tr><td><strong>Amazon Detective</strong></td><td class="val-red">&#x274C; Non configur&eacute;</td><td class="val-red">Non requis au d&eacute;marrage</td><td class="val-green">&#x2705; Activer Detective + pivot Inspector</td><td class="val-green">&#x2705; + Investigation playbooks</td></tr>
+            <tr><td><strong>CloudWatch Dashboard</strong></td><td class="val-red">&#x274C; Aucun</td><td class="val-red">Non requis</td><td class="val-green">&#x2705; Dashboard Critical/High trends</td><td class="val-green">&#x2705; + Alarm SLA d&eacute;pass&eacute;</td></tr>
+            <tr><td><strong>Score S9 (pts)</strong></td><td class="val-red">0/2</td><td class="val-red">0/2</td><td class="val-warn">1/2</td><td class="val-green">2/2</td></tr>
+        </tbody>
+    </table>
+    </div>
+
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x1F4A1;</span>
+        <div>
+            <strong>Pourquoi chaque param&egrave;tre :</strong><br>
+            &bull; <strong>Security Hub</strong> : agr&egrave;ge automatiquement les findings Inspector au format ASFF (<em>Amazon Security Finding Format</em>). Une seule interface pour les findings cross-services (Inspector + GuardDuty + Config + Macie). Obligatoire pour les rapports de conformit&eacute; CIS AWS Foundations.<br>
+            &bull; <strong>Amazon Detective</strong> : lorsqu'un finding Critical d&eacute;tecte une instance EC2 avec un exploit actif, Detective visualise le graphe de comportement r&eacute;seau/IAM autour de cette instance. R&eacute;duit le temps d'investigation de 90% vs logs manuels.<br>
+            &bull; <strong>CloudWatch Metrics</strong> : Inspector publie des m&eacute;triques natives (nombre de findings par s&eacute;v&eacute;rit&eacute;, coverage %). Cr&eacute;er un dashboard MTTR (<em>Mean Time To Remediate</em>) et des alarmes si Critical count augmente.
+        </div>
+    </div>
+
+    <div class="alert alert-warn">
+        <span class="alert-icon">&#x26A0;&#xFE0F;</span>
+        <div>
+            <strong>Pi&egrave;ge Security Hub suppression :</strong> Security Hub supprime les findings Inspector si une r&egrave;gle d'Automation Rules est mal configur&eacute;e (ex: supprimer "INFORMATIONAL" mais aussi les Critical par erreur de filtre). V&eacute;rifier les Automation Rules r&eacute;guli&egrave;rement. Un finding supprim&eacute; dans Security Hub n'est PAS supprim&eacute; dans Inspector (Inspector reste la source de v&eacute;rit&eacute;).
+        </div>
+    </div>
+
+    <h3>Configuration &mdash; AWS CLI</h3>
+    <div class="code-block">
+        <button class="copy-btn" onclick="copyCode(this)">Copier</button>
+        <pre><code># === AWS CLI ===
+# Vérifier l'intégration Inspector → Security Hub (doit être automatique)
+aws securityhub describe-hub \
+  --query <span class="string">'HubArn'</span> --output text
+# Vérifier que les findings Inspector arrivent dans Security Hub
+aws securityhub get-findings \
+  --filters <span class="string">'{ STR0 :[{ STR1 : STR2 , STR3 : STR4 }]}'</span> \
+  --max-items 5 \
+  --query <span class="string">'Findings[*].{Id:Id,Severity:Severity.Label,Title:Title}'</span> \
+  --output table
+
+# Créer un Custom Insight Security Hub : Critical Inspector Findings
+aws securityhub create-insight \
+  --name <span class="string">"Inspector Critical Active Findings"</span> \
+  --filters '{
+    <span class="string">"ProductArn"</span>:[{<span class="string">"Comparison"</span>:<span class="string">"PREFIX"</span>,<span class="string">"Value"</span>:<span class="string">"arn:aws:securityhub:*::product/aws/inspector"</span>}],
+    <span class="string">"SeverityLabel"</span>:[{<span class="string">"Comparison"</span>:<span class="string">"EQUALS"</span>,<span class="string">"Value"</span>:<span class="string">"CRITICAL"</span>}],
+    <span class="string">"RecordState"</span>:[{<span class="string">"Comparison"</span>:<span class="string">"EQUALS"</span>,<span class="string">"Value"</span>:<span class="string">"ACTIVE"</span>}]
+  }' \
+  --group-by-attribute <span class="string">"ResourceId"</span>
+
+# Créer un CloudWatch Dashboard Inspector
+aws cloudwatch put-dashboard \
+  --dashboard-name <span class="string">"InspectorV2-Overview"</span> \
+  --dashboard-body '{
+    <span class="string">"widgets"</span>:[{
+      <span class="string">"type"</span>:<span class="string">"metric"</span>,
+      <span class="string">"properties"</span>:{
+        <span class="string">"metrics"</span>:[
+          [<span class="string">"AWS/Inspector2"</span>,<span class="string">"FindingsBySeverity"</span>,{<span class="string">"stat"</span>:<span class="string">"Sum"</span>,<span class="string">"period"</span>:86400}]
+        ],
+        <span class="string">"title"</span>:<span class="string">"Findings par sévérité (24h)"</span>,
+        <span class="string">"view"</span>:<span class="string">"timeSeries"</span>
+      }
+    }]
+  }'</code></pre>
+    </div>
+
+    <h3>Checklist S9 &#x2611;</h3>
+    <div class="checklist">
+        <label class="check-item"><input type="checkbox"> &#x2610; Security Hub actif et findings Inspector visibles dans Security Hub</label>
+        <label class="check-item"><input type="checkbox"> &#x2610; Custom Insight Security Hub cr&eacute;&eacute; pour les Critical Inspector</label>
+        <label class="check-item"><input type="checkbox"> &#x2610; Amazon Detective activ&eacute; si budget disponible (investigation findings)</label>
+        <label class="check-item"><input type="checkbox"> &#x2610; CloudWatch Dashboard Inspector cr&eacute;&eacute; avec tendances Critical/High</label>
+    </div>
+</div>
+
+<!-- ═══════════════════════ S10 ═══════════════════════ -->
+<div class="section" id="s10">
+    <div class="section-header orange">
+        <div class="section-number orange">S10</div>
+        <div>
+            <div class="section-title">Cost Optimization</div>
+            <div class="section-desc">R&eacute;duire les co&ucirc;ts Inspector sans d&eacute;grader la couverture s&eacute;curit&eacute; &mdash; 1 pt</div>
+        </div>
+    </div>
+
+    <div class="alert alert-error">
+        <span class="alert-icon">&#x1F6A8;</span>
+        <div>
+            <strong>Contexte :</strong> Amazon Inspector v2 est factur&eacute; &agrave; la ressource activ&eacute;e (voir section <a href="#licences">Mod&egrave;le de co&ucirc;t</a>). Dans un grand environnement, le co&ucirc;t peut devenir significatif si tous les scan types sont activ&eacute;s sur toutes les ressources. L'optimisation consiste &agrave; cibler les ressources de <strong>production et critique</strong>, d&eacute;sactiver les scan types inutiles sur les environnements non-critiques, et profiter pleinement du <strong>free trial 15 jours</strong> pour valider la valeur.
+        </div>
+    </div>
+
+    <h3>Leviers d'optimisation des co&ucirc;ts</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr><th>Levier</th><th>Impact co&ucirc;t</th><th>Impact s&eacute;curit&eacute;</th><th>Recommandation</th></tr></thead>
+        <tbody>
+            <tr><td><strong>Lambda Code scanning</strong></td><td class="val-green">-50% Lambda cost</td><td class="val-warn">Perte analyse code source</td><td>D&eacute;sactiver si pas de code custom (uniquement handlers SDK)</td></tr>
+            <tr><td><strong>ECR : d&eacute;s&eacute;lectionner repos archiv&eacute;s</strong></td><td class="val-green">-20 &agrave; -60% ECR cost</td><td class="val-warn">Minimal (images non d&eacute;ploy&eacute;es)</td><td>Appliquer tag <code>lifecycle:archive</code> et exclure via suppression rule</td></tr>
+            <tr><td><strong>EC2 : scope prod only</strong></td><td class="val-green">-30 &agrave; -70% EC2 cost</td><td class="val-red">Angles morts dev/test</td><td>D&eacute;sactiver sur dev/sandbox si patch management inexistant de toute fa&ccedil;on</td></tr>
+            <tr><td><strong>Free trial 15 jours</strong></td><td class="val-green">Trial gratuit</td><td class="val-green">Couverture compl&egrave;te</td><td>Activer TOUS les types pendant le trial pour &eacute;valuer l'exposition r&eacute;elle</td></tr>
+            <tr><td><strong>Score S10 (pts)</strong></td><td colspan="2" class="val-red">0/1 par d&eacute;faut</td><td class="val-green">1/1 si optimisation document&eacute;e</td></tr>
+        </tbody>
+    </table>
+    </div>
+
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x1F4A1;</span>
+        <div>
+            <strong>Strat&eacute;gie trial 15 jours :</strong> Inspector v2 offre un <strong>free trial de 15 jours</strong> par compte, par r&eacute;gion. Pendant cette p&eacute;riode, activer TOUS les scan types sur toutes les ressources. L'estimateur de co&ucirc;t dans la console (&laquo; Inspector &gt; Settings &gt; Cost estimate &raquo;) projette le co&ucirc;t mensuel r&eacute;el. Utiliser cette projection pour d&eacute;cider quels scan types garder actifs apr&egrave;s le trial.
+        </div>
+    </div>
+
+    <div class="alert alert-warn">
+        <span class="alert-icon">&#x26A0;&#xFE0F;</span>
+        <div>
+            <strong>Pi&egrave;ge : ne pas d&eacute;sactiver les scans prod pour &eacute;conomiser.</strong> Le co&ucirc;t Inspector sur la prod est en g&eacute;n&eacute;ral bien inf&eacute;rieur au co&ucirc;t d'un seul incident de s&eacute;curit&eacute; exploit&eacute;. L'optimisation doit porter sur les environnements non-critiques (dev, sandbox, test), jamais sur la production.
+        </div>
+    </div>
+
+    <h3>Commandes d'estimation &mdash; AWS CLI</h3>
+    <div class="code-block">
+        <button class="copy-btn" onclick="copyCode(this)">Copier</button>
+        <pre><code># === AWS CLI ===
+# Voir l'estimation de coût pendant le free trial
+aws inspector2 list-coverage \
+  --query <span class="string">'coveredResources | length(@)'</span> \
+  --output text
+# Multipliez par les tarifs (voir section Licences) pour estimer
+
+# Désactiver Lambda Code scanning pour réduire les coûts
+# (garder Lambda standard = network reachability)
+aws inspector2 disable \
+  --resource-types LAMBDA_CODE \
+  --account-ids <span class="string">"$(aws sts get-caller-identity --query Account --output text)"</span>
+
+# Vérifier les scan types actuellement actifs
+aws inspector2 batch-get-account-status \
+  --account-ids <span class="string">"$(aws sts get-caller-identity --query Account --output text)"</span> \
+  --query <span class="string">'accounts[*].{EC2:resourceState.ec2.status,ECR:resourceState.ecr.status,Lambda:resourceState.lambda.status,LambdaCode:resourceState.lambdaCode.status}'</span> \
+  --output table
+
+# Lister les images ECR non-utilisées (candidats à l'exclusion)
+# (Images non taguées <span class="string">"latest"</span> et vieilles de + 90 jours)
+aws ecr describe-images \
+  --repository-name <span class="string">"mon-repo"</span> \
+  --filter <span class="string">'{ STR0 : STR1 }'</span> \
+  --query <span class="string">'imageDetails[?imagePushedAt<=`2024-01-01`].imageDigest'</span> \
+  --output text</code></pre>
+    </div>
+
+    <h3>Checklist S10 &#x2611;</h3>
+    <div class="checklist">
+        <label class="check-item"><input type="checkbox"> &#x2610; Free trial 15 jours utilis&eacute; avec TOUS les scan types pour &eacute;valuer l'exposition</label>
+        <label class="check-item"><input type="checkbox"> &#x2610; Estimation de co&ucirc;t mensuel valid&eacute;e dans la console avant fin du trial</label>
+        <label class="check-item"><input type="checkbox"> &#x2610; Lambda Code scanning d&eacute;sactiv&eacute; si pas de code custom (handlers SDK uniquement)</label>
+        <label class="check-item"><input type="checkbox"> &#x2610; Images ECR archiv&eacute;es exclues du scan continu (tag lifecycle + suppression rule)</label>
+        <label class="check-item"><input type="checkbox"> &#x2610; D&eacute;cision d'optimisation document&eacute;e (justification risque vs co&ucirc;t)</label>
+    </div>
+</div>
+
+<!-- ═══════════════════════ SCORES ═══════════════════════ -->
+<div class="section" id="scores"><!-- PLACEHOLDER_SCORES --><h2>&#x1F4CA; R&eacute;capitulatif des scores par section</h2>
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x1F4A1;</span>
+        <div>
+            <strong>Lecture :</strong> Chaque niveau est cumulatif. Quick Win inclut le Default. Avanc&eacute; inclut Quick Win. Optimal inclut Avanc&eacute;. Score total = 100 pts. Niveau &laquo; Quick Win &raquo; att&eacute;nuable en quelques heures d&egrave;s l'activation.
+        </div>
+    </div>
+    <div class="table-container">
+    <table>
+        <thead>
+            <tr>
+                <th>Section</th>
+                <th>Th&egrave;me</th>
+                <th>&#x26AA; D&eacute;faut</th>
+                <th>&#x26A1; Quick Win</th>
+                <th>&#x1F512; Avanc&eacute;</th>
+                <th>&#x1F3AF; Optimal</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td><a href="#s1"><strong>S1</strong></a></td><td>Activation &amp; Scan Types</td><td class="val-warn">5</td><td class="val-green">15</td><td class="val-green">18</td><td class="val-green">20</td></tr>
+            <tr><td><a href="#s2"><strong>S2</strong></a></td><td>EC2 Vulnerability Scanning</td><td class="val-red">0</td><td class="val-green">10</td><td class="val-green">16</td><td class="val-green">20</td></tr>
+            <tr><td><a href="#s3"><strong>S3</strong></a></td><td>ECR Container Image Scanning</td><td class="val-warn">5</td><td class="val-green">10</td><td class="val-green">12</td><td class="val-green">15</td></tr>
+            <tr><td><a href="#s4"><strong>S4</strong></a></td><td>Lambda Function Scanning</td><td class="val-red">0</td><td class="val-warn">5</td><td class="val-green">8</td><td class="val-green">10</td></tr>
+            <tr><td><a href="#s5"><strong>S5</strong></a></td><td>Findings &amp; Prioritization</td><td class="val-warn">5</td><td class="val-green">8</td><td class="val-green">12</td><td class="val-green">15</td></tr>
+            <tr><td><a href="#s6"><strong>S6</strong></a></td><td>Remediation &amp; Workflows</td><td class="val-red">0</td><td class="val-warn">3</td><td class="val-green">6</td><td class="val-green">8</td></tr>
+            <tr><td><a href="#s7"><strong>S7</strong></a></td><td>Multi-Account &amp; Organizations</td><td class="val-red">0</td><td class="val-warn">2</td><td class="val-green">4</td><td class="val-green">5</td></tr>
+            <tr><td><a href="#s8"><strong>S8</strong></a></td><td>SBOM &amp; Supply Chain Security</td><td class="val-red">0</td><td class="val-warn">1</td><td class="val-green">3</td><td class="val-green">4</td></tr>
+            <tr><td><a href="#s9"><strong>S9</strong></a></td><td>Int&eacute;gration &amp; Reporting</td><td class="val-red">0</td><td class="val-red">0</td><td class="val-warn">1</td><td class="val-green">2</td></tr>
+            <tr><td><a href="#s10"><strong>S10</strong></a></td><td>Cost Optimization</td><td class="val-red">0</td><td class="val-red">0</td><td class="val-red">0</td><td class="val-warn">1</td></tr>
+            <tr style="font-weight:700;background:var(--aws-dark);color:white;">
+                <td colspan="2">&#x1F3C6; TOTAL</td>
+                <td>15 / 100</td>
+                <td>54 / 100</td>
+                <td>80 / 100</td>
+                <td>100 / 100</td>
+            </tr>
+        </tbody>
+    </table>
+    </div></div>
+
+<!-- ═══════════════════════ SCRIPT ═══════════════════════ -->
+<div class="section" id="script"><!-- PLACEHOLDER_SCRIPT --><h2>&#x1F527; Script de diagnostic global</h2>
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x1F4A1;</span>
+        <div>
+            <strong>Utilisation :</strong> Ce script v&eacute;rifie l'&eacute;tat complet d'Amazon Inspector v2 dans la r&eacute;gion courante. Sortie structur&eacute;e pour audit ou int&eacute;gration dans un pipeline de conformit&eacute;. Pr&eacute;-requis : AWS CLI v2, droits <code>inspector2:*</code> en lecture.
+        </div>
+    </div>
+    <div class="code-block">
+        <button class="copy-btn" onclick="copyCode(this)">Copier</button>
+        <pre><code>#!/usr/bin/env bash
+# ============================================================
+# inspector_v2_diagnostic.sh
+# Diagnostic complet Amazon Inspector v2 - région courante
+# Usage : ./inspector_v2_diagnostic.sh [--region eu-west-1]
+# ============================================================
+set -euo pipefail
+
+REGION=<span class="string">"${AWS_DEFAULT_REGION:-$(aws configure get region)}"</span>
+ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+SEPARATOR=<span class="string">"════════════════════════════════════════════════════════"</span>
+
+echo <span class="string">""</span>
+echo <span class="string">"AMAZON INSPECTOR v2 — DIAGNOSTIC"</span>
+echo <span class="string">"$SEPARATOR"</span>
+echo <span class="string">"Compte  : $ACCOUNT_ID"</span>
+echo <span class="string">"Région  : $REGION"</span>
+echo <span class="string">"Date    : $(date -u '+%Y-%m-%d %H:%M:%S UTC')"</span>
+echo <span class="string">"$SEPARATOR"</span>
+
+# ─── 1. STATUT D'ACTIVATION ───────────────────────────────
+echo <span class="string">""</span>
+echo <span class="string">"▶ [1/6] Statut d'activation des scan types"</span>
+aws inspector2 batch-get-account-status \
+  --account-ids <span class="string">"$ACCOUNT_ID"</span> \
+  --region <span class="string">"$REGION"</span> \
+  --query <span class="string">'accounts[0].{EC2:resourceState.ec2.status,ECR:resourceState.ecr.status,Lambda:resourceState.lambda.status,LambdaCode:resourceState.lambdaCode.status}'</span> \
+  --output table
+
+# ─── 2. COVERAGE ──────────────────────────────────────────
+echo <span class="string">""</span>
+echo <span class="string">"▶ [2/6] Coverage (ressources scannées / non scannées)"</span>
+COVERED=$(aws inspector2 get-coverage-statistics \
+  --region <span class="string">"$REGION"</span> \
+  --query <span class="string">'countsByResourceType'</span> \
+  --output json)
+echo <span class="string">"$COVERED"</span>
+
+# ─── 3. FINDINGS CRITIQUES ACTIFS ─────────────────────────
+echo <span class="string">""</span>
+echo <span class="string">"▶ [3/6] Findings CRITICAL ACTIVE (top 10)"</span>
+aws inspector2 list-findings \
+  --region <span class="string">"$REGION"</span> \
+  --filter-criteria '{
+    <span class="string">"severity"</span>:[{<span class="string">"comparison"</span>:<span class="string">"EQUALS"</span>,<span class="string">"value"</span>:<span class="string">"CRITICAL"</span>}],
+    <span class="string">"findingStatus"</span>:[{<span class="string">"comparison"</span>:<span class="string">"EQUALS"</span>,<span class="string">"value"</span>:<span class="string">"ACTIVE"</span>}]
+  }' \
+  --sort-criteria <span class="string">'{ STR0 : STR1 , STR2 : STR3 }'</span> \
+  --max-results 10 \
+  --query <span class="string">'findings[*].{CVE:packageVulnerabilityDetails.vulnerabilityId,Score:inspectorScore,Resource:resources[0].id,EPSS:packageVulnerabilityDetails.cvss[0].baseScore}'</span> \
+  --output table 2>/dev/null || echo <span class="string">"  Aucun finding CRITICAL ACTIVE"</span>
+
+# ─── 4. COUNT PAR SÉVÉRITÉ ────────────────────────────────
+echo <span class="string">""</span>
+echo <span class="string">"▶ [4/6] Nombre de findings ACTIVE par sévérité"</span>
+for SEVERITY in CRITICAL HIGH MEDIUM LOW INFORMATIONAL; do
+  COUNT=$(aws inspector2 list-findings \
+    --region <span class="string">"$REGION"</span> \
+    --filter-criteria <span class="string">"{\"</span>severity\<span class="string">":[{\"</span>comparison\<span class="string">":\"</span>EQUALS\<span class="string">",\"</span>value\<span class="string">":\"</span><span class="var">$SEVERITY</span>\<span class="string">"}],\"</span>findingStatus\<span class="string">":[{\"</span>comparison\<span class="string">":\"</span>EQUALS\<span class="string">",\"</span>value\<span class="string">":\"</span>ACTIVE\<span class="string">"}]}"</span> \
+    --query <span class="string">'length(findings)'</span> \
+    --output text 2>/dev/null || echo <span class="string">"0"</span>)
+  printf <span class="string">"  %-20s : %s\n"</span> <span class="string">"$SEVERITY"</span> <span class="string">"$COUNT"</span>
+done
+
+# ─── 5. IMAGES ECR AVEC CRITICAL ──────────────────────────
+echo <span class="string">""</span>
+echo <span class="string">"▶ [5/6] Images ECR avec findings CRITICAL ACTIVE"</span>
+aws inspector2 list-findings \
+  --region <span class="string">"$REGION"</span> \
+  --filter-criteria '{
+    <span class="string">"severity"</span>:[{<span class="string">"comparison"</span>:<span class="string">"EQUALS"</span>,<span class="string">"value"</span>:<span class="string">"CRITICAL"</span>}],
+    <span class="string">"findingStatus"</span>:[{<span class="string">"comparison"</span>:<span class="string">"EQUALS"</span>,<span class="string">"value"</span>:<span class="string">"ACTIVE"</span>}],
+    <span class="string">"resourceType"</span>:[{<span class="string">"comparison"</span>:<span class="string">"EQUALS"</span>,<span class="string">"value"</span>:<span class="string">"AWS_ECR_CONTAINER_IMAGE"</span>}]
+  }' \
+  --query <span class="string">'findings[*].resources[0].id'</span> \
+  --output text 2>/dev/null | sort | uniq | head -20 || echo <span class="string">"  Aucune image ECR avec Critical"</span>
+
+# ─── 6. VÉRIFICATION DELEGATED ADMIN ──────────────────────
+echo <span class="string">""</span>
+echo <span class="string">"▶ [6/6] Delegated Administrator Inspector"</span>
+aws inspector2 list-delegated-admin-accounts \
+  --region <span class="string">"$REGION"</span> \
+  --query <span class="string">'delegatedAdminAccounts[*].{Account:accountId,Status:status}'</span> \
+  --output table 2>/dev/null || echo <span class="string">"  Non configuré (compte standalone ou pas d'org)"</span>
+
+echo <span class="string">""</span>
+echo <span class="string">"$SEPARATOR"</span>
+echo <span class="string">"Diagnostic terminé."</span>
+echo <span class="string">""</span></code></pre>
+    </div></div>
+
+<!-- ═══════════════════════ CHECKLIST ═══════════════════════ -->
+<div class="section" id="checklist"><!-- PLACEHOLDER_CHECKLIST --><h2>&#x2705; Master Checklist &mdash; Amazon Inspector v2</h2>
+    <p>Checklist consolid&eacute;e de toutes les sections. Cochez chaque item pour suivre votre progression vers le score optimal.</p>
+    <h3>S1 &mdash; Activation &amp; Scan Types</h3>
+    <div class="checklist">
+        <label class="check-item"><input type="checkbox"> Inspector v2 activ&eacute; dans <strong>toutes les r&eacute;gions utilis&eacute;es</strong></label>
+        <label class="check-item"><input type="checkbox"> EC2 scanning activ&eacute;</label>
+        <label class="check-item"><input type="checkbox"> ECR scanning activ&eacute;</label>
+        <label class="check-item"><input type="checkbox"> Lambda Standard scanning activ&eacute;</label>
+        <label class="check-item"><input type="checkbox"> Lambda Code scanning activ&eacute; (si code custom pr&eacute;sent)</label>
+        <label class="check-item"><input type="checkbox"> Free trial 15 jours termin&eacute; avec &eacute;valuation des co&ucirc;ts</label>
+        <label class="check-item"><input type="checkbox"> 100% coverage sur instances prod (0 ressource INACTIVE)</label>
+    </div>
+    <h3>S2 &mdash; EC2 Vulnerability Scanning</h3>
+    <div class="checklist">
+        <label class="check-item"><input type="checkbox"> SSM Agent install&eacute; et actif sur toutes les instances EC2</label>
+        <label class="check-item"><input type="checkbox"> IAM instance profile avec r&ocirc;le SSM attach&eacute; &agrave; chaque EC2</label>
+        <label class="check-item"><input type="checkbox"> 0 instance en statut SCANNING_EC2_UNSUPPORTED</label>
+        <label class="check-item"><input type="checkbox"> Rapport coverage EC2 g&eacute;n&eacute;r&eacute; (&gt; 95% couvert)</label>
+        <label class="check-item"><input type="checkbox"> Filtres de findings configur&eacute;s (s&eacute;v&eacute;rit&eacute; CRITICAL + ACTIVE)</label>
+    </div>
+    <h3>S3 &mdash; ECR Container Image Scanning</h3>
+    <div class="checklist">
+        <label class="check-item"><input type="checkbox"> Enhanced Scanning activ&eacute; sur TOUS les repos ECR prod (pas Basic Scanning)</label>
+        <label class="check-item"><input type="checkbox"> Scan on push activ&eacute; sur tous les repos ECR</label>
+        <label class="check-item"><input type="checkbox"> Continuous scanning activ&eacute; (re-scan si nouvelle CVE publi&eacute;e)</label>
+        <label class="check-item"><input type="checkbox"> Pipeline gate CI/CD : build &eacute;choue si Critical pr&eacute;sent (voir exemple GitHub Actions)</label>
+        <label class="check-item"><input type="checkbox"> 0 image avec Critical ACTIVE d&eacute;ploy&eacute;e en production</label>
+    </div>
+    <h3>S4 &mdash; Lambda Function Scanning</h3>
+    <div class="checklist">
+        <label class="check-item"><input type="checkbox"> Lambda Standard scanning activ&eacute; sur TOUTES les r&eacute;gions avec fonctions</label>
+        <label class="check-item"><input type="checkbox"> Lambda Code scanning activ&eacute; si code custom pr&eacute;sent</label>
+        <label class="check-item"><input type="checkbox"> 0 Lambda function avec Critical ACTIVE</label>
+        <label class="check-item"><input type="checkbox"> Processus de mise &agrave; jour des layers Lambda d&eacute;fini</label>
+    </div>
+    <h3>S5 &mdash; Findings &amp; Prioritization</h3>
+    <div class="checklist">
+        <label class="check-item"><input type="checkbox"> Filtre &laquo; Critical ACTIVE &raquo; cr&eacute;&eacute; et partag&eacute; avec l'&eacute;quipe</label>
+        <label class="check-item"><input type="checkbox"> Filtre &laquo; EPSS &gt; 0.1 &raquo; cr&eacute;&eacute; pour prioriser les CVE exploit&eacute;es</label>
+        <label class="check-item"><input type="checkbox"> Filtre &laquo; exploit in wild &raquo; configur&eacute;</label>
+        <label class="check-item"><input type="checkbox"> R&egrave;gles de suppression pour faux positifs document&eacute;es et justifi&eacute;es</label>
+        <label class="check-item"><input type="checkbox"> Rapport d'export CSV/JSON mensuel programm&eacute; vers S3</label>
+    </div>
+    <h3>S6 &mdash; Remediation &amp; Workflows</h3>
+    <div class="checklist">
+        <label class="check-item"><input type="checkbox"> Matrice SLA d&eacute;finie et communiqu&eacute;e (Critical 24h, High 7j, Medium 30j, Low 90j)</label>
+        <label class="check-item"><input type="checkbox"> SSM Patch Manager configur&eacute; avec Patch Baseline + Maintenance Window</label>
+        <label class="check-item"><input type="checkbox"> Alerte EventBridge + SNS activ&eacute;e sur Critical ACTIVE</label>
+        <label class="check-item"><input type="checkbox"> 0 Critical ACTIVE sans ticket assign&eacute; dans l'ITSM</label>
+        <label class="check-item"><input type="checkbox"> Processus de v&eacute;rification post-patch d&eacute;fini</label>
+    </div>
+    <h3>S7 &mdash; Multi-Account &amp; Organizations</h3>
+    <div class="checklist">
+        <label class="check-item"><input type="checkbox"> Delegated admin configur&eacute; (Security Account, pas Management Account)</label>
+        <label class="check-item"><input type="checkbox"> Auto-enable activ&eacute; sur EC2 + ECR + Lambda pour les nouveaux comptes</label>
+        <label class="check-item"><input type="checkbox"> Tous les comptes membres existants ont Inspector activ&eacute;</label>
+        <label class="check-item"><input type="checkbox"> Coverage report multi-comptes visible depuis Security Account</label>
+    </div>
+    <h3>S8 &mdash; SBOM &amp; Supply Chain Security</h3>
+    <div class="checklist">
+        <label class="check-item"><input type="checkbox"> Export SBOM CycloneDX 1.4 r&eacute;alis&eacute; et stock&eacute; dans S3</label>
+        <label class="check-item"><input type="checkbox"> Bucket S3 SBOM chiffr&eacute; (SSE-KMS ou SSE-S3)</label>
+        <label class="check-item"><input type="checkbox"> Routine mensuelle d'export SBOM planifi&eacute;e</label>
+        <label class="check-item"><input type="checkbox"> Format SPDX 2.3 export&eacute; si requis r&eacute;glementairement</label>
+    </div>
+    <h3>S9 &mdash; Int&eacute;gration &amp; Reporting</h3>
+    <div class="checklist">
+        <label class="check-item"><input type="checkbox"> Security Hub actif et findings Inspector visibles</label>
+        <label class="check-item"><input type="checkbox"> Custom Insight Security Hub cr&eacute;&eacute; pour les Critical Inspector</label>
+        <label class="check-item"><input type="checkbox"> CloudWatch Dashboard Inspector cr&eacute;&eacute;</label>
+    </div>
+    <h3>S10 &mdash; Cost Optimization</h3>
+    <div class="checklist">
+        <label class="check-item"><input type="checkbox"> Free trial utilis&eacute; avec tous les scan types pour &eacute;valuer</label>
+        <label class="check-item"><input type="checkbox"> Estimation de co&ucirc;t mensuel valid&eacute;e avant fin du trial</label>
+        <label class="check-item"><input type="checkbox"> Lambda Code scanning d&eacute;sactiv&eacute; si pas de code custom</label>
+        <label class="check-item"><input type="checkbox"> D&eacute;cision d'optimisation document&eacute;e</label>
+    </div></div>
+
+<!-- ═══════════════════════ GLOSSAIRE ═══════════════════════ -->
+<div class="section" id="glossaire"><!-- PLACEHOLDER_GLOSSAIRE --><h2>&#x1F4D6; Glossaire</h2>
+    <div class="table-container">
+    <table>
+        <thead><tr><th>Terme</th><th>D&eacute;finition</th></tr></thead>
+        <tbody>
+            <tr><td><strong>Amazon Inspector v2</strong></td><td>Service AWS de gestion des vuln&eacute;rabilit&eacute;s (EC2, ECR, Lambda). Successeur d'Inspector Classic (d&eacute;pr&eacute;ci&eacute; novembre 2023). Pr&eacute;fixe CLI : <code>aws inspector2</code>.</td></tr>
+            <tr><td><strong>CVE</strong></td><td><em>Common Vulnerabilities and Exposures</em> : identifiant unique d'une vuln&eacute;rabilit&eacute; connue (ex: CVE-2021-44228 = Log4Shell). La "maladie connue" du logiciel.</td></tr>
+            <tr><td><strong>CVSS</strong></td><td><em>Common Vulnerability Scoring System</em> : score de s&eacute;v&eacute;rit&eacute; intrins&egrave;que d'une CVE (0-10). CVSS v3.1 = standard actuel. Calcule : vecteur d'attaque + complexit&eacute; + privil&egrave;ges + interaction utilisateur + impact.</td></tr>
+            <tr><td><strong>Inspector Score</strong></td><td>Score contextuel Amazon Inspector (0-10). Formule : CVSS v3.1 base + poids EPSS + poids Network Reachability + poids Exploit-in-Wild. Plus pertinent que le CVSS seul car int&egrave;gre le contexte d'exposition.</td></tr>
+            <tr><td><strong>EPSS</strong></td><td><em>Exploit Prediction Scoring System</em> : probabilit&eacute; qu'une CVE soit exploit&eacute;e dans les 30 jours (0-1). Produit par FIRST.org. EPSS &gt; 0.1 (10%) = risque &eacute;lev&eacute; d'exploitation imminente.</td></tr>
+            <tr><td><strong>KEV</strong></td><td><em>CISA Known Exploited Vulnerabilities</em> : catalogue des CVE activement exploit&eacute;es dans la nature, maintenu par la CISA am&eacute;ricaine. Une CVE dans KEV = exploitation confirm&eacute;e.</td></tr>
+            <tr><td><strong>Network Reachability</strong></td><td>Contexte d'exposition r&eacute;seau d'une instance EC2 : port ouvert vers Internet, vers le VPC, ou isol&eacute;. Une CVE sur une instance Internet-facing a un Inspector Score plus &eacute;lev&eacute; que sur une instance priv&eacute;e.</td></tr>
+            <tr><td><strong>SBOM</strong></td><td><em>Software Bill of Materials</em> : liste exhaustive des composants logiciels (librairies, packages) d'une application. Analogue &agrave; la liste des ingr&eacute;dients d'un produit alimentaire. Formats : CycloneDX 1.4, SPDX 2.3.</td></tr>
+            <tr><td><strong>CycloneDX</strong></td><td>Format SBOM open-source maintenu par OWASP. Version 1.4 = standard industrie le plus adopt&eacute; pour l'analyse de s&eacute;curit&eacute; supply chain.</td></tr>
+            <tr><td><strong>SPDX</strong></td><td><em>Software Package Data Exchange</em> : format SBOM Linux Foundation. Version 2.3. Requis dans certains contextes r&eacute;glementaires (US Executive Order 14028, NIS2).</td></tr>
+            <tr><td><strong>Enhanced Scanning (ECR)</strong></td><td>Scan ECR via Amazon Inspector v2 (vs Basic Scanning via Clair/OS uniquement). Enhanced Scanning d&eacute;tecte les vuln&eacute;rabilit&eacute;s OS <strong>ET</strong> les packages applicatifs (npm, pip, Maven, etc.).</td></tr>
+            <tr><td><strong>SSM Agent</strong></td><td><em>AWS Systems Manager Agent</em> : agent install&eacute; sur les instances EC2, requis par Inspector v2 pour le scan agentless EC2. D&eacute;j&agrave; inclus dans les AMI Amazon Linux 2/2023, Windows Server 2016+.</td></tr>
+            <tr><td><strong>Suppression Rule</strong></td><td>R&egrave;gle Inspector qui marque automatiquement certains findings comme SUPPRESSED (ex: faux positif confirm&eacute;, vuln&eacute;rabilit&eacute; non applicable). N&eacute;cessite une justification. Les findings supprim&eacute;s ne comptent pas dans les m&eacute;triques par d&eacute;faut.</td></tr>
+            <tr><td><strong>Delegated Administrator</strong></td><td>Compte AWS d&eacute;sign&eacute; pour g&eacute;rer Inspector v2 au niveau d'une organisation AWS Organizations. G&eacute;n&eacute;ralement le Security/Audit Account. Concentre tous les findings des comptes membres.</td></tr>
+            <tr><td><strong>ASFF</strong></td><td><em>Amazon Security Finding Format</em> : format JSON standardis&eacute; pour les findings de s&eacute;curit&eacute; AWS. Utilis&eacute; par Inspector, GuardDuty, Macie, Config pour l'int&eacute;gration avec Security Hub.</td></tr>
+            <tr><td><strong>NVD</strong></td><td><em>National Vulnerability Database</em> : base de donn&eacute;es am&eacute;ricaine (NIST) des CVE avec scores CVSS. Source principale des donn&eacute;es de vuln&eacute;rabilit&eacute; utilis&eacute;es par Inspector.</td></tr>
+        </tbody>
+    </table>
+    </div></div>
+
+<!-- ═══════════════════════ MATRICE ═══════════════════════ -->
+<div class="section" id="matrice"><!-- PLACEHOLDER_MATRICE --><h2>&#x1F5FA;&#xFE0F; Matrice de cross-r&eacute;f&eacute;rences</h2>
+    <p>Amazon Inspector v2 interagit avec plusieurs services AWS. Cette matrice indique les d&eacute;pendances et int&eacute;grations &agrave; consulter en compl&eacute;ment de ce guide.</p>
+    <div class="table-container">
+    <table>
+        <thead><tr><th>Service AWS</th><th>Type de relation</th><th>Section concern&eacute;e</th><th>Guide associ&eacute;</th></tr></thead>
+        <tbody>
+            <tr>
+                <td><strong>Amazon EC2</strong></td>
+                <td>&#x1F50D; <em>Inspector scanne EC2</em> : OS packages, vuln&eacute;rabilit&eacute;s r&eacute;seau. D&eacute;pendance : SSM Agent + instance profile IAM.</td>
+                <td><a href="#s2">S2</a></td>
+                <td>aws-ec2.html</td>
+            </tr>
+            <tr>
+                <td><strong>Amazon ECR</strong></td>
+                <td>&#x1F50D; <em>Inspector scanne les images ECR</em> : packages OS + packages applicatifs (npm, pip&hellip;). Enhanced Scanning remplace Basic Scanning.</td>
+                <td><a href="#s3">S3</a></td>
+                <td>aws_ecr_guide.html</td>
+            </tr>
+            <tr>
+                <td><strong>AWS Lambda</strong></td>
+                <td>&#x1F50D; <em>Inspector scanne Lambda</em> : d&eacute;pendances du runtime + code source (Lambda Code). D&eacute;pendance : Lambda enabled dans la r&eacute;gion.</td>
+                <td><a href="#s4">S4</a></td>
+                <td>aws-lambda.html</td>
+            </tr>
+            <tr>
+                <td><strong>AWS Security Hub</strong></td>
+                <td>&#x27A1;&#xFE0F; <em>Inspector push ses findings vers Security Hub</em> (ASFF). Consolide Inspector + GuardDuty + Macie + Config dans une vue unifi&eacute;e.</td>
+                <td><a href="#s9">S9</a></td>
+                <td>aws-security-hub.html</td>
+            </tr>
+            <tr>
+                <td><strong>Amazon GuardDuty</strong></td>
+                <td>&#x1F91D; <em>Compl&eacute;mentaire</em> : GuardDuty d&eacute;tecte les comportements anormaux (<em>threat detection</em>) ; Inspector d&eacute;tecte les vuln&eacute;rabilit&eacute;s (<em>vulnerability management</em>). Les deux vont ensemble.</td>
+                <td><a href="#s9">S9</a></td>
+                <td>aws-guardduty.html</td>
+            </tr>
+            <tr>
+                <td><strong>AWS Organizations</strong></td>
+                <td>&#x1F3E2; <em>Inspector s'int&egrave;gre via Organizations</em> pour le Delegated Admin et l'auto-enable multi-comptes.</td>
+                <td><a href="#s7">S7</a></td>
+                <td>aws-organizations.html</td>
+            </tr>
+            <tr>
+                <td><strong>AWS CloudTrail</strong></td>
+                <td>&#x1F4DD; <em>Audit des actions Inspector</em> : qui a activ&eacute;/d&eacute;sactiv&eacute; Inspector, cr&eacute;&eacute; des suppression rules. Toutes les API inspector2 sont log&eacute;es dans CloudTrail.</td>
+                <td><a href="#s1">S1</a></td>
+                <td>aws-cloudtrail.html</td>
+            </tr>
+            <tr>
+                <td><strong>AWS Systems Manager</strong></td>
+                <td>&#x1F527; <em>SSM Agent requis par Inspector EC2</em> + SSM Patch Manager pour la rem&eacute;diation automatis&eacute;e.</td>
+                <td><a href="#s2">S2</a>, <a href="#s6">S6</a></td>
+                <td>aws_ssm_guide.html</td>
+            </tr>
+            <tr>
+                <td><strong>Amazon S3</strong></td>
+                <td>&#x1F4E6; <em>Destination des exports</em> : findings CSV/JSON (S5), SBOM CycloneDX/SPDX (S8). Chiffrement SSE-KMS recommand&eacute;.</td>
+                <td><a href="#s5">S5</a>, <a href="#s8">S8</a></td>
+                <td>aws-s3.html</td>
+            </tr>
+            <tr>
+                <td><strong>Amazon EventBridge</strong></td>
+                <td>&#x26A1; <em>Routing des &eacute;v&eacute;nements Inspector</em> vers SNS, Lambda, Step Functions pour la rem&eacute;diation automatis&eacute;e.</td>
+                <td><a href="#s6">S6</a></td>
+                <td>aws_eventbridge_guide.html</td>
+            </tr>
+        </tbody>
+    </table>
+    </div></div>
+
+<!-- ═══════════════════════ ROUTINES ═══════════════════════ -->
+<div class="section" id="routines"><!-- PLACEHOLDER_ROUTINES --><h2>&#x1F501; Routines de maintenance</h2>
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x1F4A1;</span>
+        <div>
+            <strong>Principe :</strong> Une bonne posture Inspector v2 ne se v&eacute;rifie pas ponctuellement &mdash; elle s'entretient par des routines cadenc&eacute;es. Ces routines s'automatisent via EventBridge Scheduler, Lambda, ou des taches planifi&eacute;es dans votre pipeline de s&eacute;curit&eacute;.
+        </div>
+    </div>
+
+    <h3>&#x1F4C5; Routine quotidienne</h3>
+    <div class="code-block">
+        <button class="copy-btn" onclick="copyCode(this)">Copier</button>
+        <pre><code># ─── QUOTIDIEN : Vérifier les Critical ACTIVE ─────────────
+# Objectif : 0 Critical ACTIVE sans ticket ouvert
+aws inspector2 list-findings \
+  --filter-criteria '{
+    <span class="string">"severity"</span>:[{<span class="string">"comparison"</span>:<span class="string">"EQUALS"</span>,<span class="string">"value"</span>:<span class="string">"CRITICAL"</span>}],
+    <span class="string">"findingStatus"</span>:[{<span class="string">"comparison"</span>:<span class="string">"EQUALS"</span>,<span class="string">"value"</span>:<span class="string">"ACTIVE"</span>}]
+  }' \
+  --sort-criteria <span class="string">'{ STR0 : STR1 , STR2 : STR3 }'</span> \
+  --max-results 20 \
+  --query <span class="string">'findings[*].{CVE:packageVulnerabilityDetails.vulnerabilityId,Score:inspectorScore,Resource:resources[0].id,FirstObserved:firstObservedAt}'</span> \
+  --output table
+
+# Vérifier que la coverage n'a pas diminué (nouvelles instances EC2 hors SSM ?)
+aws inspector2 get-coverage-statistics \
+  --query <span class="string">'countsByResourceType'</span> \
+  --output table</code></pre>
+    </div>
+
+    <h3>&#x1F4C5; Routine hebdomadaire</h3>
+    <div class="code-block">
+        <button class="copy-btn" onclick="copyCode(this)">Copier</button>
+        <pre><code># ─── HEBDOMADAIRE : Review High ACTIVE + Patch Compliance ──
+# Findings High ACTIVE datant de + 7 jours (SLA bientôt dépassé)
+aws inspector2 list-findings \
+  --filter-criteria '{
+    <span class="string">"severity"</span>:[{<span class="string">"comparison"</span>:<span class="string">"EQUALS"</span>,<span class="string">"value"</span>:<span class="string">"HIGH"</span>}],
+    <span class="string">"findingStatus"</span>:[{<span class="string">"comparison"</span>:<span class="string">"EQUALS"</span>,<span class="string">"value"</span>:<span class="string">"ACTIVE"</span>}]
+  }' \
+  --sort-criteria <span class="string">'{ STR0 : STR1 , STR2 : STR3 }'</span> \
+  --query <span class="string">'findings[?firstObservedAt<=`'</span><span class="string">"$(date -u -d '7 days ago' '+%Y-%m-%dT%H:%M:%SZ' 2>/dev/null || date -u -v-7d '+%Y-%m-%dT%H:%M:%SZ')"</span><span class="string">']*].{CVE:packageVulnerabilityDetails.vulnerabilityId,Resource:resources[0].id,Since:firstObservedAt}'</span> \
+  --output table
+
+# Patch compliance EC2
+aws ssm describe-patch-compliance-details \
+  --instance-id <span class="string">"INSTANCE_ID"</span> \
+  --query <span class="string">'[complianceSummaryItem]'</span> \
+  --output table
+
+# Vérifier les images ECR avec Critical déployées en production
+aws inspector2 list-findings \
+  --filter-criteria '{
+    <span class="string">"severity"</span>:[{<span class="string">"comparison"</span>:<span class="string">"EQUALS"</span>,<span class="string">"value"</span>:<span class="string">"CRITICAL"</span>}],
+    <span class="string">"findingStatus"</span>:[{<span class="string">"comparison"</span>:<span class="string">"EQUALS"</span>,<span class="string">"value"</span>:<span class="string">"ACTIVE"</span>}],
+    <span class="string">"resourceType"</span>:[{<span class="string">"comparison"</span>:<span class="string">"EQUALS"</span>,<span class="string">"value"</span>:<span class="string">"AWS_ECR_CONTAINER_IMAGE"</span>}],
+    <span class="string">"ecrImageTags"</span>:[{<span class="string">"comparison"</span>:<span class="string">"EQUALS"</span>,<span class="string">"value"</span>:<span class="string">"latest"</span>}]
+  }' \
+  --query <span class="string">'findings[*].resources[0].id'</span> \
+  --output text | sort | uniq</code></pre>
+    </div>
+
+    <h3>&#x1F4C5; Routine mensuelle</h3>
+    <div class="code-block">
+        <button class="copy-btn" onclick="copyCode(this)">Copier</button>
+        <pre><code># ─── MENSUEL : SBOM export + Coverage report + Review suppression rules ─
+# Export SBOM mensuel vers S3
+aws inspector2 create-sbom-export \
+  --report-format CycloneDX_1_4 \
+  --s3-destination '{
+    <span class="string">"bucketName"</span>:<span class="string">"mon-org-sbom-exports"</span>,
+    <span class="string">"keyPrefix"</span>:<span class="string">"inspector/sbom/'"</span>$(date +%Y-%m)<span class="string">"'/"</span>
+  }'
+
+# Export findings complet du mois vers S3 (pour reporting)
+aws inspector2 create-findings-report \
+  --report-format JSON \
+  --s3-destination '{
+    <span class="string">"bucketName"</span>:<span class="string">"mon-inspector-reports"</span>,
+    <span class="string">"keyPrefix"</span>:<span class="string">"monthly/'"</span>$(date +%Y-%m)<span class="string">"'/"</span>,
+    <span class="string">"kmsKeyArn"</span>:<span class="string">"arn:aws:kms:eu-west-1:123456789012:key/VOTRE-KEY-ID"</span>
+  }' \
+  --filter-criteria '{
+    <span class="string">"updatedAt"</span>:[{
+      <span class="string">"startInclusive"</span>:<span class="string">"'"</span>$(date -u -d <span class="string">'1 month ago'</span> <span class="string">'+%Y-%m-%dT00:00:00Z'</span> 2>/dev/null || date -u -v-1m <span class="string">'+%Y-%m-%dT00:00:00Z'</span>)<span class="string">"'"</span>,
+      <span class="string">"endInclusive"</span>:<span class="string">"'"</span>$(date -u <span class="string">'+%Y-%m-%dT23:59:59Z'</span>)<span class="string">"'"</span>
+    }]
+  }'
+
+# Vérifier les suppression rules (doivent être re-validées si > 90 jours)
+aws inspector2 list-filters \
+  --action SUPPRESS \
+  --query <span class="string">'filters[*].{Name:name,Created:createdAt,Reason:reason}'</span> \
+  --output table
+
+# Coverage report multi-comptes (si delegated admin)
+aws inspector2 list-coverage \
+  --query <span class="string">'coveredResources | length(@)'</span> \
+  --output text</code></pre>
+    </div>
+
+    <h3>&#x1F4C5; Routine trimestrielle</h3>
+    <div class="code-block">
+        <button class="copy-btn" onclick="copyCode(this)">Copier</button>
+        <pre><code># ─── TRIMESTRIEL : Revue complète SLA compliance + suppression expirations ─
+# Rapport SLA : findings créés > 24h (Critical), > 7j (High), > 30j (Medium)
+# Calculer les SLA violations (à adapter avec jq ou Athena)
+echo <span class="string">"=== SLA Violations Inspector v2 ==="</span>
+echo <span class="string">"Critical ouverts > 24h :"</span>
+aws inspector2 list-findings \
+  --filter-criteria '{
+    <span class="string">"severity"</span>:[{<span class="string">"comparison"</span>:<span class="string">"EQUALS"</span>,<span class="string">"value"</span>:<span class="string">"CRITICAL"</span>}],
+    <span class="string">"findingStatus"</span>:[{<span class="string">"comparison"</span>:<span class="string">"EQUALS"</span>,<span class="string">"value"</span>:<span class="string">"ACTIVE"</span>}],
+    <span class="string">"firstObservedAt"</span>:[{
+      <span class="string">"endInclusive"</span>:<span class="string">"'"</span>$(date -u -d <span class="string">'1 day ago'</span> <span class="string">'+%Y-%m-%dT23:59:59Z'</span> 2>/dev/null || date -u -v-1d <span class="string">'+%Y-%m-%dT23:59:59Z'</span>)<span class="string">"'"</span>
+    }]
+  }' \
+  --query <span class="string">'length(findings)'</span> --output text
+
+echo <span class="string">"High ouverts > 7j :"</span>
+aws inspector2 list-findings \
+  --filter-criteria '{
+    <span class="string">"severity"</span>:[{<span class="string">"comparison"</span>:<span class="string">"EQUALS"</span>,<span class="string">"value"</span>:<span class="string">"HIGH"</span>}],
+    <span class="string">"findingStatus"</span>:[{<span class="string">"comparison"</span>:<span class="string">"EQUALS"</span>,<span class="string">"value"</span>:<span class="string">"ACTIVE"</span>}],
+    <span class="string">"firstObservedAt"</span>:[{
+      <span class="string">"endInclusive"</span>:<span class="string">"'"</span>$(date -u -d <span class="string">'7 days ago'</span> <span class="string">'+%Y-%m-%dT23:59:59Z'</span> 2>/dev/null || date -u -v-7d <span class="string">'+%Y-%m-%dT23:59:59Z'</span>)<span class="string">"'"</span>
+    }]
+  }' \
+  --query <span class="string">'length(findings)'</span> --output text
+
+echo <span class="string">"Medium ouverts > 30j :"</span>
+aws inspector2 list-findings \
+  --filter-criteria '{
+    <span class="string">"severity"</span>:[{<span class="string">"comparison"</span>:<span class="string">"EQUALS"</span>,<span class="string">"value"</span>:<span class="string">"MEDIUM"</span>}],
+    <span class="string">"findingStatus"</span>:[{<span class="string">"comparison"</span>:<span class="string">"EQUALS"</span>,<span class="string">"value"</span>:<span class="string">"ACTIVE"</span>}],
+    <span class="string">"firstObservedAt"</span>:[{
+      <span class="string">"endInclusive"</span>:<span class="string">"'"</span>$(date -u -d <span class="string">'30 days ago'</span> <span class="string">'+%Y-%m-%dT23:59:59Z'</span> 2>/dev/null || date -u -v-30d <span class="string">'+%Y-%m-%dT23:59:59Z'</span>)<span class="string">"'"</span>
+    }]
+  }' \
+  --query <span class="string">'length(findings)'</span> --output text
+
+# Valider la configuration de l'organisation (auto-enable membres)
+aws inspector2 describe-organization-configuration \
+  --query <span class="string">'autoEnable'</span> \
+  --output table 2>/dev/null || echo <span class="string">"Standalone account (pas d'org)"</span></code></pre>
+    </div></div>
+
+</div><!-- /container -->
+
+<footer>
+    <p><strong>Amazon Inspector &mdash; Guide de Configuration &amp; Audit</strong> &mdash; Version 1.0 &mdash; Avril 2026</p>
+    <p style="margin-top:6px;">Console : <a href="https://console.aws.amazon.com/inspector/v2/" target="_blank">console.aws.amazon.com/inspector/v2/</a> &bull; Doc officielle : <a href="https://docs.aws.amazon.com/inspector/latest/user/getting_started_tutorial.html" target="_blank">docs.aws.amazon.com/inspector</a></p>
+    <p style="margin-top:6px; font-size:0.75em; color:#999;">Tarifs indicatifs au 2026-04. Consultez le <a href="https://aws.amazon.com/inspector/pricing/" target="_blank">AWS Pricing Calculator</a> pour les prix actuels. Non applicable hors contexte d'audit.</p>
+</footer>
+
+<script>
+    document.querySelectorAll('.copy-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const pre = this.closest('.code-block').querySelector('pre');
+            navigator.clipboard.writeText(pre.innerText).then(() => {
+                const orig = this.textContent;
+                this.textContent = '✓ Copié';
+                setTimeout(() => this.textContent = orig, 1800);
+            });
+        });
+    });
+</script>
+<script id="v1a-script">
+(function(){
+  const sidebar = document.querySelector('.v1a-sidebar');
+  if(!sidebar) return;
+  const accs = [...sidebar.querySelectorAll('details.acc')];
+  accs.forEach(a => a.addEventListener('toggle', () => {
+    if(a.open) accs.forEach(o => { if(o!==a) o.open = false; });
+  }));
+  const links = [...sidebar.querySelectorAll('.acc-body a[href^="#"]')];
+  const map = new Map(links.map(a => [a.getAttribute('href').slice(1), a]));
+  const sections = [...document.querySelectorAll('.section[id], section[id]')];
+  function onScroll(){
+    const y = window.scrollY + 120;
+    let cur = null;
+    for(const s of sections){ if(s.offsetTop <= y) cur = s; else break; }
+    links.forEach(a => a.classList.remove('active'));
+    if(cur){
+      const a = map.get(cur.id);
+      if(a){
+        a.classList.add('active');
+        const det = a.closest('details.acc');
+        if(det && !det.open){ accs.forEach(o=>o.open=false); det.open = true; }
+      }
+    }
+  }
+  document.addEventListener('scroll', onScroll, {passive:true});
+  onScroll();
+})();
+</script>
+</main>
+</div>
+</body>
+</html>

@@ -1,0 +1,2166 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!--
+    ╔══════════════════════════════════════════════════════════════════════╗
+    ║  azure-devops.html — Azure DevOps Security                   ║
+    ║  Pipelines CI/CD, Gestion des Accès & Protection du Code           ║
+    ║  Guide de Configuration & Audit                                    ║
+    ║  Ref : QUALITY_STANDARDS.md, _SKELETON.html, CONSTRAINTS_CHECKLIST ║
+    ╚══════════════════════════════════════════════════════════════════════╝
+    -->
+    <title>Azure DevOps Security &mdash; Pipelines CI/CD, Gestion des Acc&egrave;s &amp; Protection du Code &mdash; Guide de Configuration &amp; Audit</title>
+    <style>
+        :root {
+            --azure-blue: #0078d4;
+            --azure-dark: #004578;
+            --success-green: #107c10;
+            --warning-orange: #ff8c00;
+            --danger-red: #d13438;
+            --shadow-hover: 0 4px 16px rgba(0,0,0,0.18);
+            --radius: 8px;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--neutral-bg); color: var(--neutral-dark); line-height: 1.6; }
+        a { color: var(--azure-blue); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        code { font-family: 'Cascadia Code', Consolas, 'Courier New', monospace; font-size: 0.88em; background: #e8e6e4; padding: 1px 6px; border-radius: 3px; }
+        .hero { background: var(--white); border-bottom: 3px solid var(--azure-blue); padding: 40px 40px 32px; text-align: center; max-width: 1400px; margin: 0 auto; }
+        .hero h1 { font-size: 1.7em; font-weight: 700; color: var(--azure-dark); margin-bottom: 6px; letter-spacing: -0.3px; }
+        .hero .subtitle { font-size: 0.95em; color: var(--neutral-medium); max-width: 800px; margin: 0 auto; }
+        .hero .badge-row { margin-top: 16px; display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; }
+        .hero .badge { background: var(--neutral-bg); border: 1px solid #e1dfdd; color: var(--neutral-dark); padding: 4px 12px; border-radius: 4px; font-size: 0.78em; }
+        .hero .meta-row { margin-top: 14px; display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; font-size: 0.8em; color: var(--neutral-medium); }
+        .nav-container { max-width: 1400px; margin: 0 auto; border-bottom: 1px solid #e1dfdd; position: sticky; top: 0; z-index: 100; background: var(--neutral-bg); }
+        .nav-container nav { display: flex; justify-content: center; gap: 0; overflow-x: auto; padding: 0; }
+        .nav-container nav a { text-decoration: none; color: var(--neutral-medium); padding: 10px 14px; font-size: 0.78em; font-weight: 500; white-space: nowrap; border-bottom: 2px solid transparent; transition: all 0.2s; }
+        .nav-container nav a:hover { color: var(--azure-blue); border-bottom-color: var(--azure-blue); text-decoration: none; }
+        .container { max-width: 1400px; margin: 0 auto; padding: 30px 40px; }
+        .section { background: var(--white); border-radius: var(--radius); box-shadow: var(--shadow); padding: 28px 32px; margin-bottom: 28px; transition: box-shadow 0.2s; }
+        .section:hover { box-shadow: var(--shadow-hover); }
+        .section-header { display: flex; align-items: center; gap: 15px; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid var(--neutral-bg); }
+        .section-header.blue { border-bottom-color: var(--azure-blue); }
+        .section-header.red { border-bottom-color: var(--danger-red); }
+        .section-header.orange { border-bottom-color: var(--warning-orange); }
+        .section-header.green { border-bottom-color: var(--success-green); }
+        .section-number { background: var(--azure-blue); color: white; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.1em; flex-shrink: 0; }
+        .section-number.red { background: var(--danger-red); }
+        .section-number.orange { background: var(--warning-orange); }
+        .section-number.green { background: var(--success-green); }
+        .section-title { font-size: 1.4em; color: var(--azure-dark); font-weight: 700; }
+        .section-desc { font-size: 0.92em; color: var(--neutral-medium); margin-top: 2px; }
+        h3 { font-size: 1.05em; font-weight: 600; margin: 24px 0 10px 0; padding-left: 12px; border-left: 3px solid var(--azure-blue); }
+        p { margin-bottom: 10px; font-size: 0.93em; }
+        ul, ol { margin: 8px 0 12px 20px; font-size: 0.93em; line-height: 1.7; }
+        .badge-sm { font-size: 0.7em; padding: 2px 8px; border-radius: 3px; font-weight: 600; vertical-align: middle; }
+        .badge-critical { background: #fde7e9; color: var(--danger-red); }
+        .badge-high { background: #fff0e0; color: #d83b01; }
+        .badge-medium { background: #fff8e1; color: #6d4c00; }
+        .badge-low { background: #e8f5e9; color: var(--success-green); }
+        .badge-ok { background: #dff6dd; color: var(--success-green); }
+        /* Badges licence Azure DevOps */
+        .lic { display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 0.72em; font-weight: 600; vertical-align: middle; margin-left: 4px; }
+        .lic-azure-free { background: #e8e6e4; color: #605e5c; }
+        .lic-azure-basic { background: var(--azure-light); color: var(--azure-blue); }
+        .lic-azure-pay { background: #fff3cd; color: #6d4c00; }
+        .lic-ghas { background: #e8d4f0; color: #6b2fa0; }
+        .alert { border-radius: var(--radius); padding: 16px 20px; margin: 15px 0; font-size: 0.93em; line-height: 1.6; }
+        .alert:has(.alert-icon) { display: flex; gap: 12px; align-items: flex-start; }
+        .alert-icon { font-size: 1.2em; flex-shrink: 0; margin-top: 2px; }
+        .alert-info { background: #e6f2ff; border: 1px solid #b3d7ff; color: #004578; }
+        .alert-warn { background: #fff8e1; border: 1px solid #ffe082; color: #6d4c00; }
+        .alert-error { background: #fde7e9; border: 1px solid #f5c6cb; color: #721c24; }
+        .alert-ok { background: #e8f5e9; border: 1px solid #a5d6a7; color: #1b5e20; }
+        .table-container { overflow-x: auto; border-radius: var(--radius); box-shadow: 0 1px 4px rgba(0,0,0,0.08); margin: 12px 0 18px 0; }
+        table { width: 100%; border-collapse: collapse; background: var(--white); font-size: 0.9em; }
+        thead th { background: var(--azure-dark); color: white; padding: 12px 14px; text-align: left; font-weight: 600; font-size: 0.85em; text-transform: uppercase; letter-spacing: .3px; }
+        tbody td { padding: 10px 14px; border-bottom: 1px solid #edebe9; vertical-align: top; }
+        tbody tr:hover { background: #f8f7f6; }
+        tbody tr:last-child td { border-bottom: none; }
+        tr.row-ok { background: #f0fff0; }
+        tr.row-ko { background: #fff5f5; }
+        tr.row-warn { background: #fffdf0; }
+        .code-block { background: #1e1e1e; border-radius: var(--radius); overflow: hidden; margin: 12px 0 18px 0; }
+        .code-header { display: flex; justify-content: space-between; align-items: center; padding: 8px 14px; background: #2d2d2d; font-size: 0.78em; color: #a0a0a0; }
+        .copy-btn { background: var(--azure-blue); color: white; border: none; padding: 4px 12px; border-radius: 4px; cursor: pointer; font-size: 0.85em; transition: background 0.2s; }
+        .copy-btn:hover { background: #106EBE; }
+        .code-block pre { padding: 16px 18px; color: #d4d4d4; font-family: 'Cascadia Code', Consolas, monospace; font-size: 0.85em; overflow-x: auto; white-space: pre; line-height: 1.55; }
+        .code-block pre .comment { color: #6a9955; }
+        .code-block pre .keyword { color: #569cd6; }
+        .code-block pre .string { color: #ce9178; }
+        .code-block pre .param { color: #9cdcfe; }
+        .code-block pre .var { color: #4ec9b0; }
+        .step { display: flex; gap: 12px; margin-bottom: 10px; padding: 14px 16px; background: #faf9f8; border-radius: var(--radius); border-left: 3px solid var(--azure-blue); font-size: 0.93em; }
+        .step.step-red { border-left-color: var(--danger-red); }
+        .step.step-orange { border-left-color: var(--warning-orange); }
+        .step.step-green { border-left-color: var(--success-green); }
+        .step-n { min-width: 28px; height: 28px; border-radius: 50%; background: var(--azure-blue); color: white; display: flex; align-items: center; justify-content: center; font-size: 0.8em; font-weight: 700; flex-shrink: 0; }
+        .step-n.red { background: var(--danger-red); }
+        .step-n.orange { background: var(--warning-orange); }
+        .step-n.green { background: var(--success-green); }
+        .step-c { flex: 1; }
+        .step-c ul, .step-c ol { margin-top: 6px; padding-left: 20px; }
+        .hl { background: #fff3cd; padding: 1px 6px; border-radius: 3px; font-weight: 600; }
+        .hl-blue { background: var(--azure-light); padding: 1px 6px; border-radius: 3px; font-weight: 600; color: var(--azure-dark); }
+        .hl-green { background: #dff6dd; padding: 1px 6px; border-radius: 3px; font-weight: 600; color: var(--success-green); }
+        .hl-red { background: #fde7e9; padding: 1px 6px; border-radius: 3px; font-weight: 600; color: var(--danger-red); }
+        .progress-bar { background: #e1dfdd; border-radius: 10px; height: 24px; overflow: hidden; margin: 12px 0; position: relative; }
+        .progress-fill { height: 100%; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 0.78em; font-weight: 700; color: white; transition: width 0.3s; }
+        .progress-fill.red { background: linear-gradient(90deg, #a01020, #d13438); }
+        .progress-fill.orange { background: linear-gradient(90deg, #d83b01, #ff8c00); }
+        .progress-fill.green { background: linear-gradient(90deg, #107c10, #2ea72e); }
+        .progress-fill.blue { background: linear-gradient(90deg, #004578, #0078d4); }
+        .checklist-item { display: flex; align-items: flex-start; gap: 10px; padding: 8px 0; border-bottom: 1px solid #f3f2f1; }
+        .checklist-item:last-child { border-bottom: none; }
+        .checklist-item input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--azure-blue); flex-shrink: 0; margin-top: 3px; }
+        .level-comparison { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 16px 0; }
+        .level-card { border-radius: var(--radius); padding: 16px; text-align: center; }
+        .level-card.default { background: #f3f2f1; border: 2px solid #e1dfdd; }
+        .level-card.standard { background: #e6f2ff; border: 2px solid #b3d7ff; }
+        .level-card.strict { background: #e8f5e9; border: 2px solid #a5d6a7; }
+        .level-card.custom { background: #fff8e1; border: 2px solid #ffe082; }
+        .level-card h4 { font-size: 1em; margin-bottom: 4px; }
+        .level-card .level-score { font-size: 2em; font-weight: 700; }
+        .level-card .level-desc { font-size: 0.8em; color: var(--neutral-medium); margin-top: 4px; }
+        .score-section { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: #faf9f8; border-radius: var(--radius); border-left: 4px solid var(--azure-blue); margin-bottom: 8px; }
+        .score-section.red { border-left-color: var(--danger-red); }
+        .score-section.orange { border-left-color: var(--warning-orange); }
+        .score-section.green { border-left-color: var(--success-green); }
+        .score-label { font-weight: 600; font-size: 0.9em; }
+        .score-pts { font-size: 1.2em; font-weight: 700; color: var(--azure-dark); }
+        .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 16px 0; }
+        footer { background: #faf9f8; color: var(--neutral-medium); text-align: center; padding: 24px; margin-top: 40px; font-size: 0.8em; border-top: 1px solid #e1dfdd; }
+        @media print {
+            body { background: white; font-size: 11px; }
+            .hero { padding: 16px; border-bottom-width: 2px; }
+            .nav-container { display: none; }
+            .container { max-width: 100%; padding: 0 16px; }
+            .section { box-shadow: none; border: 1px solid #ccc; break-inside: avoid; }
+            .code-block pre { font-size: 0.75em; }
+        }
+        @media (max-width: 768px) {
+            .hero { padding: 24px 16px 20px; }
+            .hero h1 { font-size: 1.3em; }
+            .container { padding: 16px; }
+            .section { padding: 20px; }
+            .level-comparison { grid-template-columns: repeat(2, 1fr); }
+            .two-col { grid-template-columns: 1fr; }
+        }
+    </style>
+<style id="v1a-overlay">
+:root{--c:#0078d4;--azure-dark:#004578;--light:#deecf9;--bg:#f8f9fb;--surface:#fff;--border:#e3e6ec;--muted:#5b6478;--radius:14px}
+.nav-container,.back-to-index{display:none!important}
+body{background:var(--bg)}
+.v1a-layout{display:grid;grid-template-columns:280px 1fr;gap:0;align-items:start}
+.v1a-sidebar{position:sticky;top:0;height:100vh;overflow-y:auto;padding:18px 14px 24px;background:#fff;border-right:1px solid var(--border)}
+.v1a-main{min-width:0}
+.v1a-main .hero{max-width:none;margin:0;border-radius:0}
+.v1a-main .container{max-width:1200px}
+.back-index{display:inline-flex;align-items:center;gap:6px;margin:0 0 16px;padding:6px 10px;background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--muted);font-size:.78em;font-weight:500;text-decoration:none;transition:all .15s}
+.back-index:hover{background:transparent;border-color:var(--c);color:var(--azure-dark);text-decoration:none}
+.back-index .arr{font-size:1em;line-height:1;opacity:.85}
+.side-head{display:flex;align-items:center;gap:10px;padding:6px 6px 14px;border-bottom:1px solid var(--border);margin-bottom:12px}
+.side-head .ico{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--c),#50a4f0);display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.1em;flex-shrink:0}
+.side-head .t{font-weight:700;color:var(--azure-dark);font-size:.95em;line-height:1.15}
+.side-head .s{font-size:.72em;color:var(--muted);margin-top:2px;line-height:1.3}
+.acc{margin-bottom:6px;border-radius:10px;overflow:hidden}
+.acc>summary{list-style:none;cursor:pointer;padding:8px 10px;display:flex;align-items:center;gap:8px;color:var(--azure-dark);font-weight:600;font-size:.82em;border-radius:8px;user-select:none}
+.acc>summary::-webkit-details-marker{display:none}
+.acc>summary:hover{background:var(--bg)}
+.acc>summary .chev{margin-left:auto;font-size:.7em;transition:transform .15s;color:var(--muted)}
+.acc[open]>summary{background:var(--light);color:var(--c)}
+.acc[open]>summary .chev{transform:rotate(90deg)}
+.acc-body{padding:4px 0 6px 6px;display:flex;flex-direction:column;gap:2px}
+.acc-body a{display:flex;align-items:center;gap:8px;padding:6px 10px 6px 18px;border-radius:6px;font-size:.8em;color:var(--muted);text-decoration:none;border-left:2px solid transparent;transition:all .12s}
+.acc-body a:hover{color:var(--c);background:var(--bg);text-decoration:none}
+.acc-body a.active{color:var(--c);background:var(--light);border-left-color:var(--c);font-weight:600}
+.acc-body a .num{font-size:.7em;color:#9aa2b1;font-variant-numeric:tabular-nums;min-width:22px}
+.acc-body a.active .num{color:var(--c)}
+.side-foot{margin-top:14px;padding-top:12px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:4px}
+.side-foot a{display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:6px;font-size:.78em;color:var(--muted);text-decoration:none}
+.side-foot a:hover{color:var(--c);background:var(--bg);text-decoration:none}
+@media (max-width:900px){
+  .v1a-layout{grid-template-columns:1fr}
+  .v1a-sidebar{position:static;height:auto;border-right:none;border-bottom:1px solid var(--border)}
+}
+</style>
+</head>
+<body>
+<div class="v1a-layout">
+<aside class="v1a-sidebar">
+  <a href="../index.html" class="back-index" title="Revenir à l'index"><span class="arr" aria-hidden="true">&#127968;</span> Index</a>
+  <div class="side-head">
+    <div class="ico">&#x1F4D8;</div>
+    <div>
+      <div class="t">Azure DevOps Security</div>
+      <div class="s">Pipelines CI/CD, Gestion des Acc&egrave;s &amp; Protection du Code &mdash; Guide de Con&hellip;</div>
+    </div>
+  </div>
+  <details class="acc" open>
+    <summary>Introduction <span class="chev">&rsaquo;</span></summary>
+    <div class="acc-body">
+      <a href="#guide"><span class="num">&bull;</span> &#x1F4D6; Mode d'emploi</a>
+      <a href="#licences"><span class="num">&bull;</span> &#x1F4B3; Licences</a>
+    </div>
+  </details>
+  <details class="acc">
+    <summary>Sections <span class="chev">&rsaquo;</span></summary>
+    <div class="acc-body">
+      <a href="#s1"><span class="num">S1</span> Auth &amp; Entra</a>
+      <a href="#s2"><span class="num">S2</span> Service Conn.</a>
+      <a href="#s3"><span class="num">S3</span> Pipelines</a>
+      <a href="#s4"><span class="num">S4</span> Repos</a>
+      <a href="#s5"><span class="num">S5</span> Secrets</a>
+      <a href="#s6"><span class="num">S6</span> GHAS-ADO</a>
+      <a href="#s7"><span class="num">S7</span> Artifacts</a>
+      <a href="#s8"><span class="num">S8</span> Audit Logs</a>
+      <a href="#s9"><span class="num">S9</span> Environments</a>
+      <a href="#s10"><span class="num">S10</span> Conformit&eacute;</a>
+    </div>
+  </details>
+  <details class="acc">
+    <summary>Annexes <span class="chev">&rsaquo;</span></summary>
+    <div class="acc-body">
+      <a href="#scores"><span class="num">&bull;</span> &#x1F4CA; Scores</a>
+      <a href="#matrice"><span class="num">&bull;</span> &#x1F9ED; Matrice</a>
+      <a href="#script"><span class="num">&bull;</span> &#x1F4DC; Script</a>
+      <a href="#checklist"><span class="num">&bull;</span> &#x2714; Checklist</a>
+      <a href="#glossaire"><span class="num">&bull;</span> &#x1F4D8; Glossaire</a>
+    </div>
+  </details>
+  <div class="side-foot">
+    <a href="#top">&uarr; Retour en haut</a>
+    <a href="#" onclick="window.print();return false;">&#x2B07; Imprimer / PDF</a>
+    <a href="#" onclick="navigator.clipboard.writeText(location.href);this.textContent='&#x2713; Lien copié';return false;">&#x2398; Copier le lien</a>
+  </div>
+</aside>
+<main class="v1a-main">
+
+
+
+<!-- ═══════════════════════ BACK TO INDEX ═══════════════════════ -->
+<a href="../index.html" class="back-to-index" style="position:fixed;top:16px;left:16px;z-index:1000;display:inline-flex;align-items:center;gap:6px;padding:8px 14px;background:#0078d4;color:#fff;text-decoration:none;border-radius:8px;font:600 14px/1 'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;box-shadow:0 2px 8px rgba(0,0,0,0.15);transition:background .2s" onmouseover="this.style.background='#004578'" onmouseout="this.style.background='#0078d4'" aria-label="Retour à l'index">&larr;&nbsp;Index</a>
+<!-- ═══════════════════════ HEADER ═══════════════════════ -->
+<header class="hero">
+    <h1>Azure DevOps Security</h1>
+    <p class="subtitle">Pipelines CI/CD, Gestion des Acc&egrave;s &amp; Protection du Code &mdash; Guide de Configuration &amp; Audit</p>
+    <div class="badge-row">
+        <span class="badge">dev.azure.com</span>
+        <span class="badge">Azure DevOps Services</span>
+        <span class="badge">GitHub Advanced Security for ADO</span>
+        <span class="badge">Workload Identity Federation</span>
+        <span class="badge">Service Connections</span>
+    </div>
+    <div class="meta-row">
+        <span>Version&nbsp;: <strong>1.1</strong></span>
+        <span>Derni&egrave;re MAJ&nbsp;: <strong>Mai 2026</strong></span>
+        <span>R&eacute;f.&nbsp;: <a href="https://learn.microsoft.com/fr-fr/azure/devops/organizations/security/security-overview" target="_blank">Azure DevOps Security Overview</a></span>
+        <span>Portail&nbsp;: <a href="https://dev.azure.com" target="_blank">dev.azure.com</a></span>
+    </div>
+</header>
+
+<!-- ═══════════════════════ NAV ═══════════════════════ -->
+<div class="nav-container">
+    <nav>
+        <a href="#guide">&#x1F4D6; Mode d'emploi</a>
+        <a href="#licences">&#x1F4B3; Licences</a>
+        <a href="#s1">S1 Auth &amp; Entra</a>
+        <a href="#s2">S2 Service Conn.</a>
+        <a href="#s3">S3 Pipelines</a>
+        <a href="#s4">S4 Repos</a>
+        <a href="#s5">S5 Secrets</a>
+        <a href="#s6">S6 GHAS-ADO</a>
+        <a href="#s7">S7 Artifacts</a>
+        <a href="#s8">S8 Audit Logs</a>
+        <a href="#s9">S9 Environments</a>
+        <a href="#s10">S10 Conformit&eacute;</a>
+        <a href="#scores">&#x1F4CA; Scores</a>
+        <a href="#matrice">&#x1F9ED; Matrice</a>
+        <a href="#script">&#x1F4DC; Script</a>
+        <a href="#checklist">&#x2714; Checklist</a>
+        <a href="#glossaire">&#x1F4D8; Glossaire</a>
+    </nav>
+</div>
+
+<div class="container">
+
+<!-- ═══════════════════════ MODE D'EMPLOI ═══════════════════════ -->
+<div class="section" id="guide">
+    <div class="section-header blue">
+        <div class="section-number">&#x1F4D6;</div>
+        <div>
+            <div class="section-title">Mode d'emploi de ce guide</div>
+            <div class="section-desc">P&eacute;rim&egrave;tre, conventions, strat&eacute;gie de d&eacute;ploiement et solutions &eacute;cart&eacute;es</div>
+        </div>
+    </div>
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x1F4CB;</span>
+        <div>
+            Ce document est un <strong>référentiel complet</strong> couvrant la sécurisation d'Azure DevOps&nbsp;: pipelines CI/CD, gestion des accès, protection du code source et gouvernance.
+            Il peut être utilisé tel quel en présentation client ou adapté en ajoutant les données spécifiques d'une organisation ADO.
+        </div>
+    </div>
+
+    <h3>Périmètre du guide</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr><th>Section</th><th>Criticité</th><th>Thème principal</th></tr></thead>
+        <tbody>
+            <tr class="row-ko"><td><strong>S1</strong> — Authentification &amp; Entra ID</td><td><span class="badge-sm badge-critical">🔴 Critique</span></td><td>Connexion Entra ID, PAT, SSH, Conditional Access, MFA, désactivation auth alternative</td></tr>
+            <tr class="row-ko"><td><strong>S2</strong> — Service Connections</td><td><span class="badge-sm badge-critical">🔴 Critique</span></td><td>Workload Identity Federation, migration depuis Service Principal, RBAC, approval gates</td></tr>
+            <tr class="row-ko"><td><strong>S3</strong> — Pipeline Security</td><td><span class="badge-sm badge-critical">🔴 Critique</span></td><td>Agents, protected resources, YAML vs classic, injection de secrets, gates</td></tr>
+            <tr class="row-warn"><td><strong>S4</strong> — Repository Security</td><td><span class="badge-sm badge-high">🟠 Élevé</span></td><td>Branch policies, CODEOWNERS, build validation, signed commits</td></tr>
+            <tr class="row-warn"><td><strong>S5</strong> — Variable Groups &amp; Secrets</td><td><span class="badge-sm badge-high">🟠 Élevé</span></td><td>Key Vault-linked groups, secrets masqués, rotation, Library permissions</td></tr>
+            <tr class="row-warn"><td><strong>S6</strong> — GHAS-ADO</td><td><span class="badge-sm badge-high">🟠 Élevé</span></td><td>Secrets scanning, CodeQL, Dependency scanning, custom patterns</td></tr>
+            <tr><td><strong>S7</strong> — Artifact Security</td><td><span class="badge-sm badge-medium">🟡 Moyen</span></td><td>Feeds npm/NuGet/Maven, upstream sources, SCA, package vulnerabilities</td></tr>
+            <tr><td><strong>S8</strong> — Audit Logs &amp; Monitoring</td><td><span class="badge-sm badge-medium">🟡 Moyen</span></td><td>Audit logs org-level, audit streams, supervision externe, détections</td></tr>
+            <tr class="row-ok"><td><strong>S9</strong> — Environments &amp; Approvals</td><td><span class="badge-sm badge-low">🔵 Standard</span></td><td>Environments prod/staging, approval gates, exclusive lock, branch control</td></tr>
+            <tr class="row-ok"><td><strong>S10</strong> — Conformité &amp; Gouvernance</td><td><span class="badge-sm badge-low">🔵 Standard</span></td><td>CIS ADO benchmark, policies org/projet, Terraform ADO, surface d'attaque</td></tr>
+        </tbody>
+    </table>
+    </div>
+
+    <h3>Hors-périmètre (explicite)</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr><th>Sujet</th><th>Raison</th><th>Renvoi</th></tr></thead>
+        <tbody>
+            <tr><td>GitHub (vs Azure DevOps Repos)</td><td>Produit distinct (même éditeur Microsoft)</td><td>Documentation GitHub Security</td></tr>
+            <tr><td>Jenkins / GitLab</td><td>Autres outils CI/CD hors scope</td><td>Documentation respective</td></tr>
+            <tr><td>Terraform Enterprise / Cloud</td><td>Outil d'infra, pas un outil DevOps</td><td>Documentation Terraform</td></tr>
+            <tr><td>DAST / Pen Testing applicatif</td><td>Sécurité du code, pas de la plateforme ADO</td><td><code>azure-aks.html</code></td></tr>
+        </tbody>
+    </table>
+    </div>
+
+    <h3>Convention des colonnes — 4 niveaux de maturité</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr><th>Colonne</th><th>Signification</th><th>Effort</th></tr></thead>
+        <tbody>
+            <tr><td><strong>Défaut ADO</strong></td><td>Valeur appliquée automatiquement à la création de l'organisation — aucune action</td><td>0 min</td></tr>
+            <tr><td><strong>⚡ Quick Win</strong></td><td>Action immédiate à fort impact sécurité — <span class="hl-green">recommandé en premier</span></td><td>~5–15 min</td></tr>
+            <tr><td><strong>🔒 Avancé</strong></td><td>Configuration intermédiaire pour organisations en croissance sécurité</td><td>~30–60 min</td></tr>
+            <tr><td><strong>🎯 Optimal</strong></td><td>Configuration complète conforme CIS / Zero Trust — cible long terme</td><td>Variable</td></tr>
+        </tbody>
+    </table>
+    </div>
+
+    <h3>Convention des badges de licence</h3>
+    <p>
+        <span class="lic lic-azure-free">Free/Stakeholder</span> Inclus dans tous les plans ADO (gratuit)<br>
+        <span class="lic lic-azure-basic">Basic Plan</span> Basic Plan (5 gratuits, puis 6 $/user/mois)<br>
+        <span class="lic lic-azure-pay">Azure Pay-as-you-go</span> Consommation Azure (ressources liées)<br>
+        <span class="lic lic-ghas">GHAS-ADO</span> GitHub Advanced Security for Azure DevOps — Code Security 30 $ + Secret Protection 19 $ / committer / mois
+    </p>
+
+    <h3>Stratégie de déploiement recommandée</h3>
+    <div class="step step-green">
+        <div class="step-n green">1</div>
+        <div class="step-c"><strong>Quick Wins sécurité</strong> — Activer MFA, désactiver l'auth alternative, forcer PAT à expiration courte (S1) + Migrer au moins 1 Service Connection vers WIF (S2) &mdash; <span class="hl-green">~20 min, +30 pts</span></div>
+    </div>
+    <div class="step step-orange">
+        <div class="step-n orange">2</div>
+        <div class="step-c"><strong>Pipeline &amp; Repos</strong> — Passer tous les pipelines en YAML, activer les branch policies sur <code>main</code>/<code>release</code>, activer les protected resources (S3 + S4) &mdash; <span class="hl">~1h</span></div>
+    </div>
+    <div class="step">
+        <div class="step-n">3</div>
+        <div class="step-c"><strong>Secrets &amp; Scanning</strong> — Lier les Variable Groups à Key Vault, activer GHAS-ADO secrets scanning (S5 + S6) &mdash; <span class="hl">~2h</span></div>
+    </div>
+    <div class="step">
+        <div class="step-n">4</div>
+        <div class="step-c"><strong>Gouvernance &amp; Audit</strong> — Configurer les audit streams, appliquer les policies CIS, Terraform as code pour ADO (S8 + S10) &mdash; <span class="hl">Variable</span></div>
+    </div>
+
+    <h3>Solutions écartées</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr><th>Alternative</th><th>Pourquoi écartée</th><th>Solution retenue</th></tr></thead>
+        <tbody>
+            <tr><td>Service Principal avec secret (client_secret)</td><td>Secret statique → risque d'exposition, rotation manuelle fastidieuse, violation OWASP A07</td><td>Workload Identity Federation (S2) — sans secret</td></tr>
+            <tr><td>PATs sans expiration ni scope</td><td>Équivalent à un mot de passe permanent, non auditable par utilisateur</td><td>PATs 30 jours max, scope minimal (S1)</td></tr>
+            <tr><td>Classic Pipelines (GUI)</td><td>Pas de code review possible, no diff, risque d'injection de steps, no approved templates</td><td>YAML Pipelines + templates sécurisés (S3)</td></tr>
+            <tr><td>Secrets en clair dans les variables YAML</td><td>Visibles dans les logs, dans l'historique git, non chiffrés</td><td>Variable Groups liés à Key Vault (S5)</td></tr>
+            <tr><td>Self-hosted agents sans isolation</td><td>Contamination entre pipelines, persistance de secrets en cache</td><td>Microsoft-hosted agents ou agents isolés (S3)</td></tr>
+        </tbody>
+    </table>
+    </div>
+</div>
+
+<!-- ═══════════════════════ LICENCES ═══════════════════════ -->
+<div class="section" id="licences">
+    <div class="section-header blue">
+        <div class="section-number">&#x1F4B3;</div>
+        <div>
+            <div class="section-title">Licences &amp; Pr&eacute;requis</div>
+            <div class="section-desc">Azure DevOps Basic Plan, GHAS-ADO, outils requis</div>
+        </div>
+    </div>
+    <div class="table-container">
+    <table>
+        <thead><tr><th>Plan</th><th>Prix</th><th>Inclus</th><th>Limites</th></tr></thead>
+        <tbody>
+            <tr class="row-ok"><td><strong>Basic (Free tier)</strong><br><span class="lic lic-azure-free">Free</span></td><td>0 $ (5 premiers users)</td><td>Azure Boards, Azure Repos, Azure Artifacts (2 Go) + offre gratuite Azure Pipelines (1 job Microsoft-hosted / 1 800 min par org, 1 job self-hosted)</td><td>Max 5 utilisateurs Basic gratuits. Au-delà : 6 $/user/mois</td></tr>
+            <tr class="row-warn"><td><strong>Basic Plan</strong><br><span class="lic lic-azure-basic">Basic</span></td><td>6 $/user/mois</td><td>Fonctionnalités Basic standard ; Azure Test Plans reste un add-on distinct (Basic + Test Plans)</td><td>Facturation par utilisateur actif. Stakeholders gratuits (accès limité)</td></tr>
+            <tr class="row-warn"><td><strong>GitHub Advanced Security for ADO</strong><br><span class="lic lic-ghas">GHAS-ADO</span></td><td>Code Security : 30 $/committer/mois<br>Secret Protection : 19 $/committer/mois</td><td>Code scanning, dependency scanning, secret scanning / push protection selon le composant activé</td><td>Facturation par committer actif, avec composants distincts</td></tr>
+            <tr><td><strong>Microsoft-hosted Agents</strong><br><span class="lic lic-azure-pay">Pay-as-you-go</span></td><td>1 job gratuit / 1 800 min par org<br>Puis 40 $/job parallèle suppl./mois</td><td>Windows, Ubuntu, macOS. Environnement propre à chaque run</td><td>Les jobs payants retirent la limite mensuelle et montent jusqu'à 6 h par run</td></tr>
+            <tr><td><strong>Self-hosted Agents</strong><br><span class="lic lic-azure-free">Free</span></td><td>1 job parallèle gratuit<br>Puis 15 $/job parallèle suppl./mois</td><td>Agents sur votre infra, minutes illimitées par job, accès réseau privé</td><td>La concurrence dépend des parallel jobs achetés ; sécurité à votre charge</td></tr>
+        </tbody>
+    </table>
+    </div>
+
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x1F4A1;</span>
+        <div>
+            <strong>Outils requis pour ce guide</strong><br>
+            <strong>Azure CLI</strong> : <code>az devops</code>, <code>az pipelines</code> — extension ADO (<code>az extension add --name azure-devops</code>)<br>
+            <strong>PowerShell</strong> : Appels REST ad hoc possibles via PAT (header <code>Authorization: Basic</code> + base64), mais les intégrations durables doivent privilégier les jetons Microsoft Entra, les service principals, les managed identities ou les service connections selon le scénario<br>
+            <strong>Terraform</strong> : Provider <code>azuredevops</code> v4.x — <a href="https://registry.terraform.io/providers/microsoft/azuredevops/latest" target="_blank">registry.terraform.io</a>
+        </div>
+    </div>
+
+    <h3>Prérequis techniques</h3>
+    <div class="step">
+        <div class="step-n">1</div>
+        <div class="step-c">Organisation Azure DevOps liée à un tenant Microsoft Entra ID (pas de compte Microsoft personnel)</div>
+    </div>
+    <div class="step">
+        <div class="step-n">2</div>
+        <div class="step-c">Compte avec rôle <strong>Project Collection Administrator</strong> pour les configurations organisation-wide</div>
+    </div>
+    <div class="step">
+        <div class="step-n">3</div>
+        <div class="step-c">Azure CLI installé + extension ADO&nbsp;: <code>az extension add --name azure-devops</code> puis <code>az devops configure --defaults organization=https://dev.azure.com/[ORG]</code></div>
+    </div>
+    <div class="step">
+        <div class="step-n">4</div>
+        <div class="step-c">Pour GHAS-ADO (S6)&nbsp;: abonnement Azure actif + activation dans Organisation Settings → Advanced Security</div>
+    </div>
+</div>
+
+<!-- ═══════════════════════ S1 — AUTHENTIFICATION & ENTRA ID ═══════════════════════ -->
+<div class="section" id="s1">
+    <div class="section-header red">
+        <div class="section-number red">S1</div>
+        <div>
+            <div class="section-title">Authentification &amp; Int&eacute;gration Microsoft Entra ID <span class="badge-sm badge-critical">&#x1F534; Critique</span></div>
+            <div class="section-desc">Entra ID obligatoire, PAT, SSH Keys, Conditional Access, MFA, comptes de service</div>
+        </div>
+    </div>
+    <div class="alert alert-error">
+        <span class="alert-icon">&#x1F6A8;</span>
+        <div>
+            <strong>Scénario d'attaque — PAT compromis = accès total à votre code source</strong><br>
+            Un développeur stocke son PAT Azure DevOps (sans expiration, scope "Full access") dans un fichier <code>.env</code> commité par erreur.
+            Un attaquant récupère ce PAT, clone tous les repos, accède aux pipelines et exfiltre les secrets des Variable Groups.
+            Résultat&nbsp;: violation de code source, secrets d'infrastructure exposés, pipeline détourné pour injecter du code malveillant.
+            <br><br>
+            <em>Analogie&nbsp;: un PAT sans expiration = un passe-partout maître de votre bureau, glissé sous la porte pour n'importe qui.</em>
+        </div>
+    </div>
+
+    <h3>Configuration Authentication — Tableau comparatif</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr><th>Paramètre / Contrôle</th><th>Défaut ADO</th><th>⚡ Quick Win</th><th>🔒 Avancé</th><th>🎯 Optimal</th><th>Licence</th></tr></thead>
+        <tbody>
+            <tr class="row-ko"><td><strong>Authentification Microsoft Entra ID</strong></td><td>Optionnel (MSA autorisé)</td><td>—</td><td>Entra ID uniquement</td><td>Entra ID + Conditional Access</td><td><span class="lic lic-azure-basic">Basic</span></td></tr>
+            <tr class="row-ko"><td><strong>Désactiver l'auth Microsoft alternative (ex-MSA/LiveID)</strong></td><td>Activé (autorisé)</td><td>Désactiver → Org Settings → Policies</td><td>Désactivé</td><td>Désactivé + alertes</td><td><span class="lic lic-azure-free">Free</span></td></tr>
+            <tr class="row-ko"><td><strong>MFA obligatoire</strong></td><td>Non appliqué par ADO</td><td>Appliquer via Entra ID CA Policy</td><td>MFA + phishing-resistant (FIDO2)</td><td>Passwordless (FIDO2 / WHfB)</td><td><span class="lic lic-azure-basic">Entra ID P1</span></td></tr>
+            <tr class="row-ko"><td><strong>PAT — Durée maximale</strong></td><td>Variable si aucune policy n'est imposée</td><td>Limiter à 30 jours (tenant policy Microsoft Entra)</td><td>30 jours max, rotation automatique</td><td>30 jours max + alert expiration</td><td><span class="lic lic-azure-free">Free</span></td></tr>
+            <tr class="row-ko"><td><strong>PAT — Scope</strong></td><td>Full-scoped PAT possible si non restreint</td><td>Scope minimal par usage + restriction des full-scoped PATs</td><td>Scope minimal + review trimestriel</td><td>Scope minimal + inventaire PATs</td><td><span class="lic lic-azure-free">Free</span></td></tr>
+            <tr class="row-warn"><td><strong>SSH Keys — Durée</strong></td><td>Pas d'expiration imposée</td><td>—</td><td>Durée ≤ 180 jours</td><td>≤ 90 jours + inventaire</td><td><span class="lic lic-azure-free">Free</span></td></tr>
+            <tr class="row-warn"><td><strong>Conditional Access pour ADO</strong></td><td>Non configuré</td><td>—</td><td>Policy CA ciblant dev.azure.com</td><td>CA + session controls (1h)</td><td><span class="lic lic-azure-basic">Entra ID P1</span></td></tr>
+            <tr class="row-warn"><td><strong>Service accounts (non-human)</strong></td><td>Compte utilisateur classique</td><td>—</td><td>Compte de service dédié sans licence UI</td><td>Managed Identity (WIF) — voir S2</td><td><span class="lic lic-azure-basic">Basic</span></td></tr>
+        </tbody>
+    </table>
+    </div>
+
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x1F4A1;</span>
+        <div>
+            <strong>Pourquoi chaque paramètre compte</strong><br>
+            <strong>Désactiver l'auth Microsoft alternative</strong>&nbsp;: les comptes MSA/LiveID ne sont pas gérés par votre tenant Entra ID — ils échappent à vos Conditional Access policies, à vos revues d'accès, et à votre offboarding. Un ex-employé peut conserver l'accès avec son compte personnel.<br><br>
+            <strong>PAT 30 jours max</strong>&nbsp;: Microsoft recommande de réduire l'usage des PATs et de leur appliquer une durée de vie courte via la policy Microsoft Entra de lifespan maximum. Un PAT expiré ne peut pas être réutilisé par un attaquant, même s'il a été exposé dans un log ou un email.<br><br>
+            <strong>MFA via Entra ID CA</strong>&nbsp;: Azure DevOps ne gère pas lui-même le MFA — il délègue à Entra ID. Sans policy Conditional Access ciblant <code>dev.azure.com</code>, le MFA tenant ne s'applique pas nécessairement aux sessions ADO.<br><br>
+            <strong>Scope minimal PAT</strong>&nbsp;: un PAT "Full access" donne lecture ET écriture sur tous les repos, pipelines, variable groups et service connections. Le scope minimal limite le rayon d'explosion en cas de vol, et la tenant policy de restriction des full-scoped PATs évite d'en recréer sans justification.
+        </div>
+    </div>
+
+    <div class="alert alert-warn">
+        <span class="alert-icon">&#x26A0;&#xFE0F;</span>
+        <div>
+            <strong>Pièges courants</strong><br>
+            • La policy de restriction de création des PATs ne supprime pas les PATs existants : ils restent valides jusqu'à expiration, donc il faut planifier leur révocation ou leur rotation.<br>
+            • Désactiver l'authentification alternative peut bloquer des comptes de service qui utilisent encore des MSA — auditer avant de désactiver.<br>
+            • Une Conditional Access Policy sur Azure DevOps doit cibler l'application <strong>"Azure DevOps"</strong> (App ID : <code>499b84ac-1321-427f-aa17-267ca6975798</code>) — pas "Microsoft Azure Management".
+        </div>
+    </div>
+
+    <h3>Configuration — Portail Azure DevOps</h3>
+    <div class="step">
+        <div class="step-n">1</div>
+        <div class="step-c"><strong>Désactiver l'auth alternative (MSA)</strong><br>
+            <code>dev.azure.com/[ORG]</code> → <strong>Organization Settings</strong> → <strong>Policies</strong> → <em>"Allow public projects"</em> OFF → <em>"Allow third-party application access via OAuth"</em> → désactiver → <em>"Allow Microsoft account credentials in addition to Microsoft Entra ID credentials"</em> → <span class="hl-red">OFF</span>
+        </div>
+    </div>
+    <div class="step">
+        <div class="step-n">2</div>
+        <div class="step-c"><strong>Limiter la durée des PATs</strong><br>
+            Organization Settings → <strong>Microsoft Entra</strong> → <em>"Enforce maximum personal access token lifespan"</em> → activer, puis définir <strong>30 days</strong><br>
+            En complément, utiliser Organization Settings → <strong>Policies</strong> → <em>"Restrict personal access token (PAT) creation"</em> pour réduire qui peut encore créer ou régénérer des PATs.
+        </div>
+    </div>
+    <div class="step">
+        <div class="step-n">3</div>
+        <div class="step-c"><strong>Conditional Access via Entra ID</strong><br>
+            <a href="https://entra.microsoft.com" target="_blank">entra.microsoft.com</a> → Protection → Conditional Access → Nouvelle policy → Application cible : "Azure DevOps" → Conditions : Tous les utilisateurs → Contrôle : Exiger MFA
+        </div>
+    </div>
+
+    <h3>Configuration — PowerShell / REST API</h3>
+    <div class="code-block">
+        <div class="code-header"><span>PowerShell — Lister les policies d'authentification</span><button class="copy-btn">Copier</button></div>
+        <pre><span class="comment"># Pour les policies d'organisation/authentification, le guide s'appuie sur la REST API ADO</span>
+<span class="keyword">$pat</span> = <span class="string">"[VOTRE-PAT-ADMIN]"</span>
+<span class="keyword">$b64</span> = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(<span class="string">":<span class="keyword">$pat</span>"</span>))
+<span class="keyword">$headers</span> = @{ Authorization = <span class="string">"Basic <span class="keyword">$b64</span>"</span>; "Content-Type" = <span class="string">"application/json"</span> }
+<span class="keyword">$orgName</span> = <span class="string">"[VOTRE-ORG]"</span>
+
+<span class="comment"># Récupérer les policies actuelles</span>
+$uri = <span class="string">"https://dev.azure.com/<span class="keyword">$orgName</span>/_apis/policy/configurations?api-version=7.1"</span>
+Invoke-RestMethod -Uri $uri -Headers $headers -Method Get | Select-Object -ExpandProperty value |
+    Select-Object id, isEnabled, @{N='type';E={$_.type.displayName}} | Format-Table</pre>
+    </div>
+
+    <h3>Configuration — PowerShell (REST API ADO)</h3>
+    <div class="code-block">
+        <div class="code-header"><span>PowerShell — Audit complet des PATs actifs (token Entra requis)</span><button class="copy-btn">Copier</button></div>
+        <pre><span class="comment"># Les PAT Lifecycle APIs n'acceptent pas un PAT en entrée : utiliser un jeton Microsoft Entra utilisateur</span>
+<span class="keyword">param</span>(
+    [string]$OrgName = <span class="string">"[VOTRE-ORG]"</span>,
+    [string]$EntraAccessToken = <span class="string">"[JETON-ENTRA-UTILISATEUR]"</span>
+)
+
+<span class="keyword">$headers</span> = @{
+    Authorization = <span class="string">"Bearer <span class="keyword">$EntraAccessToken</span>"</span>
+    "Content-Type" = <span class="string">"application/json"</span>
+}
+
+<span class="comment"># Liste des PATs via les PAT Lifecycle APIs (token Entra utilisateur + permission adaptée)</span>
+<span class="keyword">$uri</span> = <span class="string">"https://vssps.dev.azure.com/<span class="keyword">$OrgName</span>/_apis/tokens/pats?api-version=7.1-preview.1"</span>
+<span class="keyword">$result</span> = Invoke-RestMethod -Uri <span class="keyword">$uri</span> -Headers <span class="keyword">$headers</span> -Method Get
+
+<span class="keyword">$result</span>.patTokens | ForEach-Object {
+    <span class="keyword">$exp</span> = if (<span class="keyword">$_</span>.validTo) { [datetime]<span class="keyword">$_</span>.validTo } else { <span class="string">"AUCUNE"</span> }
+    <span class="keyword">$daysLeft</span> = if (<span class="keyword">$exp</span> -is [datetime]) { ([datetime]<span class="keyword">$exp</span> - (Get-Date)).Days } else { -999 }
+    [PSCustomObject]@{
+        DisplayName  = <span class="keyword">$_</span>.displayName
+        Scope        = <span class="keyword">$_</span>.scope
+        ValidTo      = <span class="keyword">$exp</span>
+        DaysLeft     = <span class="keyword">$daysLeft</span>
+        Risk         = if (<span class="keyword">$daysLeft</span> -eq -999) { <span class="string">"🔴 SANS EXPIRATION"</span> }
+                       elseif (<span class="keyword">$daysLeft</span> -gt 30) { <span class="string">"🟡 > 30 jours"</span> }
+                       else { <span class="string">"🟢 OK"</span> }
+    }
+} | Sort-Object DaysLeft | Format-Table -AutoSize</pre>
+    </div>
+
+    <h3>Vérification</h3>
+    <div class="code-block">
+        <div class="code-header"><span>PowerShell / Azure CLI — Vérifier les contrôles S1</span><button class="copy-btn">Copier</button></div>
+        <pre><span class="comment"># Vérifier que les policies d'authentification attendues sont bien présentes côté ADO</span>
+<span class="keyword">$orgName</span> = <span class="string">"[VOTRE-ORG]"</span>
+<span class="keyword">$policyPat</span> = <span class="string">"[VOTRE-PAT-ADMIN]"</span>
+<span class="keyword">$policyB64</span> = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(<span class="string">":<span class="keyword">$policyPat</span>"</span>))
+<span class="keyword">$policyHeaders</span> = @{ Authorization = <span class="string">"Basic <span class="keyword">$policyB64</span>"</span>; "Content-Type" = <span class="string">"application/json"</span> }
+<span class="keyword">$policyUri</span> = <span class="string">"https://dev.azure.com/<span class="keyword">$orgName</span>/_apis/policy/configurations?api-version=7.1"</span>
+
+Invoke-RestMethod -Uri <span class="keyword">$policyUri</span> -Headers <span class="keyword">$policyHeaders</span> -Method Get | Select-Object -ExpandProperty value |
+    Where-Object { <span class="keyword">$_</span>.type.displayName -match "Auth|Token|PAT|Entra" } |
+    Select-Object id, isEnabled, @{N='type';E={$_.type.displayName}} | Format-Table
+
+<span class="comment"># Vérifier la présence de l'application Azure DevOps côté Entra ID</span>
+az ad app show <span class="param">--id</span> 499b84ac-1321-427f-aa17-267ca6975798 <span class="param">--query</span> "displayName"</pre>
+    </div>
+
+    <h3>Checklist — S1 Authentification</h3>
+    <div class="checklist-item"><input type="checkbox"><span>Authentification Microsoft alternative (MSA/LiveID) désactivée dans Organization Settings → Policies</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Durée maximale des PATs limitée à 30 jours dans Organization Settings → Microsoft Entra</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Création des PAT full-scoped restreinte dans Organization Settings → Microsoft Entra</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Conditional Access Policy Entra ID ciblant "Azure DevOps" (App ID : <code>499b84ac-1321-427f-aa17-267ca6975798</code>) avec MFA obligatoire</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Inventaire des PATs actifs réalisé — aucun PAT sans expiration ni scope "Full access"</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>SSH Keys avec durée ≤ 180 jours — inventaire réalisé</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Comptes de service identifiés — migration vers WIF planifiée (S2)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Accès public aux projets désactivé (Organization Settings → Policies → "Allow public projects" OFF)</span></div>
+</div>
+
+<!-- ═══════════════════════ S2 — SERVICE CONNECTIONS ═══════════════════════ -->
+<div class="section" id="s2">
+    <div class="section-header red">
+        <div class="section-number red">S2</div>
+        <div>
+            <div class="section-title">Service Connections S&eacute;curis&eacute;es <span class="badge-sm badge-critical">&#x1F534; Critique</span></div>
+            <div class="section-desc">Workload Identity Federation, migration depuis Service Principal, RBAC, approval gates</div>
+        </div>
+    </div>
+    <div class="alert alert-error">
+        <span class="alert-icon">&#x1F6A8;</span>
+        <div>
+            <strong>Scénario d'attaque — Service Principal compromis = accès illimité à votre infrastructure Azure</strong><br>
+            Un pipeline utilise une Service Connection de type "Service Principal (automatic)" avec un client_secret valable 2 ans.
+            Ce secret est stocké dans les variables ADO (non liées à Key Vault). Un attaquant accède à un agent self-hosted, lit les variables d'environnement,
+            récupère le secret, et obtient un accès Contributor sur toute la subscription Azure.
+            <br><br>
+            <em>Analogie&nbsp;: une Service Connection = "badge d'accès au datacenter" donné à votre pipeline pour agir sur vos ressources Azure.
+            Workload Identity Federation = "reconnaissance biométrique" — le pipeline prouve son identité sans jamais avoir de mot de passe.</em>
+        </div>
+    </div>
+
+    <h3>Service Connections — Tableau comparatif</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr><th>Paramètre / Contrôle</th><th>Défaut ADO</th><th>⚡ Quick Win</th><th>🔒 Avancé</th><th>🎯 Optimal</th><th>Licence</th></tr></thead>
+        <tbody>
+            <tr class="row-ko"><td><strong>Type d'authentification</strong></td><td>Service Principal (client_secret)</td><td>Migrer vers WIF (1 connexion pilote)</td><td>WIF pour toutes les connexions Azure</td><td>WIF uniquement — zéro secret</td><td><span class="lic lic-azure-basic">Basic</span></td></tr>
+            <tr class="row-ko"><td><strong>Scope de la connexion</strong></td><td>Subscription entière</td><td>Réduire au Resource Group cible</td><td>Resource Group spécifique + rôle minimal</td><td>Resource Group + rôle custom minimal</td><td><span class="lic lic-azure-basic">Basic</span></td></tr>
+            <tr class="row-ko"><td><strong>RBAC sur la Service Connection</strong></td><td>Tous les membres du projet</td><td>Restreindre aux pipelines concernés</td><td>Pipeline-level permissions uniquement</td><td>Pipeline-level + approval gate</td><td><span class="lic lic-azure-free">Free</span></td></tr>
+            <tr class="row-warn"><td><strong>Approval and checks</strong></td><td>Non configuré</td><td>—</td><td>Approval humaine pour prod</td><td>Approval + Branch control check</td><td><span class="lic lic-azure-free">Free</span></td></tr>
+            <tr class="row-warn"><td><strong>Audit des connexions inutilisées</strong></td><td>Non</td><td>—</td><td>Review trimestrielle</td><td>Review mensuelle + suppression auto après 90 jours d'inactivité</td><td><span class="lic lic-azure-free">Free</span></td></tr>
+            <tr class="row-ok"><td><strong>Rotation du secret (si SP classique)</strong></td><td>Manuelle / jamais</td><td>Planifier rotation 90 jours</td><td>Rotation 90 jours + alerte expiration</td><td>Migration WIF (zéro rotation nécessaire)</td><td><span class="lic lic-azure-basic">Basic</span></td></tr>
+        </tbody>
+    </table>
+    </div>
+
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x1F4A1;</span>
+        <div>
+            <strong>Pourquoi chaque paramètre compte</strong><br>
+            <strong>WIF vs Service Principal secret</strong>&nbsp;: avec WIF, ADO obtient un token JWT signé par Entra ID pour chaque run de pipeline, sans aucun secret statique. Ce token a une durée de vie de quelques minutes. Même si un attaquant intercepte le token, il est inutilisable après expiration. CIS recommande WIF comme seule méthode acceptable (CIS Azure DevOps Benchmark v1.0, recommandation 5.1).<br><br>
+            <strong>Scope Resource Group</strong>&nbsp;: une connexion avec scope Subscription permet d'agir sur toutes les ressources Azure de la subscription. Un scope Resource Group limite le rayon d'explosion à un seul groupe — principe de least privilege (NIST SP 800-53 AC-6).<br><br>
+            <strong>Pipeline-level permissions</strong>&nbsp;: si la Service Connection est accessible à tous les pipelines du projet, un pipeline compromis peut l'utiliser pour déployer du code malveillant. Les permissions pipeline-level garantissent que seul le pipeline autorisé peut utiliser la connexion.
+        </div>
+    </div>
+
+    <div class="alert alert-warn">
+        <span class="alert-icon">&#x26A0;&#xFE0F;</span>
+        <div>
+            <strong>Pièges — Migration WIF</strong><br>
+            • WIF nécessite que l'application Entra ID ait une <strong>Federated Credential</strong> configurée avec l'issuer ADO exact (<code>https://vstoken.dev.azure.com/[ORG-ID]</code>).<br>
+            • Les connexions "automatic" (créées par ADO) peuvent être converties via l'UI — les connexions "manual" nécessitent une reconfiguration manuelle dans Entra ID.<br>
+            • Certains tasks tiers (Terraform Cloud, HashiCorp Vault) ne supportent pas encore WIF — vérifier la compatibilité avant migration.
+        </div>
+    </div>
+
+    <h3>Migration WIF — Guide complet (Portail + CLI + Terraform)</h3>
+
+    <h3>Option 1 — Portail Azure DevOps (migration automatique)</h3>
+    <div class="step">
+        <div class="step-n">1</div>
+        <div class="step-c"><strong>Ouvrir la Service Connection existante</strong><br>
+            Project Settings → Service connections → [Votre connexion Azure RM] → Edit
+        </div>
+    </div>
+    <div class="step">
+        <div class="step-n">2</div>
+        <div class="step-c"><strong>Cliquer "Convert" vers Workload Identity Federation</strong><br>
+            Si le bouton "Convert" est disponible → cliquer → ADO crée automatiquement la Federated Credential dans Entra ID. Vérifier dans <a href="https://entra.microsoft.com" target="_blank">entra.microsoft.com</a> → Applications → [App] → Certificates &amp; secrets → Federated credentials.
+        </div>
+    </div>
+    <div class="step">
+        <div class="step-n">3</div>
+        <div class="step-c"><strong>Valider avec un pipeline test</strong><br>
+            Lancer le pipeline associé — vérifier que le déploiement réussit sans secret. Supprimer l'ancien client_secret de l'application Entra ID.
+        </div>
+    </div>
+
+    <h3>Option 2 — Azure CLI</h3>
+    <div class="code-block">
+        <div class="code-header"><span>Azure CLI — Créer une Service Connection WIF</span><button class="copy-btn">Copier</button></div>
+        <pre><span class="keyword">$orgName</span>     = <span class="string">"[VOTRE-ORG]"</span>
+<span class="keyword">$projectName</span> = <span class="string">"[VOTRE-PROJECT]"</span>
+<span class="keyword">$subId</span>       = <span class="string">"[SUBSCRIPTION-ID]"</span>
+<span class="keyword">$rgName</span>      = <span class="string">"[RESOURCE-GROUP]"</span>  <span class="comment"># scope au RG, pas à la subscription</span>
+
+<span class="comment"># Créer la Service Connection Azure RM avec Workload Identity Federation</span>
+az devops service-endpoint azurerm create `
+    <span class="param">--azure-rm-service-principal-authentication</span> WorkloadIdentityFederation `
+    <span class="param">--azure-rm-subscription-id</span> <span class="keyword">$subId</span> `
+    <span class="param">--azure-rm-subscription-name</span> <span class="string">"[NOM-SUBSCRIPTION]"</span> `
+    <span class="param">--azure-rm-tenant-id</span> <span class="string">"[TENANT-ID]"</span> `
+    <span class="param">--name</span> <span class="string">"sc-wif-<span class="keyword">$rgName</span>"</span> `
+    <span class="param">--organization</span> https://dev.azure.com/<span class="keyword">$orgName</span> `
+    <span class="param">--project</span> <span class="keyword">$projectName</span>
+
+<span class="comment"># Restreindre le RBAC au Resource Group uniquement</span>
+<span class="keyword">$spId</span> = az devops service-endpoint list `
+    <span class="param">--organization</span> https://dev.azure.com/<span class="keyword">$orgName</span> `
+    <span class="param">--project</span> <span class="keyword">$projectName</span> `
+    <span class="param">--query</span> <span class="string">"[?name=='sc-wif-<span class="keyword">$rgName</span>'].authorization.parameters.serviceprincipalid"</span> `
+    <span class="param">--output</span> tsv
+
+az role assignment create `
+    <span class="param">--assignee</span> <span class="keyword">$spId</span> `
+    <span class="param">--role</span> Contributor `
+    <span class="param">--scope</span> /subscriptions/<span class="keyword">$subId</span>/resourceGroups/<span class="keyword">$rgName</span></pre>
+    </div>
+
+    <h3>Option 3 — Terraform (azuredevops provider)</h3>
+    <div class="code-block">
+        <div class="code-header"><span>Terraform — Service Connection WIF + RBAC</span><button class="copy-btn">Copier</button></div>
+        <pre><span class="comment"># Provider configuration</span>
+<span class="keyword">terraform</span> {
+  required_providers {
+    azuredevops = {
+      source  = <span class="string">"microsoft/azuredevops"</span>
+      version = <span class="string">"~> 1.0"</span>
+    }
+    azurerm = {
+      source  = <span class="string">"hashicorp/azurerm"</span>
+      version = <span class="string">"~> 4.0"</span>
+    }
+    azuread = {
+      source  = <span class="string">"hashicorp/azuread"</span>
+      version = <span class="string">"~> 3.0"</span>
+    }
+  }
+}
+
+<span class="comment"># Service Connection Azure RM avec Workload Identity Federation (zéro secret)</span>
+<span class="comment"># Le scheme "WorkloadIdentityFederation" remplace le bloc 'credentials' (client_secret).</span>
+<span class="keyword">resource</span> <span class="string">"azuredevops_serviceendpoint_azurerm"</span> <span class="string">"wif"</span> {
+  project_id                             = var.project_id
+  service_endpoint_name                  = <span class="string">"sc-wif-production"</span>
+  description                            = <span class="string">"WIF connection - scope RG production"</span>
+  service_endpoint_authentication_scheme = <span class="string">"WorkloadIdentityFederation"</span>
+
+  credentials {
+    serviceprincipalid = azuread_application.ado_wif.client_id
+  }
+
+  azurerm_spn_tenantid      = var.tenant_id
+  azurerm_subscription_id   = var.subscription_id
+  azurerm_subscription_name = var.subscription_name
+  azurerm_management_group_id = null
+}
+
+<span class="comment"># Federated Credential côté Entra ID — issuer = jeton OIDC d'Azure DevOps</span>
+<span class="keyword">resource</span> <span class="string">"azuread_application_federated_identity_credential"</span> <span class="string">"ado_wif"</span> {
+  application_id = azuread_application.ado_wif.id
+  display_name   = <span class="string">"ado-wif-production"</span>
+  audiences      = [<span class="string">"api://AzureADTokenExchange"</span>]
+  issuer         = azuredevops_serviceendpoint_azurerm.wif.workload_identity_federation_issuer
+  subject        = azuredevops_serviceendpoint_azurerm.wif.workload_identity_federation_subject
+}
+
+<span class="comment"># Restreindre aux pipelines autorisés uniquement</span>
+<span class="keyword">resource</span> <span class="string">"azuredevops_pipeline_authorization"</span> <span class="string">"sc_auth"</span> {
+  project_id  = var.project_id
+  resource_id = azuredevops_serviceendpoint_azurerm.wif.id
+  type        = <span class="string">"endpoint"</span>
+  pipeline_id = var.deploy_pipeline_id
+}</pre>
+    </div>
+
+    <h3>Vérification</h3>
+    <div class="code-block">
+        <div class="code-header"><span>Azure CLI — Vérifier les Service Connections</span><button class="copy-btn">Copier</button></div>
+        <pre><span class="comment"># Lister toutes les Service Connections avec leur type d'auth</span>
+az devops service-endpoint list `
+    <span class="param">--organization</span> https://dev.azure.com/[ORG] `
+    <span class="param">--project</span> [PROJECT] `
+    <span class="param">--query</span> <span class="string">"[].{Name:name, Type:type, Scheme:authorization.scheme, State:isReady}"</span> `
+    <span class="param">--output</span> table
+
+<span class="comment"># Identifier les connexions encore avec un client_secret (scheme: ServicePrincipal)</span>
+az devops service-endpoint list `
+    <span class="param">--organization</span> https://dev.azure.com/[ORG] `
+    <span class="param">--project</span> [PROJECT] `
+    <span class="param">--query</span> <span class="string">"[?authorization.scheme=='ServicePrincipal'].name"</span> `
+    <span class="param">--output</span> table</pre>
+    </div>
+
+    <h3>Checklist — S2 Service Connections</h3>
+    <div class="checklist-item"><input type="checkbox"><span>Inventaire de toutes les Service Connections réalisé — type d'auth documenté</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Au moins une Service Connection migrée vers Workload Identity Federation (WIF)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Toutes les connexions Azure RM migrées vers WIF — zéro client_secret</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Scope de chaque connexion limité au Resource Group (pas subscription entière)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Permissions pipeline-level configurées (pas "Grant access to all pipelines")</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Approval gates configurées pour les connexions de production</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Connexions inutilisées depuis 90 jours identifiées et supprimées</span></div>
+</div>
+
+<!-- ═══════════════════════ S3 — PIPELINE SECURITY ═══════════════════════ -->
+<div class="section" id="s3">
+    <div class="section-header red">
+        <div class="section-number red">S3</div>
+        <div>
+            <div class="section-title">Pipeline Security <span class="badge-sm badge-critical">&#x1F534; Critique</span></div>
+            <div class="section-desc">Agents, protected resources, YAML vs classic, approval &amp; checks, injection de variables</div>
+        </div>
+    </div>
+    <div class="alert alert-error">
+        <span class="alert-icon">&#x1F6A8;</span>
+        <div>
+            <strong>Scénario d'attaque — Script injection dans un pipeline YAML</strong><br>
+            Un pipeline Classic Pipeline utilise une variable d'environnement issue d'une PR externe (fork). L'attaquant soumet une PR malveillante qui contient
+            <code>$(System.TeamProject)</code> dans un champ de formulaire — ce champ est injecté tel quel dans un script bash <code>echo $TITLE</code>.
+            L'attaquant exécute du code arbitraire dans le pipeline, lit les secrets des variable groups et les exfiltre vers un serveur externe.
+            <br><br>
+            <em>Analogie&nbsp;: un pipeline non sécurisé est une clé USB qu'on branche dans le serveur de production — n'importe qui peut y injecter ce qu'il veut.</em>
+        </div>
+    </div>
+
+    <h3>Pipeline Security — Tableau comparatif</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr><th>Paramètre / Contrôle</th><th>Défaut ADO</th><th>⚡ Quick Win</th><th>🔒 Avancé</th><th>🎯 Optimal</th><th>Licence</th></tr></thead>
+        <tbody>
+            <tr class="row-ko"><td><strong>Type de pipeline</strong></td><td>Classic Pipelines autorisés</td><td>Désactiver Classic Pipelines (org-level)</td><td>YAML uniquement</td><td>YAML + templates approuvés obligatoires</td><td><span class="lic lic-azure-free">Free</span></td></tr>
+            <tr class="row-ko"><td><strong>Agents Microsoft-hosted vs self-hosted</strong></td><td>Microsoft-hosted disponibles</td><td>Utiliser Microsoft-hosted par défaut</td><td>Self-hosted isolés si besoin réseau privé</td><td>Self-hosted avec hardening + rotation</td><td><span class="lic lic-azure-basic">Basic</span></td></tr>
+            <tr class="row-ko"><td><strong>Protected resources (env, SC, VG)</strong></td><td>Accès tous pipelines du projet</td><td>Restreindre aux pipelines spécifiques</td><td>Pipeline-level permissions sur toutes les ressources</td><td>Pipeline-level + approval gates</td><td><span class="lic lic-azure-free">Free</span></td></tr>
+            <tr class="row-ko"><td><strong>Fork builds — accès aux secrets</strong></td><td>Secrets et protected resources non exposés par défaut</td><td>Conserver "Make secrets available to builds of forks" d&eacute;sactiv&eacute;</td><td>D&eacute;sactiv&eacute; + revue manuelle des builds de forks</td><td>D&eacute;sactiv&eacute; + agents Microsoft-hosted + token de fork isol&eacute;</td><td><span class="lic lic-azure-free">Free</span></td></tr>
+            <tr class="row-warn"><td><strong>Permissions pipeline (project-level)</strong></td><td>Tous les contributeurs peuvent modifier</td><td>—</td><td>Edit limité aux pipeline owners</td><td>RBAC strict + approbation PR pour YAML</td><td><span class="lic lic-azure-free">Free</span></td></tr>
+            <tr class="row-warn"><td><strong>Approval &amp; Checks sur les environments</strong></td><td>Non configuré</td><td>Ajouter approval humaine sur env "production"</td><td>Approval + branch control check</td><td>Approval + branch + Business Hours check</td><td><span class="lic lic-azure-free">Free</span></td></tr>
+            <tr class="row-ok"><td><strong>Retention des logs pipeline</strong></td><td>30 jours</td><td>—</td><td>90 jours</td><td>365 jours + archivage / supervision externe si requis</td><td><span class="lic lic-azure-free">Free</span></td></tr>
+        </tbody>
+    </table>
+    </div>
+
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x1F4A1;</span>
+        <div>
+            <strong>Pourquoi chaque paramètre compte</strong><br>
+            <strong>Désactiver les Classic Pipelines</strong>&nbsp;: les pipelines Classic (GUI) n'ont pas de code review possible — un admin peut modifier un step sans laisser de trace dans git. YAML = les modifications passent par une PR, sont reviewées, et sont auditables dans l'historique git.<br><br>
+            <strong>Microsoft-hosted agents</strong>&nbsp;: chaque job démarre dans une VM fraîche, sans persistance du système de fichiers. Les agents self-hosted partagent le disque entre pipelines — un pipeline peut lire les secrets mis en cache par un pipeline précédent.<br><br>
+            <strong>Secrets accessibles aux forks</strong>&nbsp;: les PRs venant de forks peuvent exécuter du YAML qui accède aux secrets si cette option est activée. OWASP CI/CD Security Risks recommande de toujours isoler les contextes de sécurité des forks (CICD-SEC-04).
+        </div>
+    </div>
+
+    <div class="alert alert-warn">
+        <span class="alert-icon">&#x26A0;&#xFE0F;</span>
+        <div>
+            <strong>Ce que les presets par défaut ne couvrent PAS</strong><br>
+            • Désactiver la <strong>création</strong> des Classic Pipelines n'élimine pas les pipelines classiques déjà présents : il faut planifier leur migration vers YAML puis leur retrait séparément.<br>
+            • L'option "Limit job authorization scope to current project" est désactivée par défaut — activer pour éviter qu'un pipeline accède aux ressources d'autres projets.<br>
+            • Les tasks communautaires du Marketplace n'ont pas de review de sécurité obligatoire — approuver manuellement chaque extension.
+        </div>
+    </div>
+
+    <h3>Template YAML sécurisé — Pipeline complet</h3>
+    <div class="code-block">
+        <div class="code-header"><span>YAML — Pipeline sécurisé (WIF + protected resources + gates)</span><button class="copy-btn">Copier</button></div>
+        <pre><span class="comment"># azure-pipelines.yml — Template sécurisé</span>
+<span class="keyword">trigger</span>:
+  branches:
+    include:
+      - main
+      - release/*
+  paths:
+    exclude:
+      - docs/*
+      - README.md
+
+<span class="comment"># Pas de déclenchement sur les PRs de forks</span>
+<span class="keyword">pr</span>:
+  autoCancel: true
+  branches:
+    include: [ main ]
+
+<span class="keyword">variables</span>:
+  - group: vg-production-keyvault  <span class="comment"># Variable Group lié à Key Vault — voir S5</span>
+  - name: buildConfiguration
+    value: Release
+
+<span class="keyword">stages</span>:
+  - stage: Build
+    displayName: Build &amp; Test
+    jobs:
+      - job: BuildJob
+        pool:
+          vmImage: ubuntu-latest  <span class="comment"># Microsoft-hosted — environnement propre à chaque run</span>
+        steps:
+          - checkout: self
+            fetchDepth: 1
+            persistCredentials: false  <span class="comment"># Ne pas persister le token git après le checkout</span>
+
+          - task: DotNetCoreCLI@2
+            displayName: Restore
+            inputs:
+              command: restore
+              projects: <span class="string">'**/*.csproj'</span>
+
+          - task: DotNetCoreCLI@2
+            displayName: Build
+            inputs:
+              command: build
+              arguments: --configuration $(buildConfiguration)
+
+  - stage: Deploy_Staging
+    displayName: Deploy → Staging
+    dependsOn: Build
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    jobs:
+      - deployment: DeployStaging
+        environment: staging  <span class="comment"># Protected resource — voir S9</span>
+        pool:
+          vmImage: ubuntu-latest
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - task: AzureRmWebAppDeployment@4
+                  inputs:
+                    ConnectionType: AzureRM
+                    azureSubscription: sc-wif-staging  <span class="comment"># WIF — zéro secret</span>
+                    appType: webAppLinux
+                    WebAppName: <span class="string">'$(APP_NAME)'</span>
+
+  - stage: Deploy_Production
+    displayName: Deploy → Production
+    dependsOn: Deploy_Staging
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    jobs:
+      - deployment: DeployProduction
+        environment: production  <span class="comment"># Approval gate configurée — approval humaine requise</span>
+        pool:
+          vmImage: ubuntu-latest
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - task: AzureRmWebAppDeployment@4
+                  inputs:
+                    ConnectionType: AzureRM
+                    azureSubscription: sc-wif-production  <span class="comment"># WIF prod — scope RG uniquement</span>
+                    appType: webAppLinux
+                    WebAppName: <span class="string">'$(APP_NAME_PROD)'</span></pre>
+    </div>
+
+    <h3>Configuration — PowerShell &amp; REST API</h3>
+    <div class="code-block">
+        <div class="code-header"><span>PowerShell — Désactiver Classic Pipelines + durcir settings projet</span><button class="copy-btn">Copier</button></div>
+        <pre><span class="keyword">$orgName</span> = <span class="string">"[VOTRE-ORG]"</span>
+<span class="keyword">$project</span> = <span class="string">"[VOTRE-PROJECT]"</span>
+
+<span class="comment"># Durcir les pipeline settings au niveau projet (REST API)</span>
+<span class="comment"># Note : 'az devops' n'expose pas ces settings — endpoint generalsettings requis.</span>
+<span class="keyword">$body</span> = @{
+    enforceJobAuthScope                   = $true   <span class="comment"># scope du job restreint au projet courant</span>
+    enforceReferencedRepoScopedToken      = $true   <span class="comment"># token git limité au repo référencé</span>
+    enforceSettableVar                    = $true   <span class="comment"># bloque l'override de variables non-settable</span>
+    publishPipelineMetadata               = $false  <span class="comment"># pas de métadonnées exposées</span>
+    statusBadgesArePrivate                = $true   <span class="comment"># badges non anonymes</span>
+    disableClassicBuildPipelineCreation   = $true
+    disableClassicReleasePipelineCreation = $true
+} | ConvertTo-Json
+
+Invoke-RestMethod `
+    -Uri <span class="string">"https://dev.azure.com/<span class="keyword">$orgName</span>/<span class="keyword">$project</span>/_apis/build/generalsettings?api-version=7.1-preview.1"</span> `
+    -Method Patch -Body <span class="keyword">$body</span> -Headers <span class="keyword">$headers</span> -ContentType <span class="string">"application/json"</span>
+
+<span class="comment"># Vérifier la valeur effective</span>
+Invoke-RestMethod `
+    -Uri <span class="string">"https://dev.azure.com/<span class="keyword">$orgName</span>/<span class="keyword">$project</span>/_apis/build/generalsettings?api-version=7.1-preview.1"</span> `
+    -Headers <span class="keyword">$headers</span> | Format-List</pre>
+    </div>
+
+    <h3>Vérification</h3>
+    <div class="code-block">
+        <div class="code-header"><span>Azure CLI — Vérifier les settings pipeline</span><button class="copy-btn">Copier</button></div>
+        <pre><span class="comment"># Lister tous les pipelines du projet</span>
+az pipelines list <span class="param">--organization</span> https://dev.azure.com/[ORG] <span class="param">--project</span> [PROJECT] <span class="param">--output</span> table
+
+<span class="comment"># Identifier les Classic Pipelines (type != yaml)</span>
+az pipelines list <span class="param">--organization</span> https://dev.azure.com/[ORG] <span class="param">--project</span> [PROJECT] `
+    <span class="param">--query</span> <span class="string">"[?process.type!=`2`].{Name:name, Type:process.type}"</span> <span class="param">--output</span> table</pre>
+    </div>
+
+    <h3>Checklist — S3 Pipeline Security</h3>
+    <div class="checklist-item"><input type="checkbox"><span>Classic Pipelines désactivés (Organization Settings → Pipelines → Settings → "Disable creation of classic build pipelines")</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Secrets non accessibles aux forks ("Make secrets available to builds of forks" désactivé)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Protected resources (Service Connections, Variable Groups, Environments) avec pipeline-level permissions</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Microsoft-hosted agents utilisés par défaut (pas de self-hosted non isolés)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>"Limit job authorization scope to current project" activé (Organisation Settings → Pipelines)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Tous les pipelines en YAML versionné dans le repo — aucun Classic Pipeline actif</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Extensions Marketplace approuvées manuellement (Organization Settings → Extensions)</span></div>
+</div>
+
+<!-- ═══════════════════════ S4 — REPOSITORY SECURITY ═══════════════════════ -->
+<div class="section" id="s4">
+    <div class="section-header orange">
+        <div class="section-number orange">S4</div>
+        <div>
+            <div class="section-title">Repository Security — Azure Repos <span class="badge-sm badge-high">&#x1F7E0; Élevé</span></div>
+            <div class="section-desc">Branch policies, CODEOWNERS, build validation, signed commits, secret scanning</div>
+        </div>
+    </div>
+    <div class="alert alert-error">
+        <span class="alert-icon">&#x1F6A8;</span>
+        <div>
+            <strong>Scénario d'attaque — Merge direct sur main sans review</strong><br>
+            Un développeur avec accès Contribute peut pousser directement sur <code>main</code> sans passer par une Pull Request.
+            Il modifie le pipeline YAML pour désactiver les checks de sécurité, déploie en production sans approbation,
+            et efface ses traces en réécrivant l'historique git (<code>git push --force</code>).
+            <br><br>
+            <em>Analogie&nbsp;: une branch policy = "comité de validation" — tout changement de code doit être approuvé avant d'être intégré à la branche principale.</em>
+        </div>
+    </div>
+
+    <h3>Repository Security — Tableau comparatif</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr><th>Paramètre / Contrôle</th><th>Défaut ADO</th><th>⚡ Quick Win</th><th>🔒 Avancé</th><th>🎯 Optimal</th><th>Licence</th></tr></thead>
+        <tbody>
+            <tr class="row-ko"><td><strong>Branch policy — Require PR</strong></td><td>Désactivé</td><td>Activer sur <code>main</code></td><td>Activer sur <code>main</code> + <code>release/*</code></td><td>Activer sur toutes les branches protégées</td><td><span class="lic lic-azure-free">Free</span></td></tr>
+            <tr class="row-ko"><td><strong>Minimum reviewers</strong></td><td>0</td><td>Minimum 1 reviewer</td><td>Minimum 2 reviewers</td><td>2 reviewers + reviewer requis via CODEOWNERS</td><td><span class="lic lic-azure-free">Free</span></td></tr>
+            <tr class="row-ko"><td><strong>Build validation (CI check avant merge)</strong></td><td>Non configuré</td><td>Ajouter build validation pipeline sur <code>main</code></td><td>Build + tests unitaires obligatoires</td><td>Build + tests + SAST (GHAS-ADO)</td><td><span class="lic lic-azure-free">Free</span></td></tr>
+            <tr class="row-ko"><td><strong>Push direct sur branch protégée</strong></td><td>Autorisé (Contribute)</td><td>Bloquer le push direct sur <code>main</code></td><td>Bloquer sur toutes les branches protégées</td><td>Bloquer + alertes sur tentatives</td><td><span class="lic lic-azure-free">Free</span></td></tr>
+            <tr class="row-warn"><td><strong>CODEOWNERS</strong></td><td>Non configuré</td><td>—</td><td>Fichier CODEOWNERS à la racine</td><td>CODEOWNERS + "Require review from code owners"</td><td><span class="lic lic-azure-free">Free</span></td></tr>
+            <tr class="row-warn"><td><strong>Signed commits (GPG)</strong></td><td>Non requis</td><td>—</td><td>—</td><td>Requis sur branches protégées</td><td><span class="lic lic-azure-free">Free</span></td></tr>
+            <tr class="row-ok"><td><strong>Lier work items aux PR</strong></td><td>Optionnel</td><td>—</td><td>Recommandé pour traçabilité</td><td>Obligatoire (Check: require linked work items)</td><td><span class="lic lic-azure-free">Free</span></td></tr>
+        </tbody>
+    </table>
+    </div>
+
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x1F4A1;</span>
+        <div>
+            <strong>Pourquoi chaque paramètre compte</strong><br>
+            <strong>Require PR + 2 reviewers</strong>&nbsp;: sans PR obligatoire, un développeur peut modifier le pipeline YAML directement sur <code>main</code> sans review. Avec 2 reviewers, même si un compte est compromis, l'attaquant ne peut pas approuver sa propre PR (option "Require author's vote on their own PRs" → désactiver).<br><br>
+            <strong>Build validation</strong>&nbsp;: la build validation exécute le pipeline de test sur chaque PR avant merge. Un changement qui casse les tests ou qui injecte du code malveillant est bloqué automatiquement avant d'atteindre <code>main</code>.<br><br>
+            <strong>CODEOWNERS</strong>&nbsp;: permet de définir des reviewers obligatoires par dossier. Ex&nbsp;: les fichiers <code>.azure-pipelines/</code> ne peuvent être mergés qu'avec l'approbation de l'équipe sécurité. Source&nbsp;: CIS ADO Benchmark v1.0, recommandation 2.3.
+        </div>
+    </div>
+
+    <div class="alert alert-warn">
+        <span class="alert-icon">&#x26A0;&#xFE0F;</span>
+        <div>
+            <strong>Pièges courants</strong><br>
+            • Les policies de branche ne s'appliquent pas rétroactivement aux branches existantes — vérifier chaque branche manuellement.<br>
+            • "Bypass policies" peut être accordé à des admins — auditer régulièrement qui peut bypasser les policies (<code>az repos policy list</code>).<br>
+            • Azure DevOps supporte les CODEOWNERS mais les patterns diffèrent légèrement de GitHub — tester la configuration.
+        </div>
+    </div>
+
+    <h3>Configuration — Portail (Branch Policies)</h3>
+    <div class="step">
+        <div class="step-n">1</div>
+        <div class="step-c"><strong>Project Settings → Repositories → [Repo] → Policies → Branch Policies → main</strong><br>
+            Activer : "Require a minimum number of reviewers" (min. 2) + "Check for linked work items" + "Check for comment resolution"
+        </div>
+    </div>
+    <div class="step">
+        <div class="step-n">2</div>
+        <div class="step-c"><strong>Ajouter Build Validation</strong><br>
+            Dans Branch Policies → main → Build Validation → <em>+ Add</em> → Sélectionner le pipeline CI → "Required" → Save
+        </div>
+    </div>
+    <div class="step">
+        <div class="step-n">3</div>
+        <div class="step-c"><strong>Créer le fichier CODEOWNERS</strong><br>
+            Créer <code>/.azuredevops/CODEOWNERS</code> dans le repo → Activer "Require code owners' review" dans Branch Policies
+        </div>
+    </div>
+
+    <h3>Configuration — Azure CLI</h3>
+    <div class="code-block">
+        <div class="code-header"><span>Azure CLI — Créer Branch Policy (Require PR + reviewers)</span><button class="copy-btn">Copier</button></div>
+        <pre><span class="keyword">$orgName</span>    = <span class="string">"[VOTRE-ORG]"</span>
+<span class="keyword">$project</span>    = <span class="string">"[VOTRE-PROJECT]"</span>
+<span class="keyword">$repoId</span>     = <span class="string">"[REPO-ID]"</span>  <span class="comment"># az repos show --name [repo] --query id</span>
+<span class="keyword">$branchRef</span>  = <span class="string">"refs/heads/main"</span>
+
+<span class="comment"># Policy : Require minimum reviewers (2)</span>
+az repos policy reviewer-count create `
+    <span class="param">--organization</span> https://dev.azure.com/<span class="keyword">$orgName</span> `
+    <span class="param">--project</span> <span class="keyword">$project</span> `
+    <span class="param">--repository-id</span> <span class="keyword">$repoId</span> `
+    <span class="param">--branch</span> main `
+    <span class="param">--minimum-approver-count</span> 2 `
+    <span class="param">--creator-vote-counts</span> false `
+    <span class="param">--allow-downvotes</span> false `
+    <span class="param">--reset-on-source-push</span> true `
+    <span class="param">--blocking</span> true
+
+<span class="comment"># Policy : exiger reviewers sur les chemins sensibles (.azure-pipelines/)</span>
+<span class="comment"># Note : --required-reviewer-ids et --message sont obligatoires (sinon erreur 400).</span>
+az repos policy required-reviewer create `
+    <span class="param">--organization</span> https://dev.azure.com/<span class="keyword">$orgName</span> `
+    <span class="param">--project</span> <span class="keyword">$project</span> `
+    <span class="param">--repository-id</span> <span class="keyword">$repoId</span> `
+    <span class="param">--branch</span> main `
+    <span class="param">--required-reviewer-ids</span> <span class="string">"[GROUPE-SECURITE-OBJECT-ID]"</span> `
+    <span class="param">--path-filter</span> <span class="string">"/.azure-pipelines/*;/azure-pipelines.yml"</span> `
+    <span class="param">--message</span> <span class="string">"Modification pipelines : revue sécurité requise"</span> `
+    <span class="param">--blocking</span> true
+
+<span class="comment"># Vérifier les policies actives sur main</span>
+az repos policy list `
+    <span class="param">--organization</span> https://dev.azure.com/<span class="keyword">$orgName</span> `
+    <span class="param">--project</span> <span class="keyword">$project</span> `
+    <span class="param">--query</span> <span class="string">"[?settings.scope[0].refName=='refs/heads/main'].{Type:type.displayName, Enabled:isEnabled, Blocking:isBlocking}"</span> `
+    <span class="param">--output</span> table</pre>
+    </div>
+
+    <h3>Terraform — Branch Policies</h3>
+    <div class="code-block">
+        <div class="code-header"><span>Terraform — Branch policies complètes</span><button class="copy-btn">Copier</button></div>
+        <pre><span class="comment"># Require minimum 2 reviewers</span>
+<span class="keyword">resource</span> <span class="string">"azuredevops_branch_policy_min_reviewers"</span> <span class="string">"main"</span> {
+  project_id = var.project_id
+  enabled    = true
+  blocking   = true
+  settings {
+    reviewer_count                         = 2
+    submitter_can_vote                     = false
+    last_pusher_cannot_approve             = true
+    allow_completion_with_rejects_or_waits = false
+    on_push_reset_approved_votes           = true
+    scope {
+      repository_id  = azuredevops_git_repository.repo.id
+      repository_ref = <span class="string">"refs/heads/main"</span>
+      match_type     = <span class="string">"Exact"</span>
+    }
+  }
+}
+
+<span class="comment"># Build validation obligatoire avant merge</span>
+<span class="keyword">resource</span> <span class="string">"azuredevops_branch_policy_build_validation"</span> <span class="string">"main"</span> {
+  project_id = var.project_id
+  enabled    = true
+  blocking   = true
+  settings {
+    display_name        = <span class="string">"CI Build Validation"</span>
+    build_definition_id = azuredevops_build_definition.ci.id
+    valid_duration      = 720  <span class="comment"># 12 heures</span>
+    filename_patterns   = [<span class="string">"/src/**"</span>, <span class="string">"/azure-pipelines.yml"</span>]
+    scope {
+      repository_id  = azuredevops_git_repository.repo.id
+      repository_ref = <span class="string">"refs/heads/main"</span>
+      match_type     = <span class="string">"Exact"</span>
+    }
+  }
+}</pre>
+    </div>
+
+    <h3>Checklist — S4 Repository Security</h3>
+    <div class="checklist-item"><input type="checkbox"><span>Branch policy "Require PR" activée sur <code>main</code> et toutes les branches <code>release/*</code></span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Minimum 2 reviewers requis — "Author's vote does not count" activé</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Build validation pipeline configuré sur <code>main</code> (bloquant)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Push direct sur branches protégées bloqué</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Fichier CODEOWNERS créé (<code>/.azuredevops/CODEOWNERS</code>) avec owners par dossier sensible</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>"Require code owners' review" activé dans Branch Policies</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Audit des comptes ayant "Bypass policies" — liste minimale documentée</span></div>
+</div>
+
+<!-- ═══════════════════════ S5 — VARIABLE GROUPS & SECRETS ═══════════════════════ -->
+<div class="section" id="s5">
+    <div class="section-header orange">
+        <div class="section-number orange">S5</div>
+        <div>
+            <div class="section-title">Variable Groups &amp; Secrets Management <span class="badge-sm badge-high">&#x1F7E0; Élevé</span></div>
+            <div class="section-desc">Key Vault-linked variable groups, secrets masqu&eacute;s, rotation, Library permissions</div>
+        </div>
+    </div>
+    <div class="alert alert-error">
+        <span class="alert-icon">&#x1F6A8;</span>
+        <div>
+            <strong>Scénario d'attaque — Secret en clair dans les variables YAML</strong><br>
+            Un pipeline YAML contient directement la chaîne de connexion SQL dans une variable <code>$(DB_CONNECTION_STRING)</code> non marquée comme "secret".
+            ADO affiche cette variable en clair dans les logs de pipeline — visible pour tout membre avec accès aux logs.
+            De plus, la variable est exportée par un script <code>echo $(DB_CONNECTION_STRING)</code>, la rendant lisible dans l'output de build archivé.
+            <br><br>
+            <em>Analogie&nbsp;: stocker un secret dans une variable ADO classique = écrire le code de coffre sur un post-it collé à la porte du coffre.
+            Key Vault-linked Variable Group = accès au coffre en temps réel, sans jamais copier le code.</em>
+        </div>
+    </div>
+
+    <h3>Variable Groups &amp; Secrets — Tableau comparatif</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr><th>Paramètre / Contrôle</th><th>Défaut ADO</th><th>⚡ Quick Win</th><th>🔒 Avancé</th><th>🎯 Optimal</th><th>Licence</th></tr></thead>
+        <tbody>
+            <tr class="row-ko"><td><strong>Stockage des secrets</strong></td><td>Variables YAML / Variables ADO en clair</td><td>Marquer les variables sensibles "Secret" (masquées)</td><td>Variable Group lié à Azure Key Vault</td><td>Key Vault-linked VG + rotation automatique</td><td><span class="lic lic-azure-basic">Basic</span></td></tr>
+            <tr class="row-ko"><td><strong>Accès aux Variable Groups</strong></td><td>Tous les pipelines du projet</td><td>Restreindre aux pipelines concernés</td><td>Pipeline-level permissions</td><td>Pipeline-level + approbation pour prod VG</td><td><span class="lic lic-azure-free">Free</span></td></tr>
+            <tr class="row-ko"><td><strong>Secrets dans le YAML</strong></td><td>Parfois en clair dans la définition</td><td>Migrer vers Variable Groups</td><td>Zéro secret dans YAML</td><td>Zéro secret YAML + scan GHAS (S6)</td><td><span class="lic lic-azure-free">Free</span></td></tr>
+            <tr class="row-warn"><td><strong>Rotation des secrets</strong></td><td>Manuelle / jamais</td><td>—</td><td>Planifier rotation 90 jours via Key Vault</td><td>Rotation automatique Key Vault (90 jours)</td><td><span class="lic lic-azure-basic">Basic</span></td></tr>
+            <tr class="row-warn"><td><strong>Accès Library (permissions)</strong></td><td>Tous les contributeurs</td><td>—</td><td>Accès limité aux pipeline editors</td><td>Accès admin uniquement + audit</td><td><span class="lic lic-azure-free">Free</span></td></tr>
+            <tr class="row-ok"><td><strong>Variables marquées "Secret" masquées dans logs</strong></td><td>Non (variable standard)</td><td>Marquer toutes les variables sensibles "Secret"</td><td>Toutes les variables sensibles masquées</td><td>Key Vault-linked (jamais stockées dans ADO)</td><td><span class="lic lic-azure-free">Free</span></td></tr>
+        </tbody>
+    </table>
+    </div>
+
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x1F4A1;</span>
+        <div>
+            <strong>Pourquoi chaque paramètre compte</strong><br>
+            <strong>Key Vault-linked Variable Group</strong>&nbsp;: avec un VG lié à Key Vault, ADO récupère la valeur du secret directement depuis Key Vault au moment de l'exécution du pipeline, sans jamais la stocker côté ADO. Si le secret est rotaté dans Key Vault, le pipeline utilise automatiquement la nouvelle valeur sans reconfiguration.<br><br>
+            <strong>Variables "Secret" masquées dans logs</strong>&nbsp;: les variables marquées "Secret" sont automatiquement masquées dans tous les outputs de pipeline (affichées comme <code>***</code>). Sans ce marquage, même un <code>echo $VAR</code> accidentel expose le secret dans les logs.<br><br>
+            <strong>Pipeline-level permissions</strong>&nbsp;: par défaut, un Variable Group est accessible à tous les pipelines du projet. Un pipeline compromis peut donc lire les secrets d'un autre pipeline. Le pipeline-level permission garantit que seuls les pipelines listés peuvent accéder au VG.
+        </div>
+    </div>
+
+    <div class="alert alert-warn">
+        <span class="alert-icon">&#x26A0;&#xFE0F;</span>
+        <div>
+            <strong>Pièges courants</strong><br>
+            • Un secret Key Vault-linked est tout de même masqué dans les logs ADO — mais il reste accessible au code exécuté dans le pipeline. La protection est contre l'exfiltration accidentelle, pas contre le code malveillant dans le pipeline.<br>
+            • La Service Connection utilisée pour lire Key Vault doit avoir le rôle <strong>Key Vault Secrets User</strong> — pas Key Vault Administrator.<br>
+            • Les Variable Groups avec Key Vault nécessitent une connexion Active pour chaque refresh — si la SC est supprimée, le pipeline échoue silencieusement.
+        </div>
+    </div>
+
+    <h3>Configuration — Azure CLI</h3>
+    <div class="code-block">
+        <div class="code-header"><span>Azure CLI — Créer un Variable Group lié à Key Vault</span><button class="copy-btn">Copier</button></div>
+        <pre><span class="keyword">$orgName</span>   = <span class="string">"[VOTRE-ORG]"</span>
+<span class="keyword">$project</span>   = <span class="string">"[VOTRE-PROJECT]"</span>
+<span class="keyword">$kvName</span>    = <span class="string">"[NOM-KEY-VAULT]"</span>
+<span class="keyword">$scName</span>    = <span class="string">"sc-wif-production"</span>  <span class="comment"># Service Connection WIF avec accès Key Vault Secrets User</span>
+
+<span class="comment"># Créer le Variable Group lié à Key Vault</span>
+az pipelines variable-group create `
+    <span class="param">--organization</span> https://dev.azure.com/<span class="keyword">$orgName</span> `
+    <span class="param">--project</span> <span class="keyword">$project</span> `
+    <span class="param">--name</span> <span class="string">"vg-production-keyvault"</span> `
+    <span class="param">--authorize</span> false `
+    <span class="param">--link-secrets-to-key-vault</span> `
+    <span class="param">--key-vault-name</span> <span class="keyword">$kvName</span> `
+    <span class="param">--service-endpoint</span> <span class="keyword">$scName</span>
+
+<span class="comment"># Lister les Variable Groups existants et leur type</span>
+az pipelines variable-group list `
+    <span class="param">--organization</span> https://dev.azure.com/<span class="keyword">$orgName</span> `
+    <span class="param">--project</span> <span class="keyword">$project</span> `
+    <span class="param">--query</span> <span class="string">"[].{Name:name, Type:type, Provider:providerData.serviceEndpointId}"</span> `
+    <span class="param">--output</span> table</pre>
+    </div>
+
+    <h3>Terraform — Variable Group Key Vault</h3>
+    <div class="code-block">
+        <div class="code-header"><span>Terraform — Variable Group lié à Key Vault + pipeline authorization</span><button class="copy-btn">Copier</button></div>
+        <pre><span class="keyword">resource</span> <span class="string">"azuredevops_variable_group"</span> <span class="string">"kv_production"</span> {
+  project_id   = var.project_id
+  name         = <span class="string">"vg-production-keyvault"</span>
+  description  = <span class="string">"Secrets liés à Azure Key Vault — rotation automatique"</span>
+  allow_access = false
+
+  key_vault {
+    name                = var.key_vault_name
+    service_endpoint_id = azuredevops_serviceendpoint_azurerm.wif.id
+  }
+
+  variable {
+    name    = <span class="string">"DB-CONNECTION-STRING"</span>
+    enabled = true
+  }
+  variable {
+    name    = <span class="string">"APP-INSIGHTS-KEY"</span>
+    enabled = true
+  }
+}
+
+<span class="keyword">resource</span> <span class="string">"azuredevops_pipeline_authorization"</span> <span class="string">"vg_auth"</span> {
+  project_id  = var.project_id
+  resource_id = azuredevops_variable_group.kv_production.id
+  type        = <span class="string">"variablegroup"</span>
+  pipeline_id = var.deploy_pipeline_id
+}</pre>
+    </div>
+
+    <h3>Checklist — S5 Variable Groups &amp; Secrets</h3>
+    <div class="checklist-item"><input type="checkbox"><span>Zéro secret en clair dans les fichiers YAML du repo (validé avec GHAS secret scanning — S6)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Toutes les variables sensibles marquées "Secret" dans les Variable Groups ADO</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Au moins un Variable Group lié à Azure Key Vault pour les secrets de production</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Service Connection du VG-KV avec rôle "Key Vault Secrets User" uniquement (pas Admin)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Pipeline-level permissions sur les Variable Groups ("Allow access to all pipelines" désactivé)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Rotation des secrets planifiée ≤ 90 jours dans Key Vault (policy d'expiration configurée)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Accès Library restreint (Project Settings → Pipelines → Library → Security)</span></div>
+</div>
+
+<!-- ═══════════════════════ S6 — GHAS-ADO ═══════════════════════ -->
+<div class="section" id="s6">
+    <div class="section-header orange">
+        <div class="section-number orange">S6</div>
+        <div>
+            <div class="section-title">GitHub Advanced Security for Azure DevOps (GHAS-ADO) <span class="badge-sm badge-high">&#x1F7E0; Élevé</span></div>
+            <div class="section-desc">Secrets scanning, Code scanning (CodeQL), Dependency scanning, alert management</div>
+        </div>
+    </div>
+    <!-- CONTENU À INTÉGRER -->
+    <div class="alert alert-error">
+        <span class="alert-icon">&#x1F6A8;</span>
+        <div>
+            <strong>Scénario d'attaque — Secret commité dans le repo non détecté pendant 6 mois</strong><br>
+            Un développeur commite par erreur une clé API Azure dans un fichier de configuration.
+            Sans GHAS-ADO, cette clé reste dans l'historique git pendant 6 mois.
+            Un attaquant scanne le repo public (ou un repo privé après compromission) et trouve la clé via <code>git log</code>.
+            Avec <strong>Secret Protection</strong> et sa <strong>push protection</strong>, le push aurait pu être <strong>bloqué avant d'atteindre le repo</strong> ; avec le secret scanning seul, une alerte aurait été créée après détection.
+            <br><br>
+            <em>Analogie&nbsp;: GHAS-ADO = "détecteur de mines" dans votre repo — identifie les dangers cachés (secrets, vulnérabilités, dépendances compromises) avant qu'ils ne causent des dommages.</em>
+        </div>
+    </div>
+
+    <h3>GHAS-ADO — Tableau comparatif</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr><th>Paramètre / Contrôle</th><th>Défaut ADO</th><th>⚡ Quick Win</th><th>🔒 Avancé</th><th>🎯 Optimal</th><th>Licence</th></tr></thead>
+        <tbody>
+            <tr class="row-ko"><td><strong>Secret Scanning</strong></td><td>Non activé</td><td>Activer sur tous les repos</td><td>Activer + triage régulier des alertes</td><td>Activer + patterns personnalisés + alertes</td><td><span class="lic lic-ghas">GHAS-ADO</span></td></tr>
+            <tr class="row-ko"><td><strong>Code Scanning (CodeQL)</strong></td><td>Non activé</td><td>Activer CodeQL pour les langages principaux</td><td>CodeQL dans le pipeline CI (bloquant si critique)</td><td>CodeQL + query suites / custom queries + status checks PR</td><td><span class="lic lic-ghas">GHAS-ADO</span></td></tr>
+            <tr class="row-ko"><td><strong>Dependency Scanning (SCA)</strong></td><td>Non activé</td><td>Activer la détection des vulnérabilités de dépendances</td><td>Activer + bloquer PR si vulnérabilité critique</td><td>SCA + annotations / status checks PR + remédiation continue</td><td><span class="lic lic-ghas">GHAS-ADO</span></td></tr>
+            <tr class="row-warn"><td><strong>Gestion des alertes</strong></td><td>N/A</td><td>—</td><td>Triager les alertes dans Repos &gt; Advanced Security</td><td>Security overview + campagnes filtrées + export CSV</td><td><span class="lic lic-ghas">GHAS-ADO</span></td></tr>
+            <tr class="row-warn"><td><strong>Patterns personnalisés (secrets)</strong></td><td>N/A</td><td>—</td><td>—</td><td>Patterns regex pour secrets propriétaires (tokens internes)</td><td><span class="lic lic-ghas">GHAS-ADO</span></td></tr>
+            <tr class="row-ok"><td><strong>Push Protection (bloquer en push)</strong></td><td>N/A</td><td>—</td><td>Activer push protection</td><td>Push protection + bypass encadré et exceptionnel</td><td><span class="lic lic-ghas">GHAS-ADO</span></td></tr>
+        </tbody>
+    </table>
+    </div>
+
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x1F4A1;</span>
+        <div>
+            <strong>Pourquoi chaque paramètre compte</strong><br>
+            <strong>Secret Scanning vs Code Scanning vs Dependency Scanning</strong>&nbsp;: ces trois types couvrent des risques différents.
+            Secret Scanning détecte les <em>données sensibles statiques</em> (clés API, tokens, mots de passe).
+            Code Scanning (CodeQL) détecte les <em>vulnérabilités de logique dans votre code</em> (SQL injection, XSS, path traversal).
+            Dependency Scanning (SCA) détecte les <em>vulnérabilités connues dans vos bibliothèques tierces</em> (CVEs dans les dépendances npm, NuGet, Maven).<br><br>
+            <strong>Push Protection</strong>&nbsp;: contrairement au Secret Scanning standard (qui crée une alerte <em>après</em> détection), la Push Protection bloque le <em>push</em> avant que le secret n'atteigne le repo. Le développeur voit un message d'erreur explicatif et doit corriger ou bypasser de manière exceptionnelle selon la procédure prévue.<br><br>
+            <strong>Coût GHAS-ADO</strong>&nbsp;: Microsoft distingue d&eacute;sormais <strong>Secret Protection</strong> et <strong>Code Security</strong>, chacun factur&eacute; par committer actif sur les repos couverts. Le guide ne doit plus pr&eacute;senter un forfait unique fig&eacute;.&nbsp;Un "committer actif" reste un utilisateur ayant contribu&eacute; r&eacute;cemment &agrave; un repo couvert par le produit activ&eacute;.
+        </div>
+    </div>
+
+    <div class="alert alert-warn">
+        <span class="alert-icon">&#x26A0;&#xFE0F;</span>
+        <div>
+            <strong>Pièges — Activation GHAS-ADO</strong><br>
+            • Activer GHAS sur un repo ancien peut générer des <strong>centaines d'alertes existantes</strong> — prévoir une phase de triage avant de bloquer les PRs.<br>
+            • Le Secret Scanning scanne l'<strong>historique complet</strong> — des secrets supprimés dans le dernier commit peuvent toujours créer des alertes.<br>
+            • Secret Protection et Code Security s'activent et se facturent <strong>séparément</strong> — commencer par les repos les plus critiques et par le bon produit pour contrôler les coûts.
+        </div>
+    </div>
+
+    <h3>Activation — UI Microsoft Learn</h3>
+    <div class="code-block">
+        <div class="code-header"><span>Étapes documentées — activer GHAS-ADO et les contrôles associés</span><button class="copy-btn">Copier</button></div>
+        <pre><span class="comment"># Activation documentée par Microsoft Learn</span>
+<span class="comment"># 1. Project settings &gt; Repos &gt; Repositories</span>
+<span class="comment"># 2. Sélectionner le dépôt à protéger</span>
+<span class="comment"># 3. Activer Secret Protection et/ou Code Security</span>
+<span class="comment"># 4. Sélectionner Begin billing</span>
+<span class="comment"># 5. Optionnel : activer Dependency scanning default setup</span>
+<span class="comment"># 6. Optionnel : activer CodeQL default setup</span>
+<span class="comment"># 7. Pour bloquer les PR, configurer ensuite :</span>
+<span class="comment">#    - une Build validation policy</span>
+<span class="comment">#    - un status check AdvancedSecurity/AllHighAndCritical</span>
+<span class="comment">#      ou AdvancedSecurity/NewHighAndCritical</span></pre>
+    </div>
+
+    <h3>CodeQL dans le pipeline CI</h3>
+    <div class="code-block">
+        <div class="code-header"><span>YAML — Code Scanning avec CodeQL dans le pipeline</span><button class="copy-btn">Copier</button></div>
+                <pre><span class="comment"># Ajouter dans le stage Build du pipeline (voir S3)</span>
+<span class="keyword">steps</span>:
+    - task: AdvancedSecurity-Codeql-Init@1
+        displayName: Initialize CodeQL
+        inputs:
+            languages: <span class="string">'csharp,javascript'</span>  <span class="comment"># Adapter aux langages du projet</span>
+
+    - task: DotNetCoreCLI@2
+        displayName: Build
+        inputs:
+            command: build
+            arguments: --configuration Release
+
+    - task: AdvancedSecurity-Dependency-Scanning@1
+        displayName: Dependency Scanning (SCA)
+
+    - task: AdvancedSecurity-Codeql-Analyze@1
+        displayName: CodeQL Analysis
+        inputs:
+            waitForProcessing: true  <span class="comment"># Attendre la publication des résultats pour les status checks PR</span>
+
+<span class="comment"># Le blocage des PR se configure ensuite via les branch policies :</span>
+<span class="comment"># Build validation + status check AdvancedSecurity/AllHighAndCritical</span>
+<span class="comment"># ou AdvancedSecurity/NewHighAndCritical</span></pre>
+    </div>
+
+    <h3>Checklist — S6 GHAS-ADO</h3>
+    <div class="checklist-item"><input type="checkbox"><span>GHAS-ADO activé sur tous les repos contenant du code de production (licence GHAS-ADO confirmée)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Secret Scanning activé + Push Protection activée</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Code Scanning (CodeQL) configuré dans le pipeline CI pour les langages principaux</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Dependency Scanning (SCA) activé + build validation / status checks AdvancedSecurity configurés pour les PRs</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Triage initial des alertes existantes réalisé — alertes critiques résolues</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Alertes GHAS-ADO intégrées dans le processus de review (visibles dans les PRs)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Patterns personnalisés configurés pour les secrets propriétaires (tokens internes, clés API maison)</span></div>
+</div>
+
+<!-- ═══════════════════════ S7 — ARTIFACT SECURITY ═══════════════════════ -->
+<div class="section" id="s7">
+    <div class="section-header blue">
+        <div class="section-number">S7</div>
+        <div>
+            <div class="section-title">Artifact Security — Azure Artifacts <span class="badge-sm badge-medium">&#x1F7E1; Moyen</span></div>
+            <div class="section-desc">Feeds, upstream sources, permissions, SCA, package vulnerabilities, retention policies</div>
+        </div>
+    </div>
+    <div class="alert alert-error">
+        <span class="alert-icon">&#x1F6A8;</span>
+        <div>
+            <strong>Scénario d'attaque — Dependency Confusion / Typosquatting</strong><br>
+            Un attaquant publie un package npm nommé <code>@monentreprise/utils</code> sur le registre public npmjs.com.
+            Un pipeline ADO configuré pour chercher les packages sur le registre public (sans upstream interne)
+            télécharge ce package malveillant à la place du package interne légitime.
+            Le package exécute du code malveillant lors de l'installation, exfiltrant les secrets de l'environnement de build.
+            <br><br>
+            <em>Analogie&nbsp;: un feed Azure Artifacts correctement configuré = "zone de quarantaine" pour vos packages — seuls les packages validés peuvent entrer dans votre supply chain.</em>
+        </div>
+    </div>
+
+    <h3>Artifact Security — Tableau comparatif</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr><th>Paramètre / Contrôle</th><th>Défaut ADO</th><th>⚡ Quick Win</th><th>🔒 Avancé</th><th>🎯 Optimal</th><th>Licence</th></tr></thead>
+        <tbody>
+            <tr class="row-ko"><td><strong>Sources de packages (upstream)</strong></td><td>Registres publics directs (npmjs, NuGet.org)</td><td>Créer un feed Azure Artifacts comme proxy interne</td><td>Feed interne uniquement — tous les packages via le feed</td><td>Feed interne + validation manuelle des nouvelles dépendances</td><td><span class="lic lic-azure-basic">Basic</span></td></tr>
+            <tr class="row-ko"><td><strong>Permissions feed</strong></td><td>Tous les contributeurs peuvent publier</td><td>—</td><td>Seuls les pipelines CI/CD peuvent publier</td><td>Pipeline-only publish + human approval pour packages critiques</td><td><span class="lic lic-azure-free">Free</span></td></tr>
+            <tr class="row-ko"><td><strong>Scan vulnérabilités packages</strong></td><td>Non</td><td>Activer Dependency Scanning GHAS-ADO (S6)</td><td>GHAS-ADO SCA + audit npm/NuGet</td><td>SCA + inventaire de dépendances / provenance maîtrisée</td><td><span class="lic lic-ghas">GHAS-ADO</span></td></tr>
+            <tr class="row-warn"><td><strong>Retention policy (nettoyage packages)</strong></td><td>Conservation indéfinie</td><td>—</td><td>Retention 90 jours pour packages non-release</td><td>Retention + suppression auto versions obsolètes</td><td><span class="lic lic-azure-basic">Basic</span></td></tr>
+            <tr class="row-ok"><td><strong>Upstream sources (public feeds)</strong></td><td>npmjs / NuGet.org directs</td><td>Configurer upstream sources dans Azure Artifacts</td><td>Upstream + upstream pinning (pas de mise à jour auto)</td><td>Upstream + politique d'approbation des nouvelles versions</td><td><span class="lic lic-azure-basic">Basic</span></td></tr>
+        </tbody>
+    </table>
+    </div>
+
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x1F4A1;</span>
+        <div>
+            <strong>Pourquoi chaque paramètre compte</strong><br>
+            <strong>Upstream sources via Azure Artifacts</strong>&nbsp;: en configurant Azure Artifacts comme proxy pour npmjs/NuGet.org, tous les packages téléchargés sont cachés et analysés dans votre tenant Azure. Vous contrôlez quelles versions sont disponibles et pouvez bloquer les packages malveillants avant qu'ils atteignent les développeurs.<br><br>
+            <strong>Dependency Confusion</strong>&nbsp;: si votre pipeline cherche d'abord sur le registre public, un attaquant peut publier un package avec le même nom que votre package interne — mais avec un numéro de version supérieur. npm et NuGet donneront la priorité à la version publique la plus récente. La solution&nbsp;: désactiver l'accès direct aux registres publics et forcer le passage par Azure Artifacts.<br><br>
+            <strong>SBOM (Software Bill of Materials)</strong>&nbsp;: un SBOM liste les dépendances exactes d'une application. C'est un concept utile pour la supply chain logicielle, mais ce guide ne le pr&eacute;sente plus comme une sortie native document&eacute;e de GHAS-ADO.
+        </div>
+    </div>
+
+    <div class="alert alert-warn">
+        <span class="alert-icon">&#x26A0;&#xFE0F;</span>
+        <div>
+            <strong>Pièges — Azure Artifacts</strong><br>
+            • Configurer upstream sources ne suffit pas&nbsp;: il faut aussi <strong>bloquer les accès directs</strong> aux registres publics depuis les agents de build (firewall / NSG si self-hosted).<br>
+            • Les feeds Azure Artifacts sont facturés par Go stocké après le quota gratuit (2 Go inclus) — mettre en place une retention policy pour éviter les coûts.<br>
+            • Le feed "public" d'une organisation ADO peut être accessible sans authentification si mal configuré — vérifier les permissions du feed.
+        </div>
+    </div>
+
+    <h3>Configuration — Azure CLI</h3>
+    <div class="code-block">
+        <div class="code-header"><span>Azure CLI — Créer un feed et configurer upstream</span><button class="copy-btn">Copier</button></div>
+        <pre><span class="keyword">$orgName</span>  = <span class="string">"[VOTRE-ORG]"</span>
+<span class="keyword">$project</span>  = <span class="string">"[VOTRE-PROJECT]"</span>
+
+<span class="comment"># Lister les feeds via Azure CLI (extension azure-devops requise)</span>
+az artifacts feed list <span class="param">--organization</span> https://dev.azure.com/<span class="keyword">$orgName</span> <span class="param">--project</span> <span class="keyword">$project</span> <span class="param">--output</span> table
+
+<span class="comment"># Créer le feed via REST API (avec upstream npm + NuGet officiels)</span>
+<span class="keyword">$body</span> = @{
+    name             = <span class="string">"internal-packages"</span>
+    upstreamEnabled  = $true
+    upstreamSources  = @(
+        @{ name = <span class="string">"npmjs.com"</span>; protocol = <span class="string">"npm"</span>; location = <span class="string">"https://registry.npmjs.org/"</span>; upstreamSourceType = <span class="string">"Public"</span> },
+        @{ name = <span class="string">"NuGet Gallery"</span>; protocol = <span class="string">"nuget"</span>; location = <span class="string">"https://api.nuget.org/v3/index.json"</span>; upstreamSourceType = <span class="string">"Public"</span> }
+    )
+} | ConvertTo-Json -Depth 5
+
+Invoke-RestMethod `
+    -Uri <span class="string">"https://feeds.dev.azure.com/<span class="keyword">$orgName</span>/<span class="keyword">$project</span>/_apis/packaging/feeds?api-version=7.1-preview.1"</span> `
+    -Method Post -Body <span class="keyword">$body</span> -Headers <span class="keyword">$headers</span> -ContentType <span class="string">"application/json"</span>
+
+<span class="comment"># Lister les feeds et leurs permissions</span>
+az artifacts feed list <span class="param">--organization</span> https://dev.azure.com/<span class="keyword">$orgName</span> <span class="param">--output</span> table</pre>
+    </div>
+
+    <h3>Checklist — S7 Artifact Security</h3>
+    <div class="checklist-item"><input type="checkbox"><span>Feed Azure Artifacts créé pour chaque type de package (npm, NuGet, Maven, Python)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Upstream sources configurées (registres publics via Azure Artifacts, pas directement)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Accès direct aux registres publics bloqué depuis les agents de build</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Permissions feed&nbsp;: seuls les pipelines CI/CD peuvent publier (pas les developers)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Dependency Scanning (GHAS-ADO) activé pour tous les repos utilisant des packages externes</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Retention policy configurée sur les feeds (ex&nbsp;: 90 jours pour les pré-releases)</span></div>
+</div>
+
+<!-- ═══════════════════════ S8 — AUDIT LOGS & MONITORING ═══════════════════════ -->
+<div class="section" id="s8">
+    <div class="section-header blue">
+        <div class="section-number">S8</div>
+        <div>
+            <div class="section-title">Audit Logs &amp; Monitoring <span class="badge-sm badge-medium">&#x1F7E1; Moyen</span></div>
+            <div class="section-desc">Audit logs organisation, audit streams, Event Hubs / consumers externes, détections</div>
+        </div>
+    </div>
+    <div class="alert alert-error">
+        <span class="alert-icon">&#x1F6A8;</span>
+        <div>
+            <strong>Scénario d'attaque — Activité malveillante non détectée pendant 3 mois</strong><br>
+            Un administrateur ADO dont le compte a été compromis modifie les branch policies, supprime des Service Connections,
+            et ajoute des comptes externes à l'organisation. Sans export des audit logs vers un SIEM,
+            ces actions ne sont visibles que dans la console ADO — avec une rétention de 90 jours par défaut.
+            L'attaque est découverte 3 mois plus tard lors d'un audit manuel. Les logs de la première semaine sont perdus.
+            <br><br>
+            <em>Analogie&nbsp;: les audit logs ADO = caméras de surveillance — ils enregistrent tout, mais sans export vers un SIEM centralisé, personne ne regarde les images en temps réel.</em>
+        </div>
+    </div>
+
+    <h3>Audit Logs &amp; Monitoring — Tableau comparatif</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr><th>Paramètre / Contrôle</th><th>Défaut ADO</th><th>⚡ Quick Win</th><th>🔒 Avancé</th><th>🎯 Optimal</th><th>Licence</th></tr></thead>
+        <tbody>
+            <tr class="row-ko"><td><strong>Audit logs — Rétention</strong></td><td>90 jours dans la console ADO</td><td>Activer un audit stream</td><td>Exporter vers un consumer externe documenté</td><td>Audit stream + archivage externe selon la politique interne</td><td><span class="lic lic-azure-basic">Basic</span></td></tr>
+            <tr class="row-ko"><td><strong>Export vers SIEM</strong></td><td>Non</td><td>—</td><td>Audit stream vers Event Hubs ou Splunk</td><td>SIEM / supervision centralisée en aval</td><td><span class="lic lic-azure-basic">Basic</span></td></tr>
+            <tr class="row-ko"><td><strong>Alertes comportements anormaux</strong></td><td>Non</td><td>—</td><td>Détections sur changements sensibles dans l'outil de supervision</td><td>Cas d'usage de détection industrialisés côté SIEM</td><td><span class="lic lic-azure-basic">Basic</span></td></tr>
+            <tr class="row-warn"><td><strong>Audit des actions admin</strong></td><td>Visible console seulement</td><td>Prévoir un backfill si nécessaire</td><td>Audit stream + conservation externe</td><td>Backfill + conservation alignée sur les exigences internes</td><td><span class="lic lic-azure-basic">Basic</span></td></tr>
+            <tr class="row-ok"><td><strong>Defender for DevOps</strong></td><td>Non activé</td><td>—</td><td>Activer Microsoft Defender for DevOps</td><td>Defender for DevOps + Defender for Cloud integration</td><td><span class="lic lic-azure-pay">Pay-as-you-go</span></td></tr>
+        </tbody>
+    </table>
+    </div>
+
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x1F4A1;</span>
+        <div>
+            <strong>Pourquoi chaque paramètre compte</strong><br>
+            <strong>Audit streams</strong>&nbsp;: Azure DevOps expose des <em>audit streams</em> REST vers des consumers externes. La doc REST mentionne notamment des consumers de type <em>Splunk</em> et <em>azureEventHub</em>, avec un paramètre <em>daysToBackfill</em> pour rejouer des événements passés dans le stream.<br><br>
+            <strong>Supervision en aval</strong>&nbsp;: les alertes, requêtes et scénarios de détection se construisent dans la plateforme cible qui reçoit le stream (SIEM, observabilité, archivage), pas nativement dans l'interface d'audit Azure DevOps.<br><br>
+            <strong>Defender for DevOps</strong>&nbsp;: c'est un produit distinct qui apporte une vue centralisée de posture et de findings pour Azure DevOps, GitHub et GitLab dans Defender for Cloud. Il ne remplace pas à lui seul la stratégie d'export et de conservation des audit logs.
+        </div>
+    </div>
+
+    <h3>Configuration — REST API (audit streams)</h3>
+    <div class="code-block">
+        <div class="code-header"><span>PowerShell — Créer et lister un audit stream</span><button class="copy-btn">Copier</button></div>
+        <pre><span class="keyword">$orgName</span>        = <span class="string">"[VOTRE-ORG]"</span>
+<span class="keyword">$daysToBackfill</span> = 30
+
+<span class="comment"># Exemple documenté : consumer Splunk</span>
+<span class="comment"># Le type de consumer peut aussi être azureEventHub selon la cible retenue.</span>
+<span class="keyword">$body</span> = @{
+    consumerType   = <span class="string">"Splunk"</span>
+    consumerInputs = @{
+        SplunkUrl                 = <span class="string">"https://input-prd-p-instance.cloud.splunk.com:8088"</span>
+        SplunkEventCollectorToken = <span class="string">"[TOKEN]"</span>
+    }
+} | ConvertTo-Json -Depth 3
+
+Invoke-RestMethod `
+    -Uri <span class="string">"https://auditservice.dev.azure.com/<span class="keyword">$orgName</span>/_apis/audit/streams?daysToBackfill=<span class="keyword">$daysToBackfill</span>&amp;api-version=7.1-preview.1"</span> `
+    -Method Post -Body <span class="keyword">$body</span> -Headers <span class="keyword">$headers</span> -ContentType <span class="string">"application/json"</span>
+
+<span class="comment"># Lister les streams configurés</span>
+Invoke-RestMethod `
+    -Uri <span class="string">"https://auditservice.dev.azure.com/<span class="keyword">$orgName</span>/_apis/audit/streams?api-version=7.1-preview.1"</span> `
+    -Headers <span class="keyword">$headers</span> | Select-Object -ExpandProperty value | Format-Table</pre>
+    </div>
+
+    <h3>Cas de détection à couvrir</h3>
+    <div class="code-block">
+        <div class="code-header"><span>Exemples — Détections à implémenter dans la plateforme cible</span><button class="copy-btn">Copier</button></div>
+        <pre><span class="comment"># Cas de détection pertinents une fois le stream branché sur votre SIEM / observabilité</span>
+<span class="comment"># - création ou rotation inhabituelle de PAT</span>
+<span class="comment"># - modification de branch policies ou de permissions critiques</span>
+<span class="comment"># - ajout au groupe Project Collection Administrators</span>
+<span class="comment"># - suppression de dépôt, modification de service connection, changement d'approbation</span>
+<span class="comment"># - pics d'activité anormaux sur des plages horaires inhabituelles</span></pre>
+    </div>
+
+    <h3>Checklist — S8 Audit Logs &amp; Monitoring</h3>
+    <div class="checklist-item"><input type="checkbox"><span>Audit stream activé vers un consumer externe documenté</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Rétention externe alignée sur la politique interne / réglementaire</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Détections créées dans la plateforme de supervision connectée pour les événements sensibles</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Microsoft Defender for DevOps activé (optionnel — si Defender for Cloud déployé)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Backfill configuré si un rattrapage des événements passés est nécessaire</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Accès aux audit logs restreint aux administrateurs sécurité (Project Collection Admins)</span></div>
+</div>
+
+<!-- ═══════════════════════ S9 — ENVIRONMENTS & APPROVALS ═══════════════════════ -->
+<div class="section" id="s9">
+    <div class="section-header green">
+        <div class="section-number green">S9</div>
+        <div>
+            <div class="section-title">Environments &amp; Approvals <span class="badge-sm badge-low">&#x1F7E2; Standard</span></div>
+            <div class="section-desc">Environnements production/staging, approval gates, exclusive lock, branch control, rollback</div>
+        </div>
+    </div>
+    <div class="alert alert-error">
+        <span class="alert-icon">&#x1F6A8;</span>
+        <div>
+            <strong>Scénario d'attaque — Déploiement direct en production depuis une branch feature</strong><br>
+            Un pipeline de déploiement est déclenché automatiquement sur toute branch (pas uniquement <code>main</code>).
+            Un développeur déclenche le pipeline depuis sa branch <code>feature/hack</code> contenant du code non reviewé.
+            Sans approval gate et sans restriction de branch, le code est déployé directement en production
+            sans aucune intervention humaine.
+            <br><br>
+            <em>Analogie&nbsp;: les Environments avec Approval = "double clé nucléaire" — deux personnes différentes doivent actionner simultanément avant que quoi que ce soit ne soit déployé en production.</em>
+        </div>
+    </div>
+
+    <h3>Environments &amp; Approvals — Tableau comparatif</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr><th>Paramètre / Contrôle</th><th>Défaut ADO</th><th>⚡ Quick Win</th><th>🔒 Avancé</th><th>🎯 Optimal</th><th>Licence</th></tr></thead>
+        <tbody>
+            <tr class="row-ko"><td><strong>Environments définis (staging / prod)</strong></td><td>Pas d'environments structurés</td><td>Créer environments "staging" et "production" dans ADO</td><td>Environments + approval gate prod</td><td>Environments + approval + exclusive lock + timeout</td><td><span class="lic lic-azure-free">Free</span></td></tr>
+            <tr class="row-ko"><td><strong>Approval humaine pour production</strong></td><td>Non configurée</td><td>Ajouter 1 approbateur pour "production"</td><td>2 approbateurs (ou séquentiels)</td><td>2 approbateurs + timeout 4h + notification Microsoft Teams</td><td><span class="lic lic-azure-free">Free</span></td></tr>
+            <tr class="row-ko"><td><strong>Branch control check</strong></td><td>Non configuré</td><td>—</td><td>Autoriser uniquement déploiement depuis <code>main</code></td><td>Branch control + tag requis (ex&nbsp;: <code>release-*</code>)</td><td><span class="lic lic-azure-free">Free</span></td></tr>
+            <tr class="row-warn"><td><strong>Exclusive lock (anti-concurrent)</strong></td><td>Déploiements concurrents possibles</td><td>—</td><td>Activer Exclusive Lock sur production</td><td>Exclusive Lock + queue ou annulation du run concurrent</td><td><span class="lic lic-azure-free">Free</span></td></tr>
+            <tr class="row-warn"><td><strong>Business Hours Check</strong></td><td>Déploiements 24/7 possibles</td><td>—</td><td>—</td><td>Restreindre les déploiements prod aux heures ouvrées (lundi-vendredi, 9h-17h)</td><td><span class="lic lic-azure-free">Free</span></td></tr>
+            <tr class="row-ok"><td><strong>History et audit des approvals</strong></td><td>Visible dans ADO</td><td>—</td><td>Conservé dans les logs de pipeline</td><td>Export S8 vers supervision / archivage externe pour audit long-terme</td><td><span class="lic lic-azure-free">Free</span></td></tr>
+        </tbody>
+    </table>
+    </div>
+
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x1F4A1;</span>
+        <div>
+            <strong>Pourquoi chaque paramètre compte</strong><br>
+            <strong>Branch Control Check</strong>&nbsp;: sans ce check, un pipeline peut déployer en production depuis n'importe quelle branch — y compris une branch de test ou de développement non reviewée. Le Branch Control Check garantit que seuls les commits présents dans <code>main</code> (ou une branch <code>release/*</code>) peuvent déclencher un déploiement en production.<br><br>
+            <strong>Exclusive Lock</strong>&nbsp;: sans ce lock, deux pipelines peuvent déployer simultanément en production, créant des race conditions, des configurations incohérentes, ou écrasant un déploiement en cours par un rollback non souhaité.<br><br>
+            <strong>Approval timeout</strong>&nbsp;: un timeout explicite (ex&nbsp;: 4h ou 24h) évite qu'une PR de déploiement reste "en attente d'approbation" indéfiniment et bloque d'autres déploiements via l'Exclusive Lock. Après le timeout, le run est automatiquement rejeté.
+        </div>
+    </div>
+
+    <h3>Configuration — Portail</h3>
+    <div class="step">
+        <div class="step-n">1</div>
+        <div class="step-c"><strong>Créer les Environments</strong><br>
+            Pipelines → Environments → + New → Nom&nbsp;: <code>production</code> → Description → Create
+        </div>
+    </div>
+    <div class="step">
+        <div class="step-n">2</div>
+        <div class="step-c"><strong>Configurer l'Approval Gate</strong><br>
+            Environment "production" → ... → Approvals and checks → + Approvals → Approvers&nbsp;: [Responsable technique] → Timeout&nbsp;: 4 heures → Save
+        </div>
+    </div>
+    <div class="step">
+        <div class="step-n">3</div>
+        <div class="step-c"><strong>Ajouter Branch Control Check</strong><br>
+            Approvals and checks → + Branch control → Allowed branches&nbsp;: <code>refs/heads/main</code> → Verify branch protection
+        </div>
+    </div>
+
+    <h3>Terraform — Environment + Checks</h3>
+    <div class="code-block">
+        <div class="code-header"><span>Terraform — Environment avec approval et branch control</span><button class="copy-btn">Copier</button></div>
+        <pre><span class="comment"># Créer les Environments</span>
+<span class="keyword">resource</span> <span class="string">"azuredevops_environment"</span> <span class="string">"production"</span> {
+  project_id  = var.project_id
+  name        = <span class="string">"production"</span>
+  description = <span class="string">"Environnement de production — approval + branch control requis"</span>
+}
+
+<span class="keyword">resource</span> <span class="string">"azuredevops_environment"</span> <span class="string">"staging"</span> {
+  project_id  = var.project_id
+  name        = <span class="string">"staging"</span>
+  description = <span class="string">"Environnement de staging"</span>
+}
+
+<span class="comment"># Approval check sur production (1 approbateur)</span>
+<span class="keyword">resource</span> <span class="string">"azuredevops_check_approval"</span> <span class="string">"prod_approval"</span> {
+  project_id           = var.project_id
+  target_resource_id   = azuredevops_environment.production.id
+  target_resource_type = <span class="string">"environment"</span>
+  approvers            = [var.approver_user_id]
+  instructions         = <span class="string">"Vérifier les tests de staging avant approbation"</span>
+  minimum_required_approvers = 1
+  requester_can_approve      = false
+  timeout                    = 240  <span class="comment"># 4 heures (en minutes — unité du provider)</span>
+}
+
+<span class="comment"># Branch control check (main uniquement)</span>
+<span class="keyword">resource</span> <span class="string">"azuredevops_check_branch_control"</span> <span class="string">"prod_branch"</span> {
+  project_id           = var.project_id
+  target_resource_id   = azuredevops_environment.production.id
+  target_resource_type = <span class="string">"environment"</span>
+  settings {
+    allowed_branches                = <span class="string">"refs/heads/main"</span>
+    verify_branch_protection        = true
+    ignore_unknown_protection_status = false
+  }
+}</pre>
+    </div>
+
+    <h3>Checklist — S9 Environments &amp; Approvals</h3>
+    <div class="checklist-item"><input type="checkbox"><span>Environments "staging" et "production" créés dans Pipelines → Environments</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Approval gate configurée sur "production" (minimum 1 approbateur, pas l'auteur du commit)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Timeout d'approbation configuré (≤4h) — rejet automatique après expiration</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Branch Control Check activé sur "production" — déploiement depuis <code>main</code> uniquement</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Exclusive Lock activé sur "production" (anticoncurrence des déploiements)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Tous les pipelines de déploiement prod utilisent le type <code>deployment:</code> (job) avec l'environment concerné</span></div>
+</div>
+
+<!-- ═══════════════════════ S10 — CONFORMITÉ & GOUVERNANCE ═══════════════════════ -->
+<div class="section" id="s10">
+    <div class="section-header green">
+        <div class="section-number green">S10</div>
+        <div>
+            <div class="section-title">Conformit&eacute; &amp; Gouvernance <span class="badge-sm badge-low">&#x1F7E2; Standard</span></div>
+            <div class="section-desc">CIS benchmark ADO, policies organisation/projet, IP allowlisting, Terraform ADO, audit surface d'attaque</div>
+        </div>
+    </div>
+    <div class="alert alert-error">
+        <span class="alert-icon">&#x1F6A8;</span>
+        <div>
+            <strong>Scénario d'attaque — Accès anonyme à l'organisation ADO</strong><br>
+            L'organisation ADO est configurée avec "Allow public projects" activé et "Allow anonymous access to badges" activé.
+            Un attaquant peut lister les projets, accéder aux badges de pipeline (qui révèlent les noms de branches et les statuts de build)
+            et effectuer une reconnaissance de la structure interne sans aucune authentification.
+            <br><br>
+            <em>Analogie&nbsp;: la gouvernance ADO = "politique de sécurité physique du datacenter" — définit les règles de base qui s'appliquent à tout le monde, indépendamment des configurations individuelles.</em>
+        </div>
+    </div>
+
+    <h3>Conformité &amp; Gouvernance — Tableau comparatif</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr><th>Paramètre / Contrôle</th><th>Défaut ADO</th><th>⚡ Quick Win</th><th>🔒 Avancé</th><th>🎯 Optimal</th><th>Licence</th></tr></thead>
+        <tbody>
+            <tr class="row-ko"><td><strong>Accès public aux projets</strong></td><td>Possiblement activé</td><td>Désactiver "Allow public projects" (Org Settings)</td><td>Désactivé</td><td>Désactivé + audit mensuel</td><td><span class="lic lic-azure-free">Free</span></td></tr>
+            <tr class="row-ko"><td><strong>Accès anonyme aux badges</strong></td><td>Activé par défaut</td><td>Désactiver (Org Settings → Policies)</td><td>Désactivé</td><td>Désactivé</td><td><span class="lic lic-azure-free">Free</span></td></tr>
+            <tr class="row-ko"><td><strong>IP Allowlisting / Conditional Access</strong></td><td>Aucune restriction IP</td><td>—</td><td>Policy CA avec restriction IP (plages bureau)</td><td>IP allowlisting + named locations Entra ID</td><td><span class="lic lic-azure-basic">Entra ID P1</span></td></tr>
+            <tr class="row-warn"><td><strong>Third-party OAuth apps</strong></td><td>Autorisé par défaut</td><td>Désactiver "Allow third-party application access via OAuth"</td><td>Désactivé sauf applications validées</td><td>Désactivé + liste blanche apps approuvées</td><td><span class="lic lic-azure-free">Free</span></td></tr>
+            <tr class="row-warn"><td><strong>ADO as Code (Terraform)</strong></td><td>Configuration manuelle</td><td>—</td><td>Projets ADO gérés via Terraform (azuredevops provider)</td><td>Infrastructure-as-Code complète pour ADO</td><td><span class="lic lic-azure-free">Free</span></td></tr>
+            <tr class="row-ok"><td><strong>Audit surface d'attaque</strong></td><td>Manuel / jamais</td><td>Lancer le script d'audit all-in-one (voir Script)</td><td>Audit mensuel automatisé</td><td>Audit mensuel + rapport + tickets de remédiation</td><td><span class="lic lic-azure-free">Free</span></td></tr>
+        </tbody>
+    </table>
+    </div>
+
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x1F4A1;</span>
+        <div>
+            <strong>Pourquoi chaque paramètre compte</strong><br>
+            <strong>"Allow public projects" OFF</strong>&nbsp;: même si aucun projet n'est actuellement public, cette policy empêche n'importe quel membre de rendre un projet public par inadvertance. Un projet public est accessible en lecture par tout internet sans authentification.<br><br>
+            <strong>Third-party OAuth apps</strong>&nbsp;: des centaines d'applications tierces (Trello, Slack bots, outils de monitoring) demandent des autorisations OAuth sur ADO. Sans cette restriction, n'importe quel employé peut accorder à une application tierce non auditée un accès en écriture à vos repos.<br><br>
+            <strong>ADO as Code</strong>&nbsp;: gérer la configuration ADO via Terraform garantit que toute modification de policy, de projet, de Service Connection ou de variable group est reviewée via une PR (même logique que pour le code applicatif). Les configurations drift sont détectées automatiquement par <code>terraform plan</code>.
+        </div>
+    </div>
+
+    <h3>Configuration — Organisation Settings à vérifier</h3>
+    <div class="step">
+        <div class="step-n">1</div>
+        <div class="step-c"><strong>Désactiver accès public et OAuth tiers</strong><br>
+            Organization Settings → Policies → Désactiver&nbsp;: "Allow public projects" | "Allow third-party application access via OAuth" | "Allow anonymous access to badges"
+        </div>
+    </div>
+    <div class="step">
+        <div class="step-n">2</div>
+        <div class="step-c"><strong>Configurer IP Allowlisting via Entra ID</strong><br>
+            <a href="https://entra.microsoft.com" target="_blank">entra.microsoft.com</a> → Protection → Named Locations → + IP ranges → Définir les plages IP du bureau → Conditional Access Policy → Conditions → Locations → Only selected locations
+        </div>
+    </div>
+
+    <h3>Terraform — Organisation ADO as Code</h3>
+    <div class="code-block">
+        <div class="code-header"><span>Terraform — Projet ADO + permissions + organisation policies</span><button class="copy-btn">Copier</button></div>
+        <pre><span class="comment"># Projet ADO géré par Terraform</span>
+<span class="keyword">resource</span> <span class="string">"azuredevops_project"</span> <span class="string">"main"</span> {
+  name               = var.project_name
+  visibility         = <span class="string">"private"</span>  <span class="comment"># Jamais public</span>
+  version_control    = <span class="string">"Git"</span>
+  work_item_template = <span class="string">"Scrum"</span>
+  description        = <span class="string">"Projet géré via Terraform — ADO as Code"</span>
+}
+
+<span class="comment"># Policy org-level : désactiver accès OAuth tiers</span>
+<span class="keyword">resource</span> <span class="string">"azuredevops_project_pipeline_settings"</span> <span class="string">"settings"</span> {
+  project_id = azuredevops_project.main.id
+  enforce_referenced_repo_scoped_token = true
+  enforce_settable_var              = true
+  publish_pipeline_metadata         = false
+  status_badges_are_private         = true  <span class="comment"># Badges non accessibles anonymement</span>
+}
+
+<span class="comment"># RBAC : groupe sécurité avec accès limité</span>
+<span class="keyword">resource</span> <span class="string">"azuredevops_group"</span> <span class="string">"security_team"</span> {
+  scope        = azuredevops_project.main.id
+  display_name = <span class="string">"Security Reviewers"</span>
+  description  = <span class="string">"Groupe sécurité — CODEOWNERS + approval gates"</span>
+}</pre>
+    </div>
+
+    <h3>Checklist — S10 Conformité &amp; Gouvernance</h3>
+    <div class="checklist-item"><input type="checkbox"><span>"Allow public projects" désactivé (Organization Settings → Policies)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>"Allow third-party application access via OAuth" désactivé</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>"Allow anonymous access to badges" désactivé</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>IP Allowlisting configuré via Conditional Access Entra ID (si applicable)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Configuration ADO (projets, policies, groupes) gérée via Terraform (ADO as Code)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Audit surface d'attaque réalisé (script all-in-one section Script)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Revue trimestrielle des acces : membres de l'organisation, Project Collection Admins, Service Connections inutilisées</span></div>
+</div>
+
+<!-- ═══════════════════════ SCORES ═══════════════════════ -->
+<div class="section" id="scores">
+    <div class="section-header blue">
+        <div class="section-number">&#x1F4CA;</div>
+        <div>
+            <div class="section-title">Tableau de bord &mdash; Score de maturit&eacute; Azure DevOps</div>
+            <div class="section-desc">Score /100 par section — &eacute;tat initial vs cible</div>
+        </div>
+    </div>
+    <p>Utilisez ce tableau de bord pour mesurer votre niveau de sécurité Azure DevOps sur <strong>100 points</strong>.
+    Cochez les items accomplis dans les sections précédentes pour évaluer votre position.</p>
+
+    <div class="table-container">
+    <table>
+        <thead><tr><th>Section</th><th>Contrôles clés</th><th>Points max</th><th>Niveau Quick Win</th><th>Niveau Avancé</th><th>Niveau Optimal</th></tr></thead>
+        <tbody>
+            <tr><td><strong>S1 — Authentification</strong></td><td>MFA, PAT scope, Conditional Access</td><td><strong>15</strong>&nbsp;pts</td><td>6</td><td>11</td><td>15</td></tr>
+            <tr><td><strong>S2 — Service Connections</strong></td><td>WIF migration, RBAC, scope restreint</td><td><strong>15</strong>&nbsp;pts</td><td>6</td><td>11</td><td>15</td></tr>
+            <tr><td><strong>S3 — Pipeline Security</strong></td><td>YAML only, fork protection, templates</td><td><strong>15</strong>&nbsp;pts</td><td>5</td><td>10</td><td>15</td></tr>
+            <tr><td><strong>S4 — Repository Security</strong></td><td>Branch policies, CODEOWNERS, PR obligatoire</td><td><strong>12</strong>&nbsp;pts</td><td>5</td><td>9</td><td>12</td></tr>
+            <tr><td><strong>S5 — Variable Groups &amp; Secrets</strong></td><td>Key Vault-linked VG, secrets masqués</td><td><strong>10</strong>&nbsp;pts</td><td>4</td><td>7</td><td>10</td></tr>
+            <tr><td><strong>S6 — GHAS-ADO</strong></td><td>Secret scan, Code scan, Dep scan</td><td><strong>10</strong>&nbsp;pts</td><td>3</td><td>7</td><td>10</td></tr>
+            <tr><td><strong>S7 — Artifact Security</strong></td><td>Feed interne, upstream sources</td><td><strong>8</strong>&nbsp;pts</td><td>3</td><td>5</td><td>8</td></tr>
+            <tr><td><strong>S8 — Audit Logs</strong></td><td>Audit streams, supervision externe, détections</td><td><strong>7</strong>&nbsp;pts</td><td>3</td><td>5</td><td>7</td></tr>
+            <tr><td><strong>S9 — Environments &amp; Approvals</strong></td><td>Approval gates, branch control, exclusive lock</td><td><strong>5</strong>&nbsp;pts</td><td>2</td><td>3</td><td>5</td></tr>
+            <tr><td><strong>S10 — Conformité &amp; Gouvernance</strong></td><td>Public projects OFF, ADO as Code</td><td><strong>3</strong>&nbsp;pts</td><td>1</td><td>2</td><td>3</td></tr>
+            <tr style="font-weight:bold;background:var(--azure-dark);color:#fff"><td colspan="2">TOTAL</td><td>100 pts</td><td>38</td><td>70</td><td>100</td></tr>
+        </tbody>
+    </table>
+    </div>
+
+    <h3>Niveaux de maturité</h3>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;margin-top:1rem">
+        <div style="border:2px solid var(--danger-red);border-radius:8px;padding:1rem">
+            <div style="font-size:2rem;font-weight:900;color:var(--danger-red)">32 / 100</div>
+            <div style="font-weight:700">&#x1F534; État défaut</div>
+            <div style="font-size:.85rem;margin-top:.4rem">Configuration ADO out-of-the-box sans durcissement. Exposition maximale aux risques courants (PAT compromis, injection YAML, dépendances malveillantes).</div>
+        </div>
+        <div style="border:2px solid var(--warning-orange);border-radius:8px;padding:1rem">
+            <div style="font-size:2rem;font-weight:900;color:var(--warning-orange)">38 / 100</div>
+            <div style="font-weight:700">&#x26A1; Quick Wins (1-2j)</div>
+            <div style="font-size:.85rem;margin-top:.4rem">Actions rapides sans investissement licence. Couvre les vecteurs d'attaque les plus courants en quelques heures. Objectif minimal recommandé.</div>
+        </div>
+        <div style="border:2px solid var(--azure-blue);border-radius:8px;padding:1rem">
+            <div style="font-size:2rem;font-weight:900;color:var(--azure-blue)">70 / 100</div>
+            <div style="font-weight:700">&#x1F512; Niveau Avancé (2-4 sem.)</div>
+            <div style="font-size:.85rem;margin-top:.4rem">WIF, GHAS-ADO activé, audit logs exportés, approval gates prod. Conforme aux recommandations CIS ADO Benchmark. Objectif cible pour la plupart des organisations.</div>
+        </div>
+        <div style="border:2px solid var(--success-green);border-radius:8px;padding:1rem">
+            <div style="font-size:2rem;font-weight:900;color:var(--success-green)">100 / 100</div>
+            <div style="font-weight:700">&#x1F3AF; Optimal (&gt; 1 mois)</div>
+            <div style="font-size:.85rem;margin-top:.4rem">ADO as Code complet, supervision externe branchée, rétention alignée sur les exigences internes et policies maximales. Cible de maturité la plus élevée du guide.</div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════ MATRICE ═══════════════════════ -->
+<div class="section" id="matrice">
+    <div class="section-header blue">
+        <div class="section-number">&#x1F9ED;</div>
+        <div>
+            <div class="section-title">Matrice d'interactions entre sections</div>
+            <div class="section-desc">D&eacute;pendances et liens entre les 10 sections du guide</div>
+        </div>
+    </div>
+    <p>Ce guide interagit avec plusieurs autres guides du repository. Utilisez ces liens pour naviguer vers les guides complémentaires.</p>
+
+    <div class="table-container">
+    <table>
+        <thead><tr><th>Guide source</th><th>Relation</th><th>Guide cible</th><th>Sections concernées</th></tr></thead>
+        <tbody>
+            <tr><td><strong>azure_devops_guide</strong> (ce guide)</td><td>→ <em>déploie via</em></td><td>azure_appservice_guide</td><td>S3 (pipelines YAML de déploiement App Service)</td></tr>
+            <tr><td><strong>azure_devops_guide</strong></td><td>→ <em>déploie via</em></td><td>azure_aks_security_guide</td><td>S3 (pipelines YAML de déploiement AKS / kubectl)</td></tr>
+            <tr><td><strong>azure_devops_guide</strong></td><td>→ <em>utilise</em></td><td>azure_keyvault_guide</td><td>S5 (Key Vault-linked Variable Groups)</td></tr>
+            <tr><td><strong>azure_devops_guide</strong></td><td>↔ <em>interagit</em></td><td>entra_id_guide</td><td>S1 (MFA, Conditional Access, Entra ID policies), S2 (Workload Identity Federation)</td></tr>
+            <tr><td><strong>azure_devops_guide</strong></td><td>↔ <em>interagit</em></td><td>azure_governance_guide</td><td>S10 (policies org-level, RBAC ADO), Scores (benchmarks)</td></tr>
+            <tr><td><strong>azure_devops_guide</strong></td><td>→ <em>alimente</em></td><td>azure_monitor_guide</td><td>S8 (si Azure Monitor / Sentinel est retenu comme plateforme de supervision)</td></tr>
+            <tr><td><strong>azure_devops_guide</strong></td><td>→ <em>utilise</em></td><td>azure_managed_identity_guide</td><td>S2 (Workload Identity Federation remplace SP + secret)</td></tr>
+        </tbody>
+    </table>
+    </div>
+
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x1F4A1;</span>
+        <div>
+            <strong>Guide de navigation inter-guides</strong><br>
+            • <strong>Avant de lire ce guide</strong>&nbsp;: assurez-vous d'avoir configuré les bases Entra ID (MFA, Conditional Access) — voir <em>entra_id_guide</em>.<br>
+            • <strong>Après ce guide</strong>&nbsp;: configurez les targets de déploiement (App Service, AKS) et la supervision via votre plateforme SIEM / observabilité cible.<br>
+            • <strong>Priorité absolue</strong>&nbsp;: S1 (Auth) + S2 (Service Connections) + S5 (Secrets) — ces trois sections ont les impacts les plus importants sur la sécurité.
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════ SCRIPT ALL-IN-ONE ═══════════════════════ -->
+<div class="section" id="script">
+    <div class="section-header blue">
+        <div class="section-number">&#x1F4DC;</div>
+        <div>
+            <div class="section-title">Script All-in-One &mdash; Audit &amp; Configuration Azure DevOps</div>
+            <div class="section-desc">PowerShell + Azure CLI — id&eacute;mpotent, toutes phases</div>
+        </div>
+    </div>
+    <p>Ce script PowerShell all-in-one audite et configure votre organisation Azure DevOps en 10 phases correspondant aux sections de ce guide.
+    Adaptez les variables en tête de script à votre environnement avant exécution.</p>
+
+    <div class="alert alert-warn">
+        <span class="alert-icon">&#x26A0;&#xFE0F;</span>
+        <div>
+            <strong>Prérequis avant exécution</strong><br>
+            • PowerShell 7+ installé (<code>winget install Microsoft.PowerShell</code>)<br>
+            • PAT ADO avec scope&nbsp;: <code>vso.code_manage</code>, <code>vso.audit</code>, <code>vso.security_manage</code>, <code>vso.tokens_manage</code><br>
+            • Azure CLI installé et connecté (<code>az login</code>) avec les droits Owner sur la subscription<br>
+            • Le script est <strong>idempotent</strong> — il peut être ré-exécuté sans risque de doublon
+        </div>
+    </div>
+
+    <div class="code-block">
+        <div class="code-header"><span>PowerShell — Script All-in-One Azure DevOps Security (10 phases)</span><button class="copy-btn">Copier</button></div>
+        <pre><span class="comment">########################################################################
+# AZURE DEVOPS SECURITY HARDENING SCRIPT — All-in-One
+# Auteur  : généré depuis azure-devops.html
+# Version : 1.1
+# Usage   : .\ado-security-hardening.ps1
+########################################################################</span>
+
+<span class="comment"># == VARIABLES — à adapter ==</span>
+<span class="keyword">$OrgName</span>        = <span class="string">"[VOTRE-ORG]"</span>       <span class="comment"># sans https://</span>
+<span class="keyword">$PAT</span>            = <span class="string">"[VOTRE-PAT]"</span>       <span class="comment"># scope : audit, code_manage, security_manage, tokens_manage</span>
+<span class="keyword">$ProjectName</span>    = <span class="string">"[VOTRE-PROJECT]"</span>   <span class="comment"># nom du projet ADO principal</span>
+<span class="keyword">$SubscriptionId</span> = <span class="string">"[SUBSCRIPTION-ID]"</span> <span class="comment"># pour les Service Connections WIF</span>
+<span class="keyword">$AuditStreamConsumer</span>    = <span class="string">"[AZUREEVENTHUB|SPLUNK]"</span> <span class="comment"># optionnel — pour S8</span>
+<span class="keyword">$AuditStreamBackfillDays</span> = 30                          <span class="comment"># optionnel — rattrapage des événements passés</span>
+
+<span class="comment"># == Initialisation ==</span>
+<span class="keyword">$BaseUrl</span>  = <span class="string">"https://dev.azure.com/<span class="keyword">$OrgName</span>"</span>
+<span class="keyword">$Token</span>    = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(":$PAT"))
+<span class="keyword">$headers</span>  = @{ Authorization = <span class="string">"Basic <span class="keyword">$Token</span>"</span>; Accept = <span class="string">"application/json"</span> }
+<span class="keyword">$results</span>  = @{}
+Write-Host <span class="string">"╔═══════════════════════════════════════════════════════════════╗"</span>
+Write-Host <span class="string">" Azure DevOps Security Hardening Script — All-in-One"</span>
+Write-Host <span class="string">"╚═══════════════════════════════════════════════════════════════╝"</span>
+
+<span class="comment"># == [1/10] S1 : Audit PAT ==</span>
+Write-Host <span class="string">"`n[1/10] Audit des PAT actifs..."</span> -ForegroundColor Cyan
+<span class="keyword">$patResponse</span> = Invoke-RestMethod -Uri <span class="string">"https://vssps.dev.azure.com/<span class="keyword">$OrgName</span>/_apis/tokens/pats?api-version=7.1-preview.1"</span> -Headers <span class="keyword">$headers</span>
+<span class="comment"># Risque = pas d'expiration OU expiration > 180 jours OU scope large (_full / _manage / AllScopes)</span>
+<span class="keyword">$riskyPATs</span>   = <span class="keyword">$patResponse</span>.value | Where-Object {
+    (-not <span class="keyword">$_</span>.validTo) -or
+    ([DateTime]<span class="keyword">$_</span>.validTo -gt (Get-Date).AddDays(180)) -or
+    (<span class="keyword">$_</span>.scope -match <span class="string">"_full|_manage|app_token"</span>)
+}
+<span class="keyword">$results</span>[<span class="string">"S1_RiskyPATs"</span>] = <span class="keyword">$riskyPATs</span>.Count
+Write-Host <span class="string">"  PAT à risque détectés : $($riskyPATs.Count)"</span> -ForegroundColor (<span class="keyword">if</span> (<span class="keyword">$riskyPATs</span>.Count -gt 0) { <span class="string">"Red"</span> } <span class="keyword">else</span> { <span class="string">"Green"</span> })
+
+<span class="comment"># == [2/10] S2 : Audit Service Connections ==</span>
+Write-Host <span class="string">"
+[2/10] Audit des Service Connections..."</span> -ForegroundColor Cyan
+<span class="keyword">$scResponse</span>   = Invoke-RestMethod -Uri <span class="string">"<span class="keyword">$BaseUrl</span>/<span class="keyword">$ProjectName</span>/_apis/serviceendpoint/endpoints?api-version=7.1-preview.4"</span> -Headers <span class="keyword">$headers</span>
+<span class="keyword">$scWithSecret</span> = <span class="keyword">$scResponse</span>.value | Where-Object { <span class="keyword">$_</span>.authorization.scheme -eq <span class="string">"ServicePrincipal"</span> -and <span class="keyword">$_</span>.data.PSObject.Properties.Name -contains <span class="string">"referenceName"</span> -eq $false }
+<span class="keyword">$results</span>[<span class="string">"S2_SCWithSecret"</span>] = <span class="keyword">$scWithSecret</span>.Count
+Write-Host <span class="string">"  Service Connections avec secret (non-WIF) : $($scWithSecret.Count)"</span> -ForegroundColor (<span class="keyword">if</span> (<span class="keyword">$scWithSecret</span>.Count -gt 0) { <span class="string">"Yellow"</span> } <span class="keyword">else</span> { <span class="string">"Green"</span> })
+
+<span class="comment"># == [3/10] S3 : Vérifier Classic Pipelines ==</span>
+Write-Host <span class="string">"
+[3/10] Vérification Classic Pipelines..."</span> -ForegroundColor Cyan
+<span class="keyword">$classicBody</span> = @{ contributionIds = @(<span class="string">"ms.vss-build-web.pipelines-general-settings-data-provider"</span>); dataProviderContext = @{ properties = @{ sourcePage = @{ routeValues = @{ project = <span class="keyword">$ProjectName</span> }}}}} | ConvertTo-Json -Depth 10
+<span class="keyword">$classicResp</span> = Invoke-RestMethod -Uri <span class="string">"<span class="keyword">$BaseUrl</span>/_apis/Contribution/HierarchyQuery/project/<span class="keyword">$ProjectName</span>?api-version=5.0-preview"</span> -Method Post -Body <span class="keyword">$classicBody</span> -Headers <span class="keyword">$headers</span> -ContentType <span class="string">"application/json"</span>
+Write-Host <span class="string">"  Classic pipelines disabled : $($classicResp.dataProviders.'ms.vss-build-web.pipelines-general-settings-data-provider'.disableClassicPipelineCreation)"</span>
+
+<span class="comment"># == [4/10] S4 : Branch Policies ==</span>
+Write-Host <span class="string">"
+[4/10] Vérification Branch Policies sur main..."</span> -ForegroundColor Cyan
+<span class="keyword">$repoResp</span> = Invoke-RestMethod -Uri <span class="string">"<span class="keyword">$BaseUrl</span>/<span class="keyword">$ProjectName</span>/_apis/git/repositories?api-version=7.1-preview.1"</span> -Headers <span class="keyword">$headers</span>
+<span class="keyword">$repoId</span>   = <span class="keyword">$repoResp</span>.value[0].id
+<span class="keyword">$polResp</span>  = Invoke-RestMethod -Uri <span class="string">"<span class="keyword">$BaseUrl</span>/<span class="keyword">$ProjectName</span>/_apis/policy/configurations?api-version=7.1-preview.1"</span> -Headers <span class="keyword">$headers</span>
+<span class="keyword">$mainPolicies</span> = <span class="keyword">$polResp</span>.value | Where-Object { <span class="keyword">$_</span>.settings.scope.refName -eq <span class="string">"refs/heads/main"</span> }
+Write-Host <span class="string">"  Policies sur main : $($mainPolicies.Count)"</span> -ForegroundColor (<span class="keyword">if</span> (<span class="keyword">$mainPolicies</span>.Count -lt 2) { <span class="string">"Yellow"</span> } <span class="keyword">else</span> { <span class="string">"Green"</span> })
+
+<span class="comment"># == [5/10] S5 : Variable Groups ==</span>
+Write-Host <span class="string">"
+[5/10] Vérification Variable Groups..."</span> -ForegroundColor Cyan
+<span class="keyword">$vgResp</span>       = Invoke-RestMethod -Uri <span class="string">"<span class="keyword">$BaseUrl</span>/<span class="keyword">$ProjectName</span>/_apis/distributedtask/variablegroups?api-version=7.1-preview.2"</span> -Headers <span class="keyword">$headers</span>
+<span class="keyword">$kvLinkedVG</span>   = <span class="keyword">$vgResp</span>.value | Where-Object { <span class="keyword">$_</span>.type -eq <span class="string">"AzureKeyVault"</span> }
+Write-Host <span class="string">"  Variable Groups Key Vault-linked : $($kvLinkedVG.Count) / $($vgResp.count)"</span> -ForegroundColor Cyan
+
+<span class="comment"># == [6/10] S6 : GHAS-ADO ==</span>
+Write-Host <span class="string">"
+[6/10] Vérification GHAS-ADO (Advanced Security)..."</span> -ForegroundColor Cyan
+<span class="keyword">$ghasResp</span> = Invoke-RestMethod -Uri <span class="string">"<span class="keyword">$BaseUrl</span>/<span class="keyword">$ProjectName</span>/_apis/management/enablement?api-version=7.2-preview.1"</span> -Headers <span class="keyword">$headers</span> -ErrorAction SilentlyContinue
+<span class="keyword">$results</span>[<span class="string">"S6_GHAS"</span>] = <span class="keyword">$ghasResp</span>.advSecEnabled
+Write-Host <span class="string">"  GHAS-ADO activé : $($ghasResp.advSecEnabled)"</span> -ForegroundColor (<span class="keyword">if</span> (<span class="keyword">$ghasResp</span>.advSecEnabled) { <span class="string">"Green"</span> } <span class="keyword">else</span> { <span class="string">"Yellow"</span> })
+
+<span class="comment"># == [7/10] S7 : Feeds Artifacts ==</span>
+Write-Host <span class="string">"
+[7/10] Vérification Azure Artifacts feeds..."</span> -ForegroundColor Cyan
+<span class="keyword">$feedResp</span> = Invoke-RestMethod -Uri <span class="string">"https://feeds.dev.azure.com/<span class="keyword">$OrgName</span>/<span class="keyword">$ProjectName</span>/_apis/packaging/feeds?api-version=7.1-preview.1"</span> -Headers <span class="keyword">$headers</span> -ErrorAction SilentlyContinue
+Write-Host <span class="string">"  Feeds définis : $($feedResp.count)"</span> -ForegroundColor Cyan
+
+<span class="comment"># == [8/10] S8 : Audit Log Streams ==</span>
+Write-Host <span class="string">"
+[8/10] Vérification streaming audit logs..."</span> -ForegroundColor Cyan
+<span class="keyword">$streamResp</span> = Invoke-RestMethod -Uri <span class="string">"https://auditservice.dev.azure.com/<span class="keyword">$OrgName</span>/_apis/audit/streams?api-version=7.1-preview.1"</span> -Headers <span class="keyword">$headers</span> -ErrorAction SilentlyContinue
+<span class="keyword">$results</span>[<span class="string">"S8_AuditStreams"</span>] = <span class="keyword">$streamResp</span>.count
+Write-Host <span class="string">"  Audit streams configurés : $($streamResp.count)"</span> -ForegroundColor (<span class="keyword">if</span> (<span class="keyword">$streamResp</span>.count -gt 0) { <span class="string">"Green"</span> } <span class="keyword">else</span> { <span class="string">"Red"</span> })
+
+<span class="comment"># == [9/10] S9 : Environments ==</span>
+Write-Host <span class="string">"
+[9/10] Vérification des Environments..."</span> -ForegroundColor Cyan
+<span class="keyword">$envResp</span> = Invoke-RestMethod -Uri <span class="string">"<span class="keyword">$BaseUrl</span>/<span class="keyword">$ProjectName</span>/_apis/distributedtask/environments?api-version=7.1-preview.1"</span> -Headers <span class="keyword">$headers</span> -ErrorAction SilentlyContinue
+Write-Host <span class="string">"  Environments définis : $($envResp.count)"</span> -ForegroundColor (<span class="keyword">if</span> (<span class="keyword">$envResp</span>.count -ge 2) { <span class="string">"Green"</span> } <span class="keyword">else</span> { <span class="string">"Yellow"</span> })
+
+<span class="comment"># == [10/10] S10 : Org Settings ==</span>
+Write-Host <span class="string">"
+[10/10] Vérification Organisation Settings..."</span> -ForegroundColor Cyan
+<span class="keyword">$orgPolicies</span> = Invoke-RestMethod -Uri <span class="string">"https://vsaex.dev.azure.com/<span class="keyword">$OrgName</span>/_apis/OrganizationPolicy/Policies?api-version=5.0-preview.1"</span> -Headers <span class="keyword">$headers</span> -ErrorAction SilentlyContinue
+Write-Host <span class="string">"  Policies org récupérées : $($orgPolicies.count)"</span>
+
+<span class="comment"># == Résumé ==</span>
+Write-Host <span class="string">"
+`u{2554}`u{2550}`u{2550}`u{2550}`u{2550}`u{2550} RÉSUMÉ DE L'AUDIT `u{2550}`u{2550}`u{2550}`u{2550}`u{2550}`u{2557}"</span> -ForegroundColor White
+Write-Host <span class="string">" PAT à risque    : $($results.S1_RiskyPATs)"</span>    -ForegroundColor (<span class="keyword">if</span> (<span class="keyword">$results</span>.S1_RiskyPATs -gt 0) { <span class="string">"Red"</span> } <span class="keyword">else</span> { <span class="string">"Green"</span> })
+Write-Host <span class="string">" SC non-WIF      : $($results.S2_SCWithSecret)"</span>  -ForegroundColor (<span class="keyword">if</span> (<span class="keyword">$results</span>.S2_SCWithSecret -gt 0) { <span class="string">"Yellow"</span> } <span class="keyword">else</span> { <span class="string">"Green"</span> })
+Write-Host <span class="string">" GHAS activé    : $($results.S6_GHAS)"</span>           -ForegroundColor (<span class="keyword">if</span> (<span class="keyword">$results</span>.S6_GHAS) { <span class="string">"Green"</span> } <span class="keyword">else</span> { <span class="string">"Yellow"</span> })
+Write-Host <span class="string">" Audit streams   : $($results.S8_AuditStreams)"</span>    -ForegroundColor (<span class="keyword">if</span> (<span class="keyword">$results</span>.S8_AuditStreams -gt 0) { <span class="string">"Green"</span> } <span class="keyword">else</span> { <span class="string">"Red"</span> })
+Write-Host <span class="string">"`u{255A}`u{2550}`u{2550}`u{2550}`u{2550}`u{2550}`u{2550}`u{2550}`u{2550}`u{2550}`u{2550}`u{2550}`u{2550}`u{2550}`u{2550}`u{2550}`u{2550}`u{2550}`u{2550}`u{2550}`u{2550}`u{2550}`u{2550}`u{2550}`u{2550}`u{2550}`u{255D}"</span> -ForegroundColor White</pre>
+    </div>
+</div>
+
+<!-- ═══════════════════════ CHECKLIST ═══════════════════════ -->
+<div class="section" id="checklist">
+    <div class="section-header blue">
+        <div class="section-number">&#x2714;</div>
+        <div>
+            <div class="section-title">Checklist de d&eacute;ploiement</div>
+            <div class="section-desc">Phase 1 Quick Win → Phase finale V&eacute;rification</div>
+        </div>
+    </div>
+    <p>4 phases progressives pour durcir votre Azure DevOps de l'état défaut au niveau optimal.</p>
+
+    <h3>Phase 1 — Quick Wins (Jour 1, sans licence supplémentaire)</h3>
+    <div class="checklist-item"><input type="checkbox"><span><strong>[S1]</strong> Vérifier que MFA est activé pour tous les comptes ADO (Entra ID → Security Defaults ou CA Policy)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span><strong>[S1]</strong> Révoquer les PAT avec scope Full Access ou expiration &gt; 90 jours</span></div>
+    <div class="checklist-item"><input type="checkbox"><span><strong>[S4]</strong> Activer "Require a minimum number of reviewers" (min. 2) sur la branch <code>main</code></span></div>
+    <div class="checklist-item"><input type="checkbox"><span><strong>[S4]</strong> Activer "Require build to succeed" avant merge sur <code>main</code></span></div>
+    <div class="checklist-item"><input type="checkbox"><span><strong>[S10]</strong> Désactiver "Allow public projects" (Organization Settings → Policies)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span><strong>[S10]</strong> Désactiver "Allow third-party application access via OAuth"</span></div>
+    <div class="checklist-item"><input type="checkbox"><span><strong>[Script]</strong> Exécuter le script all-in-one en mode audit pour inventorier l'état actuel</span></div>
+
+    <h3>Phase 2 — Pipeline &amp; Repos (Semaine 1-2)</h3>
+    <div class="checklist-item"><input type="checkbox"><span><strong>[S2]</strong> Migrer toutes les Service Connections vers Workload Identity Federation (WIF)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span><strong>[S3]</strong> Désactiver Classic Pipelines (Org Settings → Pipelines → General)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span><strong>[S3]</strong> Convertir tous les pipelines Classic en YAML</span></div>
+    <div class="checklist-item"><input type="checkbox"><span><strong>[S3]</strong> Activer "Protect access to repositories in YAML pipelines"</span></div>
+    <div class="checklist-item"><input type="checkbox"><span><strong>[S4]</strong> Créer le fichier <code>CODEOWNERS</code> dans chaque repo avec les responsables par dossier</span></div>
+    <div class="checklist-item"><input type="checkbox"><span><strong>[S9]</strong> Créer les Environments "staging" et "production" dans Pipelines</span></div>
+    <div class="checklist-item"><input type="checkbox"><span><strong>[S9]</strong> Configurer Approval Gate + Branch Control (main) + Exclusive Lock sur "production"</span></div>
+
+    <h3>Phase 3 — Secrets &amp; Scanning (Semaine 2-4)</h3>
+    <div class="checklist-item"><input type="checkbox"><span><strong>[S5]</strong> Créer un Azure Key Vault dédié à ADO et y migrer tous les secrets de pipeline</span></div>
+    <div class="checklist-item"><input type="checkbox"><span><strong>[S5]</strong> Créer un Variable Group Key Vault-linked et l'utiliser dans tous les pipelines</span></div>
+    <div class="checklist-item"><input type="checkbox"><span><strong>[S6]</strong> Activer GHAS-ADO sur tous les repos avec du code de production</span></div>
+    <div class="checklist-item"><input type="checkbox"><span><strong>[S6]</strong> Trier les alertes initiales (faux positifs → dismissés, vrais positifs → tickets)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span><strong>[S6]</strong> Activer Push Protection (Secret Scanning) pour bloquer les secrets à la source</span></div>
+    <div class="checklist-item"><input type="checkbox"><span><strong>[S7]</strong> Créer les feeds Azure Artifacts et configurer les upstream sources</span></div>
+
+    <h3>Phase 4 — Gouvernance &amp; Audit (Mois 1+)</h3>
+    <div class="checklist-item"><input type="checkbox"><span><strong>[S1]</strong> Configurer Conditional Access Policy pour ADO (MFA + Named Locations)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span><strong>[S8]</strong> Configurer un audit stream vers un consumer externe documenté</span></div>
+    <div class="checklist-item"><input type="checkbox"><span><strong>[S8]</strong> Créer les détections côté SIEM / supervision pour les événements sensibles</span></div>
+    <div class="checklist-item"><input type="checkbox"><span><strong>[S10]</strong> Migrer la configuration ADO vers Terraform (ADO as Code)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span><strong>[S10]</strong> Planifier une revue trimestrielle des accès (membres, admins, Service Connections)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span><strong>[Scores]</strong> Évaluer le score de sécurité /100 et fixer les objectifs de la prochaine itération</span></div>
+</div>
+
+<!-- ═══════════════════════ GLOSSAIRE ═══════════════════════ -->
+<div class="section" id="glossaire">
+    <div class="section-header blue">
+        <div class="section-number">&#x1F4D8;</div>
+        <div>
+            <div class="section-title">Glossaire</div>
+            <div class="section-desc">D&eacute;finitions des acronymes et concepts cl&eacute;s Azure DevOps</div>
+        </div>
+    </div>
+    <div class="table-container">
+    <table>
+        <thead><tr><th>Terme</th><th>Définition</th><th>Section</th></tr></thead>
+        <tbody>
+            <tr><td><strong>ADO</strong></td><td>Azure DevOps — plateforme Microsoft de dev collaboratif (repos, pipelines, boards, artifacts)</td><td>Tout</td></tr>
+            <tr><td><strong>PAT</strong></td><td>Personal Access Token — jeton d'authentification ADO lié à un compte utilisateur. Alternative aux mots de passe pour l'API REST.</td><td>S1</td></tr>
+            <tr><td><strong>WIF</strong></td><td>Workload Identity Federation — mécanisme permettant à un pipeline ADO de s'authentifier sur Azure sans secret statique, via des tokens OIDC éphémères.</td><td>S2</td></tr>
+            <tr><td><strong>SP</strong></td><td>Service Principal — identité applicative dans Entra ID. Utilisée par les Service Connections ADO (ancienne méthode — remplacer par WIF).</td><td>S2</td></tr>
+            <tr><td><strong>GHAS-ADO</strong></td><td>GitHub Advanced Security for Azure DevOps — fonctionnalité payante ajoutant le Secret Scanning, le Code Scanning (CodeQL) et le Dependency Scanning à ADO.</td><td>S6</td></tr>
+            <tr><td><strong>YAML</strong></td><td>YAML Ain't Markup Language — format texte utilisé pour définir les pipelines ADO. Les pipelines YAML sont versionés dans le repo (vs Classic qui sont dans l'interface UI).</td><td>S3</td></tr>
+            <tr><td><strong>SAST</strong></td><td>Static Application Security Testing — analyse du code source à la recherche de vulnérabilités sans exécuter le programme. Implémenté par CodeQL dans GHAS-ADO.</td><td>S6</td></tr>
+            <tr><td><strong>SCA</strong></td><td>Software Composition Analysis — analyse des dépendances tierces (npm, NuGet, Maven) pour détecter les CVE connues. Implémenté par Dependency Scanning GHAS-ADO.</td><td>S6, S7</td></tr>
+            <tr><td><strong>CodeQL</strong></td><td>Moteur d'analyse sémantique de code développé par GitHub. Utilisé par GHAS-ADO pour le Code Scanning (SAST). Supporte&nbsp;: C/C++, C#, Java, JavaScript, Python, Go, Ruby, Swift.</td><td>S6</td></tr>
+            <tr><td><strong>RBAC</strong></td><td>Role-Based Access Control — modèle de contrôle d'accès par rôles. Dans Azure&nbsp;: Owner / Contributor / Reader. Dans ADO&nbsp;: Project Administrator, Build Administrator, etc.</td><td>S2, S10</td></tr>
+            <tr><td><strong>CA</strong></td><td>Conditional Access — politique Entra ID qui conditionne l'accès aux applications (dont ADO) à des critères&nbsp;: MFA, localisation IP, conformité de l'appareil.</td><td>S1</td></tr>
+            <tr><td><strong>CI/CD</strong></td><td>Continuous Integration / Continuous Deployment — pratique d'automatisation du build, des tests et du déploiement applicatif. Les pipelines ADO implémentent le CI/CD.</td><td>S3, S9</td></tr>
+            <tr><td><strong>PR</strong></td><td>Pull Request — demande de merge d'une branch vers une autre. Dans ADO&nbsp;: mécanisme de révision du code. Les branch policies peuvent rendre les PR obligatoires sur <code>main</code>.</td><td>S4</td></tr>
+            <tr><td><strong>CODEOWNERS</strong></td><td>Fichier de configuration Git définissant les propriétaires responsables de chaque partie du code. Dans ADO&nbsp;: utilisé avec la policy "Required reviewers" pour notifications automatiques.</td><td>S4</td></tr>
+            <tr><td><strong>CVE</strong></td><td>Common Vulnerabilities and Exposures — identifiant standardisé pour les vulnérabilités sécurité (ex&nbsp;: CVE-2021-44228 = Log4Shell). Référencé par le Dependency Scanning GHAS-ADO.</td><td>S6, S7</td></tr>
+            <tr><td><strong>SBOM</strong></td><td>Software Bill of Materials — inventaire exhaustif des composants logiciels (librairies, dépendances, versions) d'une application. Concept utile pour la supply chain logicielle, mais non documenté ici comme sortie native de GHAS-ADO.</td><td>S6, S7</td></tr>
+            <tr><td><strong>MSA</strong></td><td>Microsoft Account — compte Microsoft personnel (ex&nbsp;: user@outlook.com). À ne pas confondre avec un compte Entra ID professionnel. Les MSA ne supportent pas toutes les politiques de sécurité ADO.</td><td>S1</td></tr>
+            <tr><td><strong>KQL</strong></td><td>Kusto Query Language — langage de requête Microsoft pour interroger Log Analytics, Azure Data Explorer, et Sentinel. Peut être utilisé si les audit streams ADO sont envoyés vers une plateforme compatible.</td><td>S8</td></tr>
+            <tr><td><strong>WI</strong></td><td>Workload Identity — identité non humaine (managed identity, service principal, federated identity) utilisée par des applications et pipelines pour s'authentifier sur Azure sans mots de passe.</td><td>S2</td></tr>
+        </tbody>
+    </table>
+    </div>
+</div>
+
+</div><!-- /container -->
+
+<!-- ═══════════════════════ FOOTER ═══════════════════════ -->
+<footer>
+    <strong>Azure DevOps Security Guide</strong> &mdash; Version 1.0 &mdash; Avril 2026 &mdash;
+    R&eacute;f. : <a href="https://learn.microsoft.com/fr-fr/azure/devops/organizations/security/security-overview" target="_blank">Microsoft Learn — Azure DevOps Security</a>
+    &nbsp;|&nbsp; <a href="https://learn.microsoft.com/fr-fr/azure/devops/pipelines/security/overview" target="_blank">Pipeline Security</a>
+    &nbsp;|&nbsp; CIS Azure DevOps Benchmark
+</footer>
+
+<script>
+    // Copy button functionality
+    document.querySelectorAll('.copy-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const pre = this.closest('.code-block').querySelector('pre');
+            navigator.clipboard.writeText(pre.innerText).then(() => {
+                const orig = this.textContent;
+                this.textContent = '✓ Copié';
+                setTimeout(() => this.textContent = orig, 2000);
+            });
+        });
+    });
+</script>
+<script id="v1a-script">
+(function(){
+  const sidebar = document.querySelector('.v1a-sidebar');
+  if(!sidebar) return;
+  const accs = [...sidebar.querySelectorAll('details.acc')];
+  accs.forEach(a => a.addEventListener('toggle', () => {
+    if(a.open) accs.forEach(o => { if(o!==a) o.open = false; });
+  }));
+  const links = [...sidebar.querySelectorAll('.acc-body a[href^="#"]')];
+  const map = new Map(links.map(a => [a.getAttribute('href').slice(1), a]));
+  const sections = [...document.querySelectorAll('.section[id], section[id]')];
+  function onScroll(){
+    const y = window.scrollY + 120;
+    let cur = null;
+    for(const s of sections){ if(s.offsetTop <= y) cur = s; else break; }
+    links.forEach(a => a.classList.remove('active'));
+    if(cur){
+      const a = map.get(cur.id);
+      if(a){
+        a.classList.add('active');
+        const det = a.closest('details.acc');
+        if(det && !det.open){ accs.forEach(o=>o.open=false); det.open = true; }
+      }
+    }
+  }
+  document.addEventListener('scroll', onScroll, {passive:true});
+  onScroll();
+})();
+</script>
+</main>
+</div>
+</body>
+</html>

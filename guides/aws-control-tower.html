@@ -1,0 +1,2455 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!--
+    File: aws-control-tower.html
+    Version: 1.1
+    Updated: Mai 2026
+    Refs: QUALITY_STANDARDS.md, CONSTRAINTS_CHECKLIST.md, CONTENT_RULES_AWS.md
+    -->
+    <title>AWS Control Tower &mdash; Landing Zone, Gouvernance Multi-Compte &amp; Guardrails &mdash; Guide de Configuration &amp; Audit</title>
+    <style>
+        :root {
+            --aws-orange: #ff9900;
+            --aws-dark: #232f3e;
+            --aws-blue: #1a73e8;
+            --aws-light: #fef9f0;
+            --success-green: #1d8102;
+            --warning-orange: #d75300;
+            --danger-red: #cc0000;
+            --neutral-bg: #f3f2f1;
+            --neutral-dark: #232f3e;
+            --neutral-medium: #5f6b7c;
+            --white: #ffffff;
+            --shadow: 0 2px 8px rgba(0,0,0,0.12);
+            --shadow-hover: 0 4px 16px rgba(0,0,0,0.18);
+            --radius: 8px;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--neutral-bg); color: var(--neutral-dark); line-height: 1.6; }
+        a { color: var(--aws-blue); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        code { font-family: 'Cascadia Code', Consolas, 'Courier New', monospace; font-size: 0.88em; background: #e8e6e4; padding: 1px 6px; border-radius: 3px; }
+        .hero { background: var(--aws-dark); border-bottom: 4px solid var(--aws-orange); padding: 40px 40px 32px; text-align: center; max-width: 1400px; margin: 0 auto; }
+        .hero h1 { font-size: 1.7em; font-weight: 700; color: #ffffff; margin-bottom: 6px; letter-spacing: -0.3px; }
+        .hero .subtitle { font-size: 0.95em; color: #c8cfe0; max-width: 900px; margin: 0 auto; }
+        .hero .badge-row { margin-top: 16px; display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; }
+        .hero .badge { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #ffffff; padding: 4px 12px; border-radius: 4px; font-size: 0.78em; }
+        .hero .meta-row { margin-top: 14px; display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; font-size: 0.8em; color: #c8cfe0; }
+        .hero .meta-row strong { color: var(--aws-orange); }
+        .nav-container { max-width: 1400px; margin: 0 auto; border-bottom: 2px solid var(--aws-orange); position: sticky; top: 0; z-index: 100; background: var(--aws-dark); }
+        .nav-container nav { display: flex; justify-content: center; gap: 0; overflow-x: auto; padding: 0; }
+        .nav-container nav a { text-decoration: none; color: #c8cfe0; padding: 10px 14px; font-size: 0.78em; font-weight: 500; white-space: nowrap; border-bottom: 2px solid transparent; transition: all 0.2s; }
+        .nav-container nav a:hover { color: var(--aws-orange); border-bottom-color: var(--aws-orange); text-decoration: none; }
+        .container { max-width: 1400px; margin: 0 auto; padding: 30px 40px; }
+        .section { background: var(--white); border-radius: var(--radius); box-shadow: var(--shadow); padding: 28px 32px; margin-bottom: 28px; transition: box-shadow 0.2s; }
+        .section:hover { box-shadow: var(--shadow-hover); }
+        .section-header { display: flex; align-items: center; gap: 15px; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid var(--neutral-bg); }
+        .section-header.orange { border-bottom-color: var(--aws-orange); }
+        .section-header.red { border-bottom-color: var(--danger-red); }
+        .section-header.blue { border-bottom-color: var(--aws-blue); }
+        .section-header.green { border-bottom-color: var(--success-green); }
+        .section-number { background: var(--aws-orange); color: white; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.1em; flex-shrink: 0; }
+        .section-number.red { background: var(--danger-red); }
+        .section-number.blue { background: var(--aws-blue); }
+        .section-number.green { background: var(--success-green); }
+        .section-number.dark { background: var(--aws-dark); }
+        .section-title { font-size: 1.35em; color: var(--aws-dark); font-weight: 700; }
+        .section-desc { font-size: 0.92em; color: var(--neutral-medium); margin-top: 2px; }
+        h3 { font-size: 1.05em; font-weight: 600; margin: 24px 0 10px 0; padding-left: 12px; border-left: 3px solid var(--aws-orange); }
+        .badge-sm { font-size: 0.7em; padding: 2px 8px; border-radius: 3px; font-weight: 600; vertical-align: middle; }
+        .badge-critical { background: #fde7e9; color: var(--danger-red); }
+        .badge-high { background: #fff3cd; color: #d75300; }
+        .badge-medium { background: #fff8e1; color: #6d4c00; }
+        .badge-low { background: #e8f5e9; color: var(--success-green); }
+        .lic { display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 0.72em; font-weight: 600; vertical-align: middle; margin-left: 4px; }
+        .lic-aws-free { background: #e8f5e9; color: #1d8102; }
+        .lic-aws-pay { background: #fff3cd; color: #d75300; }
+        .lic-aws-addon { background: #fde7e9; color: #cc0000; }
+        .lic-aws-org { background: #e3e8f0; color: #232f3e; }
+        .alert { border-radius: var(--radius); padding: 16px 20px; margin: 15px 0; font-size: 0.93em; line-height: 1.6; }
+        .alert:has(.alert-icon) { display: flex; gap: 12px; align-items: flex-start; }
+        .alert-icon { font-size: 1.2em; flex-shrink: 0; margin-top: 2px; }
+        .alert-info { background: #e6f2ff; border: 1px solid #b3d7ff; color: #004578; }
+        .alert-warn { background: #fff8e1; border: 1px solid #ffe082; color: #6d4c00; }
+        .alert-error { background: #fde7e9; border: 1px solid #f5c6cb; color: #721c24; }
+        .alert-ok { background: #e8f5e9; border: 1px solid #a5d6a7; color: #1b5e20; }
+        .table-container { overflow-x: auto; border-radius: var(--radius); box-shadow: 0 1px 4px rgba(0,0,0,0.08); margin: 12px 0 18px 0; }
+        table { width: 100%; border-collapse: collapse; background: var(--white); font-size: 0.9em; }
+        thead th { background: var(--aws-dark); color: white; padding: 12px 14px; text-align: left; font-weight: 600; font-size: 0.85em; text-transform: uppercase; letter-spacing: .3px; }
+        tbody td { padding: 10px 14px; border-bottom: 1px solid #edebe9; vertical-align: top; }
+        tbody tr:hover { background: #f8f7f6; }
+        tbody tr:last-child td { border-bottom: none; }
+        tr.row-ok { background: #f0fff0; }
+        tr.row-ko { background: #fff5f5; }
+        tr.row-warn { background: #fffdf0; }
+        .code-block { background: #1e1e1e; border-radius: var(--radius); overflow: hidden; margin: 12px 0 18px 0; }
+        .code-header { display: flex; justify-content: space-between; align-items: center; padding: 8px 14px; background: #2d2d2d; font-size: 0.78em; color: #a0a0a0; }
+        .copy-btn { background: var(--aws-orange); color: white; border: none; padding: 4px 12px; border-radius: 4px; cursor: pointer; font-size: 0.85em; transition: background 0.2s; }
+        .copy-btn:hover { background: #e68a00; }
+        .code-block pre { padding: 16px 18px; color: #d4d4d4; font-family: 'Cascadia Code', Consolas, monospace; font-size: 0.85em; overflow-x: auto; white-space: pre; line-height: 1.55; }
+        .code-block pre .comment { color: #6a9955; }
+        .code-block pre .keyword { color: #569cd6; }
+        .code-block pre .string { color: #ce9178; }
+        .code-block pre .param { color: #9cdcfe; }
+        .code-block pre .var { color: #4ec9b0; }
+        .step { display: flex; gap: 12px; margin-bottom: 10px; padding: 14px 16px; background: #faf9f8; border-radius: var(--radius); border-left: 3px solid var(--aws-orange); font-size: 0.93em; }
+        .step.step-red { border-left-color: var(--danger-red); }
+        .step.step-green { border-left-color: var(--success-green); }
+        .step.step-blue { border-left-color: var(--aws-blue); }
+        .step-n { min-width: 28px; height: 28px; border-radius: 50%; background: var(--aws-orange); color: white; display: flex; align-items: center; justify-content: center; font-size: 0.8em; font-weight: 700; flex-shrink: 0; }
+        .step-n.red { background: var(--danger-red); }
+        .step-n.green { background: var(--success-green); }
+        .step-n.blue { background: var(--aws-blue); }
+        .step-c { flex: 1; }
+        .hl { background: #fff3cd; padding: 1px 6px; border-radius: 3px; font-weight: 600; }
+        .hl-blue { background: #e6f2ff; padding: 1px 6px; border-radius: 3px; font-weight: 600; color: var(--aws-blue); }
+        .hl-green { background: #e8f5e9; padding: 1px 6px; border-radius: 3px; font-weight: 600; color: var(--success-green); }
+        .hl-red { background: #fde7e9; padding: 1px 6px; border-radius: 3px; font-weight: 600; color: var(--danger-red); }
+        .hl-orange { background: #fff3cd; padding: 1px 6px; border-radius: 3px; font-weight: 600; color: var(--warning-orange); }
+        .progress-bar { background: #e1dfdd; border-radius: 10px; height: 24px; overflow: hidden; margin: 12px 0; position: relative; }
+        .progress-fill { height: 100%; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 0.78em; font-weight: 700; color: white; transition: width 0.3s; }
+        .progress-fill.red { background: linear-gradient(90deg, #a01020, #cc0000); }
+        .progress-fill.orange { background: linear-gradient(90deg, #d75300, #ff9900); }
+        .progress-fill.green { background: linear-gradient(90deg, #1d8102, #2ea72e); }
+        .progress-fill.blue { background: linear-gradient(90deg, #232f3e, #1a73e8); }
+        .checklist-item { display: flex; align-items: flex-start; gap: 10px; padding: 8px 0; border-bottom: 1px solid #f3f2f1; }
+        .checklist-item:last-child { border-bottom: none; }
+        .checklist-item input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--aws-orange); flex-shrink: 0; margin-top: 3px; }
+        .level-comparison { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 16px 0; }
+        .level-card { border-radius: var(--radius); padding: 16px; text-align: center; }
+        .level-card.default { background: #f3f2f1; border: 2px solid #e1dfdd; }
+        .level-card.standard { background: #fff8e6; border: 2px solid #ffe082; }
+        .level-card.strict { background: #e8f5e9; border: 2px solid #a5d6a7; }
+        .level-card.custom { background: #e6f2ff; border: 2px solid #b3d7ff; }
+        .level-card h4 { font-size: 1em; margin-bottom: 4px; color: var(--aws-dark); }
+        .level-card .level-score { font-size: 2em; font-weight: 700; color: var(--aws-orange); }
+        .level-card .level-desc { font-size: 0.8em; color: var(--neutral-medium); margin-top: 4px; }
+        .cross-ref { display: inline-block; background: #e6f2ff; border: 1px solid #b3d7ff; border-radius: 4px; padding: 2px 10px; font-size: 0.82em; color: var(--aws-blue); margin: 2px; }
+        .diagram-block { background: #1e1e1e; color: #d4d4d4; border-radius: var(--radius); padding: 24px; margin: 16px 0; overflow-x: auto; font-family: 'Cascadia Code', Consolas, monospace; font-size: 0.78em; line-height: 1.35; white-space: pre; }
+        .diagram-block .d-ok { color: #4ec9b0; }
+        .diagram-block .d-ko { color: #f44747; }
+        .diagram-block .d-warn { color: #dcdcaa; }
+        .flow-diagram { background: linear-gradient(135deg, #1a1a2e 0%, #232f3e 50%, #0f3460 100%); border-radius: var(--radius); padding: 28px 24px; margin: 12px 0 18px 0; overflow-x: auto; }
+        .flow-diagram-title { text-align: center; color: #c8cfe0; font-size: 0.75em; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 20px; font-weight: 600; }
+        .flow-grid { display: grid; gap: 0; align-items: stretch; }
+        .flow-col { display: flex; flex-direction: column; }
+        .flow-col-header { text-align: center; font-size: 0.72em; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; padding-bottom: 8px; margin-bottom: 12px; border-bottom: 2px solid; border-color: var(--fc-color, #8892b0); color: var(--fc-color, #8892b0); }
+        .flow-col-body { display: flex; flex-direction: column; gap: 8px; flex: 1; }
+        .flow-card { border-radius: 6px; padding: 10px 12px; border-left: 3px solid var(--fc-color, #8892b0); }
+        .flow-card-title { font-weight: 700; font-size: 0.82em; color: var(--fc-color, #64ffda); }
+        .flow-card-detail { color: #c8cfe0; font-size: 0.72em; margin-top: 4px; font-family: 'Cascadia Code', Consolas, monospace; }
+        .flow-card-content { color: #c8cfe0; font-size: 0.75em; line-height: 1.5; }
+        .flow-card.green  { background: rgba(100,255,218,0.08); border-left-color: #64ffda; --fc-color: #64ffda; }
+        .flow-card.orange { background: rgba(255,153,0,0.08); border-left-color: #ff9900; --fc-color: #ff9900; }
+        .flow-card.blue   { background: rgba(26,115,232,0.08); border-left-color: #1a73e8; --fc-color: #569cd6; }
+        .flow-card.red    { background: rgba(204,0,0,0.08); border-left-color: #cc0000; --fc-color: #f44747; }
+        .flow-arrow { display: flex; align-items: center; justify-content: center; padding: 0 8px; }
+        .flow-arrow-line { flex: 1; height: 2px; background: rgba(255,153,0,0.4); }
+        .flow-arrow-head { width: 0; height: 0; border-top: 8px solid transparent; border-bottom: 8px solid transparent; border-left: 12px solid rgba(255,153,0,0.6); }
+        footer { background: var(--aws-dark); color: #c8cfe0; text-align: center; padding: 24px; margin-top: 40px; font-size: 0.8em; }
+        footer strong { color: var(--aws-orange); }
+        @media print {
+            body { background: white; font-size: 11px; }
+            .hero { padding: 16px; }
+            .nav-container { display: none; }
+            .container { max-width: 100%; padding: 0 16px; }
+            .section { box-shadow: none; border: 1px solid #ccc; break-inside: avoid; }
+        }
+        @media (max-width: 768px) {
+            .hero { padding: 24px 16px 20px; }
+            .hero h1 { font-size: 1.3em; }
+            .container { padding: 16px; }
+            .section { padding: 20px; }
+            .level-comparison { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+<style id="v1a-overlay">
+:root{--c:#0078d4;--azure-dark:#004578;--light:#deecf9;--bg:#f8f9fb;--surface:#fff;--border:#e3e6ec;--muted:#5b6478;--radius:14px}
+.nav-container,.back-to-index{display:none!important}
+body{background:var(--bg)}
+.v1a-layout{display:grid;grid-template-columns:280px 1fr;gap:0;align-items:start}
+.v1a-sidebar{position:sticky;top:0;height:100vh;overflow-y:auto;padding:18px 14px 24px;background:#fff;border-right:1px solid var(--border)}
+.v1a-main{min-width:0}
+.v1a-main .hero{max-width:none;margin:0;border-radius:0}
+.v1a-main .container{max-width:1200px}
+.back-index{display:inline-flex;align-items:center;gap:6px;margin:0 0 16px;padding:6px 10px;background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--muted);font-size:.78em;font-weight:500;text-decoration:none;transition:all .15s}
+.back-index:hover{background:transparent;border-color:var(--c);color:var(--azure-dark);text-decoration:none}
+.back-index .arr{font-size:1em;line-height:1;opacity:.85}
+.side-head{display:flex;align-items:center;gap:10px;padding:6px 6px 14px;border-bottom:1px solid var(--border);margin-bottom:12px}
+.side-head .ico{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--c),#50a4f0);display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.1em;flex-shrink:0}
+.side-head .t{font-weight:700;color:var(--azure-dark);font-size:.95em;line-height:1.15}
+.side-head .s{font-size:.72em;color:var(--muted);margin-top:2px;line-height:1.3}
+.acc{margin-bottom:6px;border-radius:10px;overflow:hidden}
+.acc>summary{list-style:none;cursor:pointer;padding:8px 10px;display:flex;align-items:center;gap:8px;color:var(--azure-dark);font-weight:600;font-size:.82em;border-radius:8px;user-select:none}
+.acc>summary::-webkit-details-marker{display:none}
+.acc>summary:hover{background:var(--bg)}
+.acc>summary .chev{margin-left:auto;font-size:.7em;transition:transform .15s;color:var(--muted)}
+.acc[open]>summary{background:var(--light);color:var(--c)}
+.acc[open]>summary .chev{transform:rotate(90deg)}
+.acc-body{padding:4px 0 6px 6px;display:flex;flex-direction:column;gap:2px}
+.acc-body a{display:flex;align-items:center;gap:8px;padding:6px 10px 6px 18px;border-radius:6px;font-size:.8em;color:var(--muted);text-decoration:none;border-left:2px solid transparent;transition:all .12s}
+.acc-body a:hover{color:var(--c);background:var(--bg);text-decoration:none}
+.acc-body a.active{color:var(--c);background:var(--light);border-left-color:var(--c);font-weight:600}
+.acc-body a .num{font-size:.7em;color:#9aa2b1;font-variant-numeric:tabular-nums;min-width:22px}
+.acc-body a.active .num{color:var(--c)}
+.side-foot{margin-top:14px;padding-top:12px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:4px}
+.side-foot a{display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:6px;font-size:.78em;color:var(--muted);text-decoration:none}
+.side-foot a:hover{color:var(--c);background:var(--bg);text-decoration:none}
+@media (max-width:900px){
+  .v1a-layout{grid-template-columns:1fr}
+  .v1a-sidebar{position:static;height:auto;border-right:none;border-bottom:1px solid var(--border)}
+}
+</style>
+<style id="theme-overlay" data-cat="aws">
+:root {
+  --c: #ff9900;
+}
+.v1a-topbar { background: linear-gradient(90deg, #ff9900, #ff9900) !important; }
+.v1a-side { --c: #ff9900 !important; }
+</style>
+</head>
+<body>
+<div class="v1a-layout">
+<aside class="v1a-sidebar">
+  <a href="../index.html" class="back-index" title="Revenir à l'index"><span class="arr" aria-hidden="true">&#127968;</span> Index</a>
+  <div class="side-head">
+    <div class="ico">&#x1F4D8;</div>
+    <div>
+      <div class="t">AWS Control Tower</div>
+      <div class="s">Guide complet de configuration, audit et gouvernance AWS Control Tower &mdash; Landing &hellip;</div>
+    </div>
+  </div>
+  <details class="acc" open>
+    <summary>Introduction <span class="chev">&rsaquo;</span></summary>
+    <div class="acc-body">
+      <a href="#guide"><span class="num">&bull;</span> Mode d'emploi</a>
+      <a href="#licences"><span class="num">&bull;</span> Co&ucirc;ts</a>
+    </div>
+  </details>
+  <details class="acc">
+    <summary>Sections <span class="chev">&rsaquo;</span></summary>
+    <div class="acc-body">
+      <a href="#s1"><span class="num">S1</span> Landing Zone</a>
+      <a href="#s2"><span class="num">S2</span> Guardrails</a>
+      <a href="#s3"><span class="num">S3</span> Account Factory</a>
+      <a href="#s4"><span class="num">S4</span> OU Structure</a>
+      <a href="#s5"><span class="num">S5</span> Drift</a>
+      <a href="#s6"><span class="num">S6</span> CfCT</a>
+      <a href="#s7"><span class="num">S7</span> AFT</a>
+      <a href="#s8"><span class="num">S8</span> Security Baseline</a>
+      <a href="#s9"><span class="num">S9</span> Reporting</a>
+      <a href="#s10"><span class="num">S10</span> Migration</a>
+    </div>
+  </details>
+  <details class="acc">
+    <summary>Annexes <span class="chev">&rsaquo;</span></summary>
+    <div class="acc-body">
+      <a href="#scores"><span class="num">&bull;</span> Scores</a>
+      <a href="#matrice"><span class="num">&bull;</span> Matrice</a>
+      <a href="#glossaire"><span class="num">&bull;</span> Glossaire</a>
+      <a href="#script"><span class="num">&bull;</span> &#x1F4DC; Script</a>
+      <a href="#checklist"><span class="num">&bull;</span> Checklist</a>
+    </div>
+  </details>
+  <div class="side-foot">
+    <a href="#top">&uarr; Retour en haut</a>
+    <a href="#" onclick="window.print();return false;">&#x2B07; Imprimer / PDF</a>
+    <a href="#" onclick="navigator.clipboard.writeText(location.href);this.textContent='&#x2713; Lien copié';return false;">&#x2398; Copier le lien</a>
+  </div>
+</aside>
+<main class="v1a-main">
+
+
+
+<!-- ═══════════════════════ BACK TO INDEX ═══════════════════════ -->
+<a href="../index.html" class="back-to-index" style="position:fixed;top:16px;left:16px;z-index:1000;display:inline-flex;align-items:center;gap:6px;padding:8px 14px;background:#0078d4;color:#fff;text-decoration:none;border-radius:8px;font:600 14px/1 'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;box-shadow:0 2px 8px rgba(0,0,0,0.15);transition:background .2s" onmouseover="this.style.background='#004578'" onmouseout="this.style.background='#0078d4'" aria-label="Retour à l'index">&larr;&nbsp;Index</a>
+<!-- ═══════════════════════ HEADER ═══════════════════════ -->
+<header class="hero">
+    <h1>AWS Control Tower &mdash; Landing Zone, Gouvernance Multi-Compte &amp; Guardrails</h1>
+    <p class="subtitle">Guide complet de configuration, audit et gouvernance AWS Control Tower &mdash; Landing Zone, Account Factory, Guardrails, Drift Detection et CfCT</p>
+    <div class="badge-row">
+        <span class="badge">AWS Control Tower</span>
+        <span class="badge">AWS Organizations</span>
+        <span class="badge">IAM Identity Center</span>
+        <span class="badge">AWS Config</span>
+        <span class="badge">CloudTrail</span>
+        <span class="badge">Account Factory for Terraform (AFT)</span>
+    </div>
+    <div class="meta-row">
+        <span>Version : <strong>1.1</strong></span>
+        <span>Derni&egrave;re MAJ : <strong>Mai 2026</strong></span>
+        <span>Console : <a href="https://console.aws.amazon.com/controltower/" target="_blank" style="color: var(--aws-orange);">console.aws.amazon.com/controltower</a></span>
+        <span>R&eacute;f. : <a href="https://docs.aws.amazon.com/controltower/" target="_blank" style="color: var(--aws-orange);">AWS Control Tower Documentation</a></span>
+    </div>
+</header>
+
+<!-- ═══════════════════════ NAV ═══════════════════════ -->
+<div class="nav-container">
+    <nav>
+        <a href="#guide">Mode d'emploi</a>
+        <a href="#licences">Co&ucirc;ts</a>
+        <a href="#s1">S1 Landing Zone</a>
+        <a href="#s2">S2 Guardrails</a>
+        <a href="#s3">S3 Account Factory</a>
+        <a href="#s4">S4 OU Structure</a>
+        <a href="#s5">S5 Drift</a>
+        <a href="#s6">S6 CfCT</a>
+        <a href="#s7">S7 AFT</a>
+        <a href="#s8">S8 Security Baseline</a>
+        <a href="#s9">S9 Reporting</a>
+        <a href="#s10">S10 Migration</a>
+        <a href="#scores">Scores</a>
+        <a href="#matrice">Matrice</a>
+        <a href="#glossaire">Glossaire</a>
+        <a href="#script">&#x1F4DC; Script</a>
+        <a href="#checklist">Checklist</a>
+    </nav>
+</div>
+
+<div class="container">
+
+<!-- ═══════════════════════ MODE D'EMPLOI ═══════════════════════ -->
+<div class="section" id="guide">
+    <div class="section-header orange">
+        <div class="section-number dark">&#x1F4D6;</div>
+        <div>
+            <div class="section-title">Mode d'emploi de ce guide</div>
+            <div class="section-desc">Strat&eacute;gie d'impl&eacute;mentation, p&eacute;rim&egrave;tre, audiences et solutions &eacute;cart&eacute;es</div>
+        </div>
+    </div>
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x1F4CB;</span>
+        <div>
+            Ce guide est un <strong>r&eacute;f&eacute;rentiel complet AWS Control Tower</strong> couvrant le d&eacute;ploiement d'une Landing Zone, la gouvernance multi-compte, les guardrails et l'Account Factory.
+            Il peut &ecirc;tre utilis&eacute; tel quel pour auditer un environnement existant ou planifier un d&eacute;ploiement greenfield.
+            <strong>Analogie cl&eacute; :</strong> Control Tower = <em>"promoteur immobilier s&eacute;curis&eacute;"</em> qui construit des logements standardis&eacute;s (comptes AWS) selon des normes de s&eacute;curit&eacute; strictes.
+        </div>
+    </div>
+
+    <h3>Convention des colonnes de scoring</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr><th>Colonne</th><th>Signification</th><th>Effort</th></tr></thead>
+        <tbody>
+            <tr><td><strong>D&eacute;faut AWS</strong></td><td>Valeur par d&eacute;faut &mdash; Control Tower non deploy&eacute; ou non configur&eacute;</td><td>0 min</td></tr>
+            <tr><td><strong>&#x26A1; Quick Win</strong></td><td>Actions rapides &mdash; <span class="hl-green">Gain imm&eacute;diat en &lt;30 min</span></td><td>&lt;30 min</td></tr>
+            <tr><td><strong>&#x1F512; Avanc&eacute;</strong></td><td>Configuration interm&eacute;diaire &mdash; Landing Zone + Guardrails de base</td><td>2-4h</td></tr>
+            <tr><td><strong>&#x1F3AF; Optimal</strong></td><td>Configuration compl&egrave;te &mdash; AFT + CfCT + Security Baseline totale</td><td>1-3j</td></tr>
+        </tbody>
+    </table>
+    </div>
+
+    <h3>Convention des badges de licence / co&ucirc;t</h3>
+    <p>
+        <span class="lic lic-aws-free">Gratuit</span> Inclus dans AWS Control Tower sans co&ucirc;t direct<br>
+        <span class="lic lic-aws-org">AWS Organizations</span> N&eacute;cessite AWS Organizations (gratuit)<br>
+        <span class="lic lic-aws-pay">Co&ucirc;t indirect</span> Engendre des co&ucirc;ts via les services sous-jacents (Config, CloudTrail, CloudWatch)<br>
+        <span class="lic lic-aws-addon">Add-on</span> Service tiers ou configuration suppl&eacute;mentaire requise
+    </p>
+
+    <h3>P&eacute;rim&egrave;tre de ce guide</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr><th>Sujet</th><th>Dans le p&eacute;rim&egrave;tre</th><th>Hors p&eacute;rim&egrave;tre (renvoi)</th></tr></thead>
+        <tbody>
+            <tr class="row-ok"><td>Landing Zone Setup (OU, comptes, CloudTrail, Config)</td><td>&#x2705; S1</td><td></td></tr>
+            <tr class="row-ok"><td>Guardrails (pr&eacute;ventifs, d&eacute;tectifs, proactifs)</td><td>&#x2705; S2</td><td></td></tr>
+            <tr class="row-ok"><td>Account Factory + AFT</td><td>&#x2705; S3, S7</td><td></td></tr>
+            <tr class="row-ok"><td>OU Structure &amp; Gouvernance</td><td>&#x2705; S4</td><td></td></tr>
+            <tr class="row-ok"><td>Drift Detection &amp; Remediation</td><td>&#x2705; S5</td><td></td></tr>
+            <tr class="row-ok"><td>CfCT (Customizations for Control Tower)</td><td>&#x2705; S6</td><td></td></tr>
+            <tr class="row-ok"><td>Security Baseline, Reporting, Migration</td><td>&#x2705; S8-S10</td><td></td></tr>
+            <tr class="row-ko"><td>AWS Organizations — SCPs d&eacute;taill&eacute;es</td><td></td><td>&#x274C; <a href="aws-organizations.html">aws-organizations.html</a></td></tr>
+            <tr class="row-ko"><td>AWS Config &mdash; r&egrave;gles d&eacute;taill&eacute;es</td><td></td><td>&#x274C; (guide &agrave; venir)</td></tr>
+            <tr class="row-ko"><td>IAM Identity Center (SSO d&eacute;taill&eacute;)</td><td></td><td>&#x274C; <a href="aws-iam-identity-center.html">aws-iam-identity-center.html</a></td></tr>
+            <tr class="row-ko"><td>Security Hub (findings d&eacute;taill&eacute;s)</td><td></td><td>&#x274C; <a href="aws-security-hub.html">aws-security-hub.html</a></td></tr>
+        </tbody>
+    </table>
+    </div>
+
+    <h3>Strat&eacute;gie de d&eacute;ploiement recommand&eacute;e</h3>
+    <div class="step step-green">
+        <div class="step-n green">1</div>
+        <div class="step-c"><strong>Quick Win</strong> &mdash; D&eacute;ployer la Landing Zone initiale avec les param&egrave;tres par d&eacute;faut (+20 pts, ~30 min une fois les pr&eacute;requis remplis)</div>
+    </div>
+    <div class="step step-green">
+        <div class="step-n green">2</div>
+        <div class="step-c"><strong>Activer les Strongly Recommended Guardrails</strong> &mdash; Activer les contr&ocirc;les fortement recommand&eacute;s pertinents pour vos OUs de production (+20 pts, ~1h)</div>
+    </div>
+    <div class="step">
+        <div class="step-n">3</div>
+        <div class="step-c"><strong>Structurer les OUs</strong> &mdash; Cr&eacute;er la hi&eacute;rarchie OU compl&egrave;te et associer les SCPs (+15 pts, ~2h)</div>
+    </div>
+    <div class="step">
+        <div class="step-n">4</div>
+        <div class="step-c"><strong>D&eacute;ployer Account Factory (ou AFT)</strong> &mdash; Standardiser la cr&eacute;ation de comptes (+20 pts, 1-3j pour AFT)</div>
+    </div>
+    <div class="step">
+        <div class="step-n">5</div>
+        <div class="step-c"><strong>CfCT + Security Baseline compl&egrave;te</strong> &mdash; Customizations, GuardDuty, Security Hub, Macie org-wide (+25 pts)</div>
+    </div>
+
+    <h3>Solutions &eacute;cart&eacute;es</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr><th>Alternative</th><th>Raison de l'&eacute;cart</th></tr></thead>
+        <tbody>
+            <tr><td><strong>AWS Organizations seul (sans Control Tower)</strong></td><td>Pas d'Account Factory, pas de guardrails pr&eacute;-int&eacute;gr&eacute;s, pas de Landing Zone automatis&eacute;e. Control Tower ajoute l'orchestration. Acceptable pour &lt;5 comptes uniquement.</td></tr>
+            <tr><td><strong>Terraform pur (sans AFT)</strong></td><td>Possible mais sans le pipeline d'approbation int&eacute;gr&eacute;, la gestion du lifecycle de comptes et les baselines automatiques qu'AFT fournit.</td></tr>
+            <tr><td><strong>Service Catalog seul</strong></td><td>Control Tower utilise Service Catalog en interne mais fournit un niveau d'abstraction sup&eacute;rieur avec la gouvernance int&eacute;gr&eacute;e.</td></tr>
+        </tbody>
+    </table>
+    </div>
+</div>
+
+<!-- ═══════════════════════ COÛTS ═══════════════════════ -->
+<div class="section" id="licences">
+    <div class="section-header orange">
+        <div class="section-number dark">&#x1F4B0;</div>
+        <div>
+            <div class="section-title">Mod&egrave;le de Co&ucirc;t AWS Control Tower <span class="lic lic-aws-free">Gratuit</span></div>
+            <div class="section-desc">Pas de co&ucirc;t additionnel pour Control Tower lui-m&ecirc;me ; facturation des services sous-jacents selon l'usage</div>
+        </div>
+    </div>
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x1F4A1;</span>
+        <div>
+            <strong>AWS Control Tower n'ajoute pas de frais de service d&eacute;di&eacute;s</strong>. Les co&ucirc;ts proviennent des services qu'il configure ou pilote selon votre landing zone et vos workloads : AWS Config, AWS CloudTrail, Amazon CloudWatch, AWS Service Catalog, Amazon SNS, Amazon S3, Amazon VPC et, le cas &eacute;ch&eacute;ant, les ressources AFT. Les montants varient selon le nombre de comptes, les r&eacute;gions gouvern&eacute;es, les contr&ocirc;les activ&eacute;s, la r&eacute;tention et le churn des ressources ; valider les montants sur les pages de pricing AWS et dans AWS Pricing Calculator.
+        </div>
+    </div>
+
+    <div class="table-container">
+    <table>
+        <thead><tr><th>Service</th><th>Mod&egrave;le de facturation</th><th>Rep&egrave;re 2026</th><th>Badge</th></tr></thead>
+        <tbody>
+            <tr class="row-ok"><td><strong>AWS Control Tower</strong></td><td>Aucun co&ucirc;t additionnel pour le service lui-m&ecirc;me</td><td><span class="hl-green">0 $ additionnel</span></td><td><span class="lic lic-aws-free">Gratuit</span></td></tr>
+            <tr class="row-ok"><td><strong>AWS Organizations</strong></td><td>Sans frais additionnels</td><td><span class="hl-green">0 $ additionnel</span></td><td><span class="lic lic-aws-free">Gratuit</span></td></tr>
+            <tr class="row-ok"><td><strong>IAM Identity Center</strong></td><td>Sans frais additionnels</td><td><span class="hl-green">0 $ additionnel</span></td><td><span class="lic lic-aws-free">Gratuit</span></td></tr>
+            <tr class="row-warn"><td><strong>AWS Config</strong></td><td>Configuration items, rule evaluations et conformance pack evaluations</td><td><span class="hl">Variable selon comptes, r&eacute;gions gouvern&eacute;es et churn</span></td><td><span class="lic lic-aws-pay">Co&ucirc;t indirect</span></td></tr>
+            <tr class="row-warn"><td><strong>AWS CloudTrail</strong></td><td>Trails et &eacute;v&eacute;nements selon votre design (trail g&eacute;r&eacute; par CT ou hors CT)</td><td><span class="hl">Variable selon activit&eacute; et data events</span></td><td><span class="lic lic-aws-pay">Co&ucirc;t indirect</span></td></tr>
+            <tr class="row-warn"><td><strong>Amazon CloudWatch Logs</strong></td><td>Ingestion, stockage et r&eacute;tention des logs</td><td><span class="hl">Variable selon volume et r&eacute;tention</span></td><td><span class="lic lic-aws-pay">Co&ucirc;t indirect</span></td></tr>
+            <tr class="row-warn"><td><strong>AWS Service Catalog</strong></td><td>Usage du service et des ressources associ&eacute;es</td><td><span class="hl">Variable selon le workflow Account Factory</span></td><td><span class="lic lic-aws-pay">Co&ucirc;t indirect</span></td></tr>
+            <tr class="row-warn"><td><strong>Amazon S3</strong> (Log Archive)</td><td>Stockage, r&eacute;tention, requ&ecirc;tes et lifecycle pour logs et archives</td><td><span class="hl">Variable selon volum&eacute;trie et r&eacute;tention</span></td><td><span class="lic lic-aws-pay">Co&ucirc;t indirect</span></td></tr>
+            <tr class="row-ko"><td><strong>Account Factory for Terraform (AFT)</strong></td><td>Services AFT du compte d&eacute;di&eacute; : CodePipeline, CodeBuild, DynamoDB, Lambda, Step Functions, S3, VPC/NAT optionnels</td><td><span class="hl">Variable ; r&eacute;ductible si <code>aft_enable_vpc=false</code> convient</span></td><td><span class="lic lic-aws-pay">Add-on AFT</span></td></tr>
+        </tbody>
+    </table>
+    </div>
+
+    <div class="alert alert-warn">
+        <span class="alert-icon">&#x26A0;&#xFE0F;</span>
+        <div>
+            <strong>Pi&egrave;ge co&ucirc;t AWS Config :</strong> AWS Control Tower peut faire d'AWS Config le principal poste de co&ucirc;t indirect, car la facturation suit les configuration items et les &eacute;valuations sur l'ensemble des comptes et des r&eacute;gions gouvern&eacute;es. Les workloads &eacute;ph&eacute;m&egrave;res amplifient fortement cette facture. R&eacute;duire les r&eacute;gions gouvern&eacute;es au strict n&eacute;cessaire, v&eacute;rifier les exclusions pertinentes et simuler le sc&eacute;nario dans le calculateur officiel.
+            Vérifier via : <a href="https://calculator.aws/pricing/2/estimator" target="_blank">AWS Pricing Calculator</a>.
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════ S1 — LANDING ZONE SETUP ═══════════════════════ -->
+<div class="section" id="s1">
+    <div class="section-header red">
+        <div class="section-number red">1</div>
+        <div>
+            <div class="section-title">Landing Zone Setup <span class="lic lic-aws-org">AWS Organizations</span></div>
+            <div class="section-desc">Pr&eacute;requis, structure OU, comptes partagés, CloudTrail org-wide, AWS Config, IAM Identity Center, KMS</div>
+        </div>
+    </div>
+    <div class="alert alert-error">
+        <span class="alert-icon">&#x1F6A8;</span>
+        <div>
+            <strong>Sc&eacute;nario :</strong> Un DevOps cr&eacute;e un compte AWS de test avec des droits admin. Il oublie de configurer CloudTrail, MFA et les SCP. 6 mois plus tard, une clé IAM est leakée sur GitHub. L'attaquant cr&eacute;e 50 instances EC2 dans 10 r&eacute;gions pour du crypto-mining : <strong>facture de 80 000 $ en 48h</strong>, aucune alerte, aucune trace.
+            <br><strong>Analogie :</strong> La Landing Zone = <em>"r&eacute;sidence s&eacute;curis&eacute;e"</em> : le complexe immobilier avec ses r&egrave;gles de copropri&eacute;t&eacute;. Sans elle, chaque logement (compte AWS) est construit par un artisan diff&eacute;rent, sans normes.
+        </div>
+    </div>
+
+    <h3>1.1 &mdash; Pr&eacute;requis avant d&eacute;ploiement</h3>
+    <div class="alert alert-warn">
+        <span class="alert-icon">&#x26A0;&#xFE0F;</span>
+        <div>
+            <strong>Pr&eacute;requis bloquants :</strong> (1) AWS Control Tower peut &ecirc;tre lanc&eacute; dans une organisation AWS Organizations <strong>nouvelle ou existante</strong>, mais les quotas doivent permettre la cr&eacute;ation d'au moins deux comptes suppl&eacute;mentaires. (2) Pr&eacute;voir deux adresses e-mail uniques pour <em>Log Archive</em> et <em>Audit</em>, sauf si vous r&eacute;utilisez des comptes existants compatibles. (3) Si IAM Identity Center est d&eacute;j&agrave; configur&eacute;, la r&eacute;gion home de Control Tower doit correspondre &agrave; la r&eacute;gion IAM Identity Center ; si IAM Identity Center est en <code>us-east-1</code>, Control Tower r&eacute;utilise cette instance. (4) Les endpoints STS doivent &ecirc;tre activ&eacute;s dans toutes les r&eacute;gions gouvern&eacute;es avant le lancement.
+        </div>
+    </div>
+
+    <div class="table-container">
+    <table>
+        <thead><tr>
+            <th>Pr&eacute;requis</th>
+            <th>D&eacute;faut AWS</th>
+            <th>&#x26A1; Quick Win</th>
+            <th>&#x1F512; Requis pour CT</th>
+            <th>&#x1F3AF; Best Practice</th>
+            <th>Source</th>
+        </tr></thead>
+        <tbody>
+            <tr class="row-ko">
+                <td><strong>Management Account MFA root</strong></td>
+                <td><span class="hl-red">Non activ&eacute;</span></td>
+                <td><span class="hl-green">MFA hardware</span></td>
+                <td><span class="hl-green">Obligatoire</span></td>
+                <td>MFA hardware (FIDO2) + backup</td>
+                <td><a href="aws-iam.html#s2" class="cross-ref">IAM Guide S2</a></td>
+            </tr>
+            <tr class="row-ko">
+                <td><strong>AWS Organizations activé</strong></td>
+                <td><span class="hl-red">Non activ&eacute;</span></td>
+                <td><span class="hl-green">Activer All Features</span></td>
+                <td><span class="hl-green">All Features obligatoire</span></td>
+                <td>All Features (pas Consolidated Billing seul)</td>
+                <td>AWS docs, CT prerequisite</td>
+            </tr>
+            <tr class="row-ko">
+                <td><strong>R&eacute;gion home Control Tower</strong></td>
+                <td><span class="hl-red">Non d&eacute;finie</span></td>
+                <td><span class="hl-green">Choisir 1 r&eacute;gion principale</span></td>
+                <td><span class="hl-green">Immuable apr&egrave;s setup</span></td>
+                <td><code>us-east-1</code> ou <code>eu-west-1</code> selon g&eacute;ographie</td>
+                <td>AWS CT User Guide</td>
+            </tr>
+            <tr class="row-warn">
+                <td><strong>KMS Customer Managed Key</strong></td>
+                <td><span class="hl">AWS-managed key</span></td>
+                <td><span class="hl-green">CMK d&eacute;di&eacute;e Control Tower</span></td>
+                <td>Recommand&eacute;</td>
+                <td>CMK dans chaque r&eacute;gion g&eacute;r&eacute;e</td>
+                <td>CIS AWS 3.x, AWS Security Best Practices</td>
+            </tr>
+            <tr class="row-warn">
+                <td><strong>E-mails comptes partagés (Log Archive + Audit)</strong></td>
+                <td><span class="hl-red">Aucun</span></td>
+                <td><span class="hl-green">2 e-mails uniques pr&ecirc;ts ou 2 comptes existants compatibles</span></td>
+                <td><span class="hl-green">Obligatoire</span></td>
+                <td>Alias e-mail non-personnel (ex: aws-log-archive@company.com)</td>
+                <td>AWS CT User Guide §prerequisites</td>
+            </tr>
+            <tr class="row-ok">
+                <td><strong>Limites de service (Service Quotas)</strong></td>
+                <td>Par d&eacute;faut AWS</td>
+                <td>V&eacute;rifier quotas Organizations</td>
+                <td>Max accounts quota ≥ nb comptes cibl&eacute;s</td>
+                <td>Demander augmentation &agrave; l'avance (AWS Support)</td>
+                <td>AWS Service Quotas</td>
+            </tr>
+        </tbody>
+    </table>
+    </div>
+
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x1F4A1;</span>
+        <div>
+            <strong>Pourquoi chaque pr&eacute;requis compte :</strong><br>
+            &bull; <strong>MFA root obligatoire</strong> : Le Management Account contr&ocirc;le toute l'organisation. Compromis = toute votre infrastructure AWS compromise. AWS exige MFA root depuis 2024 pour tout nouveau compte.<br>
+            &bull; <strong>All Features Organizations</strong> : Le mode "Consolidated Billing" ne permet pas les SCPs — sans SCPs, les guardrails pr&eacute;ventifs de Control Tower ne peuvent pas fonctionner.<br>
+            &bull; <strong>R&eacute;gion home immuable</strong> : Changer la r&eacute;gion home apr&egrave;s d&eacute;ploiement n&eacute;cessite de tout d&eacute;truire et recr&eacute;er. Choisir soigneusement avant le premier d&eacute;ploiement.<br>
+            &bull; <strong>CMK Control Tower</strong> : Chiffrement des buckets S3 du Log Archive et des trails CloudTrail. Sans CMK, les logs utilisent la cl&eacute; AWS-managed, non r&eacute;vocable en cas d'incident.
+        </div>
+    </div>
+
+    <h3>1.2 &mdash; Tableau de configuration Landing Zone</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr>
+            <th>Composant</th>
+            <th>D&eacute;faut CT</th>
+            <th>&#x26A1; Quick Win</th>
+            <th>&#x1F512; Avanc&eacute;</th>
+            <th>&#x1F3AF; Optimal</th>
+            <th>Licence</th>
+        </tr></thead>
+        <tbody>
+            <tr class="row-ko">
+                <td><strong>CloudTrail organization-wide</strong></td>
+                <td><span class="hl">Choix de landing zone (g&eacute;r&eacute; par CT ou hors CT)</span></td>
+                <td>Documenter un trail d'organisation unique</td>
+                <td>+KMS CMK encryption + r&eacute;tention</td>
+                <td>+validation des logs et supervision align&eacute;e</td>
+                <td><span class="lic lic-aws-pay">CloudTrail</span></td>
+            </tr>
+            <tr class="row-ko">
+                <td><strong>AWS Config organization-wide</strong></td>
+                <td><span class="hl-green">Activ&eacute; auto</span></td>
+                <td>Conserver, restreindre r&eacute;gions</td>
+                <td>Exclusions ressources non pertinentes</td>
+                <td>Config Aggregator + conformance packs CIS</td>
+                <td><span class="lic lic-aws-pay">AWS Config</span></td>
+            </tr>
+            <tr class="row-ko">
+                <td><strong>IAM Identity Center</strong></td>
+                <td><span class="hl-green">Activ&eacute; auto</span></td>
+                <td>Configurer permission sets de base</td>
+                <td>Connexion IdP externe (AAD/Okta)</td>
+                <td>Permission sets granulaires par OU/compte</td>
+                <td><span class="lic lic-aws-free">Gratuit</span></td>
+            </tr>
+            <tr class="row-warn">
+                <td><strong>VPC Configuration (r&eacute;gions g&eacute;r&eacute;es)</strong></td>
+                <td><span class="hl">Selon le blueprint Account Factory / AFT</span></td>
+                <td>V&eacute;rifier le comportement du VPC par r&eacute;gion support&eacute;e avant toute suppression manuelle</td>
+                <td>VPC baseline custom via Account Factory ou AFT</td>
+                <td>VPC standard avec subnets priv&eacute;s/publics + NAT</td>
+                <td><span class="lic lic-aws-pay">VPC</span></td>
+            </tr>
+            <tr class="row-warn">
+                <td><strong>Regions gouvern&eacute;es</strong></td>
+                <td><span class="hl">Choisies au setup et modifiables ensuite</span></td>
+                <td>R&eacute;duire aux r&eacute;gions utilis&eacute;es</td>
+                <td>D&eacute;nommer explicitement les r&eacute;gions gouvern&eacute;es vs non gouvern&eacute;es</td>
+                <td>Region Deny pour bloquer les r&eacute;gions non gouvern&eacute;es</td>
+                <td><span class="lic lic-aws-free">Gratuit</span></td>
+            </tr>
+            <tr class="row-ok">
+                <td><strong>Compte Log Archive</strong></td>
+                <td><span class="hl-green">Cr&eacute;&eacute; auto</span></td>
+                <td>Conserver — ne pas y d&eacute;ployer de workload</td>
+                <td>+Lifecycle policies S3 (passage Glacier apr&egrave;s 90j)</td>
+                <td>+Access S3 Block Public Access + Object Lock WORM</td>
+                <td><span class="lic lic-aws-pay">S3</span></td>
+            </tr>
+            <tr class="row-ok">
+                <td><strong>Compte Audit</strong></td>
+                <td><span class="hl-green">Cr&eacute;&eacute; auto</span></td>
+                <td>Conserver — acc&egrave;s en lecture seule audit team</td>
+                <td>+Security Hub aggregator dans ce compte</td>
+                <td>+GuardDuty delegated admin + Macie delegated</td>
+                <td><span class="lic lic-aws-free">Gratuit</span></td>
+            </tr>
+        </tbody>
+    </table>
+    </div>
+
+    <div class="alert alert-warn">
+        <span class="alert-icon">&#x26A0;&#xFE0F;</span>
+        <div>
+            <strong>Pi&egrave;ge : VPC par d&eacute;faut AWS</strong> — Quand Account Factory cr&eacute;e le VPC AWS Control Tower dans une r&eacute;gion support&eacute;e, AWS indique que le VPC par d&eacute;faut y est supprim&eacute;. En revanche, dans les r&eacute;gions non gouvern&eacute;es, non support&eacute;es, ou pour certains comptes existants import&eacute;s, il faut <strong>v&eacute;rifier</strong> le comportement r&eacute;el avant toute action. Le guardrail <em>"Disallow internet connection through RDP from EC2"</em> reste d&eacute;tectif, pas pr&eacute;ventif.
+        </div>
+    </div>
+
+    <h3>1.3 &mdash; D&eacute;ploiement Landing Zone (double chemin)</h3>
+    <div class="code-block">
+        <div class="code-header">
+            <span>&#x1F5A5;&#xFE0F; Console AWS &mdash; D&eacute;ploiement Landing Zone (GUI)</span>
+            <button class="copy-btn" onclick="navigator.clipboard.writeText(this.closest('.code-block').querySelector('pre').innerText)">Copier</button>
+        </div>
+        <pre><span class="comment"># ÉTAPE 1 — Accéder à AWS Control Tower</span>
+<span class="comment"># Console > Services > Management & Governance > AWS Control Tower</span>
+<span class="comment"># URL directe : https://console.aws.amazon.com/controltower/</span>
+
+<span class="comment"># ÉTAPE 2 — Set up landing zone</span>
+<span class="comment"># Cliquer "Set up landing zone"</span>
+<span class="comment"># Choisir la Home Region (immuable après déploiement)</span>
+
+<span class="comment"># ÉTAPE 3 — Configure OUs</span>
+<span class="comment"># Security OU : contient Log Archive + Audit (nommé "Security" par défaut)</span>
+<span class="comment"># Sandbox OU : contient les comptes de développement (renommable)</span>
+
+<span class="comment"># ÉTAPE 4 — Shared accounts</span>
+<span class="comment"># Log Archive Account email : aws-log-archive@company.com</span>
+<span class="comment"># Audit Account email       : aws-audit@company.com</span>
+
+<span class="comment"># ÉTAPE 5 — Configure CloudTrail + KMS</span>
+<span class="comment"># Choisir si AWS Control Tower gère le trail d'organisation CloudTrail</span>
+<span class="comment"># ou si vous conservez un modèle CloudTrail hors CT ; vérifier ensuite le chiffrement</span>
+
+<span class="comment"># ÉTAPE 6 — IAM Identity Center</span>
+<span class="comment"># Control Tower active ou réutilise IAM Identity Center selon l'existant</span>
+
+<span class="comment"># Durée du déploiement : 30-60 minutes</span></pre>
+    </div>
+
+    <div class="code-block">
+        <div class="code-header">
+            <span>&#x2600;&#xFE0F; AWS CLI &mdash; Vérification post-déploiement Landing Zone</span>
+            <button class="copy-btn" onclick="navigator.clipboard.writeText(this.closest('.code-block').querySelector('pre').innerText)">Copier</button>
+        </div>
+        <pre><span class="comment"># Vérifier le statut de la Landing Zone</span>
+<span class="var">LANDING_ZONE_ARN</span>=$(aws controltower list-landing-zones \
+  <span class="param">--query</span> <span class="string">'landingZones[0].arn'</span> \
+  <span class="param">--output</span> text)
+
+aws controltower get-landing-zone \
+  <span class="param">--landing-zone-identifier</span> <span class="var">$LANDING_ZONE_ARN</span> \
+  <span class="param">--query</span> <span class="string">'landingZone.{Status:status,Version:version,DriftStatus:driftStatus.status}'</span>
+
+<span class="comment"># Résultat attendu :</span>
+<span class="comment"># { "Status": "ACTIVE", "Version": "&lt;landing-zone-version&gt;", "DriftStatus": "NOT_DRIFTED" }</span>
+
+<span class="comment"># Lister les OUs gouvernées</span>
+aws organizations list-organizational-units-for-parent \
+  <span class="param">--parent-id</span> $(aws organizations list-roots <span class="param">--query</span> <span class="string">'Roots[0].Id'</span> <span class="param">--output</span> text) \
+  <span class="param">--query</span> <span class="string">'OrganizationalUnits[].{Name:Name,Id:Id}'</span>
+
+<span class="comment"># Vérifier que CloudTrail organization trail est actif</span>
+aws cloudtrail describe-trails \
+  <span class="param">--include-shadow-trails</span> \
+  <span class="param">--query</span> <span class="string">'trailList[?IsOrganizationTrail==`true`].{Name:Name,S3Bucket:S3BucketName,KMSKey:KMSKeyId}'</span>
+
+<span class="comment"># Vérifier la présence éventuelle d'un VPC par défaut dans les régions supportées / gouvernées</span>
+<span class="keyword">for</span> <span class="var">REGION</span> in us-east-1 eu-west-1 ap-southeast-1; do
+  <span class="var">VPC_ID</span>=$(aws ec2 describe-vpcs \
+    <span class="param">--region</span> <span class="var">$REGION</span> \
+    <span class="param">--filters</span> <span class="string">"Name=is-default,Values=true"</span> \
+    <span class="param">--query</span> <span class="string">'Vpcs[0].VpcId'</span> \
+    <span class="param">--output</span> text)
+  <span class="keyword">if</span> [ "<span class="var">$VPC_ID</span>" != "None" ]; then
+        echo <span class="string">"VPC défaut encore présent dans $REGION : $VPC_ID — vérifier si le compte a été provisionné hors blueprint VPC CT ou hors région supportée"</span>
+    <span class="keyword">else</span>
+        echo <span class="string">"Pas de VPC défaut détecté dans $REGION"</span>
+  fi
+done</pre>
+    </div>
+
+    <h3>1.4 &mdash; Checklist &eacute;tat des lieux Landing Zone</h3>
+    <div class="checklist-item"><input type="checkbox"> <span>Management Account : MFA root activ&eacute; (hardware FIDO2)</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>AWS Organizations : All Features activ&eacute; (pas Consolidated Billing seul)</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>Landing Zone d&eacute;ploy&eacute;e (statut <code>ACTIVE</code>, non <code>DRIFTED</code>)</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>R&eacute;gion home choisie et document&eacute;e</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>Compte Log Archive cr&eacute;&eacute; et e-mail d&eacute;di&eacute;</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>Compte Audit cr&eacute;&eacute; et e-mail d&eacute;di&eacute;</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>CloudTrail organization trail g&eacute;r&eacute; par CT ou mod&egrave;le &eacute;quivalent hors CT document&eacute; ; chiffrement v&eacute;rifi&eacute;</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>AWS Config activ&eacute; sur toutes les r&eacute;gions g&eacute;r&eacute;es</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>IAM Identity Center align&eacute; avec la r&eacute;gion home CT, ou instance <code>us-east-1</code> r&eacute;utilis&eacute;e</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>Pr&eacute;sence d'un VPC par d&eacute;faut v&eacute;rifi&eacute;e dans les r&eacute;gions support&eacute;es / gouvern&eacute;es ; pas de suppression aveugle</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>Bucket S3 Log Archive : Block Public Access activ&eacute;</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>Nombre de r&eacute;gions g&eacute;r&eacute;es limit&eacute; au strict n&eacute;cessaire (r&eacute;duction co&ucirc;ts AWS Config)</span></div>
+</div>
+
+<!-- ═══════════════════════ S2 — GUARDRAILS ═══════════════════════ -->
+<div class="section" id="s2">
+    <div class="section-header red">
+        <div class="section-number red">2</div>
+        <div>
+            <div class="section-title">Guardrails (Controls) <span class="lic lic-aws-free">Inclus</span></div>
+            <div class="section-desc">Pr&eacute;ventifs (SCP), d&eacute;tectifs (Config), proactifs (CloudFormation hooks) — Mandatory, Strongly Recommended, Elective</div>
+        </div>
+    </div>
+    <div class="alert alert-error">
+        <span class="alert-icon">&#x1F6A8;</span>
+        <div>
+            <strong>Sc&eacute;nario :</strong> Un d&eacute;veloppeur cr&eacute;e un bucket S3 public dans un compte sandbox. Il y stocke des fichiers de configuration contenant des clés API. 3 jours plus tard, un scanner automatique trouve le bucket et exfiltre 50 000 enregistrements clients. Les guardrails d&eacute;tectifs auraient alert&eacute; en 15 minutes — les guardrails pr&eacute;ventifs l'auraient bloqu&eacute; imm&eacute;diatement.
+            <br><strong>Analogie :</strong> Guardrail pr&eacute;ventif = <em>"verrou &eacute;lectronique"</em> (SCP qui emp&ecirc;che physiquement l'action). Guardrail d&eacute;tectif = <em>"cam&eacute;ra de surveillance"</em> (Config rule qui enregistre et alerte, mais n'emp&ecirc;che pas).
+        </div>
+    </div>
+
+    <h3>2.1 &mdash; Catalogue des Guardrails Strongly Recommended</h3>
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x1F4A1;</span>
+        <div>
+            <strong>Pourquoi activer les Strongly Recommended :</strong> Les guardrails <em>Mandatory</em> sont activ&eacute;s automatiquement et ne peuvent pas &ecirc;tre d&eacute;sactiv&eacute;s. Les <em>Strongly Recommended</em> couvrent 80% des incidents de s&eacute;curit&eacute; r&eacute;els mais n&eacute;cessitent une activation manuelle. Les <em>Elective</em> sont sp&eacute;cifiques &agrave; certains secteurs (HIPAA, PCI). Sans les Strongly Recommended, votre environnement est expos&eacute; aux vecteurs d'attaque les plus fr&eacute;quents (S3 public, root non restreint, ports ouverts).
+        </div>
+    </div>
+
+    <div class="table-container">
+    <table>
+        <thead><tr>
+            <th>Identifiant CT</th>
+            <th>Nom du Guardrail</th>
+            <th>Type</th>
+            <th>Guidance</th>
+            <th>Impact si absent</th>
+            <th>Niveau OU</th>
+        </tr></thead>
+        <tbody>
+            <tr class="row-ko">
+                <td><code>AWS-GR_DISALLOW_CHANGES_TO_ENCRYPTION_CONFIGURATION_FOR_S3_BUCKETS</code></td>
+                <td>Disallow changes to S3 bucket encryption</td>
+                <td><span class="badge-sm badge-critical">Pr&eacute;ventif (SCP)</span></td>
+                <td>Strongly Recommended</td>
+                <td>Suppression du chiffrement S3 par un utilisateur malveillant</td>
+                <td>Tous workloads</td>
+            </tr>
+            <tr class="row-ko">
+                <td><code>AWS-GR_DISALLOW_S3_PUBLIC_ACCESS</code></td>
+                <td>Disallow public access to S3 buckets</td>
+                <td><span class="badge-sm badge-critical">D&eacute;tectif (Config)</span></td>
+                <td>Strongly Recommended</td>
+                <td>Exposition de donn&eacute;es sensibles sur Internet</td>
+                <td>Tous workloads</td>
+            </tr>
+            <tr class="row-ko">
+                <td><code>AWS-GR_RESTRICT_ROOT_USER</code></td>
+                <td>Disallow actions as root user</td>
+                <td><span class="badge-sm badge-critical">Pr&eacute;ventif (SCP)</span></td>
+                <td>Strongly Recommended</td>
+                <td>Utilisation root = contournement de toutes les politiques IAM</td>
+                <td>Tous comptes hors Management</td>
+            </tr>
+            <tr class="row-ko">
+                <td><code>AWS-GR_RESTRICT_ROOT_USER_ACCESS_KEYS</code></td>
+                <td>Disallow creation of access keys for root user</td>
+                <td><span class="badge-sm badge-critical">Pr&eacute;ventif (SCP)</span></td>
+                <td>Strongly Recommended</td>
+                <td>Cl&eacute;s root = acc&egrave;s programmatique total sans MFA</td>
+                <td>Tous comptes hors Management</td>
+            </tr>
+            <tr class="row-ko">
+                <td><code>AWS-GR_DISALLOW_INTERNET_CONNECTION_THROUGH_RDP</code></td>
+                <td>Disallow RDP from Internet on EC2</td>
+                <td><span class="badge-sm badge-high">D&eacute;tectif (Config)</span></td>
+                <td>Strongly Recommended</td>
+                <td>Attaque brute force RDP depuis Internet</td>
+                <td>Tous workloads</td>
+            </tr>
+            <tr class="row-ko">
+                <td><code>AWS-GR_DISALLOW_INTERNET_CONNECTION_THROUGH_SSH</code></td>
+                <td>Disallow SSH from Internet on EC2</td>
+                <td><span class="badge-sm badge-high">D&eacute;tectif (Config)</span></td>
+                <td>Strongly Recommended</td>
+                <td>Acc&egrave;s SSH non autoris&eacute; depuis Internet</td>
+                <td>Tous workloads</td>
+            </tr>
+            <tr class="row-ko">
+                <td><code>AWS-GR_ENCRYPTED_VOLUMES</code></td>
+                <td>Detect unencrypted EBS volumes</td>
+                <td><span class="badge-sm badge-high">D&eacute;tectif (Config)</span></td>
+                <td>Strongly Recommended</td>
+                <td>Vol de snapshot EBS non chiffr&eacute; = acc&egrave;s aux donn&eacute;es</td>
+                <td>Tous workloads</td>
+            </tr>
+            <tr class="row-ko">
+                <td><code>AWS-GR_RDS_INSTANCE_PUBLIC_ACCESS_CHECK</code></td>
+                <td>Detect RDS instances with public access</td>
+                <td><span class="badge-sm badge-critical">D&eacute;tectif (Config)</span></td>
+                <td>Strongly Recommended</td>
+                <td>Base de donn&eacute;es expos&eacute;e directement sur Internet</td>
+                <td>Tous workloads</td>
+            </tr>
+            <tr class="row-ko">
+                <td><code>AWS-GR_RDS_STORAGE_ENCRYPTED</code></td>
+                <td>Detect unencrypted RDS instances</td>
+                <td><span class="badge-sm badge-high">D&eacute;tectif (Config)</span></td>
+                <td>Strongly Recommended</td>
+                <td>Donn&eacute;es RDS expos&eacute;es lors d'un snapshot ou backup</td>
+                <td>Tous workloads</td>
+            </tr>
+            <tr class="row-warn">
+                <td><code>AWS-GR_DISALLOW_CHANGES_TO_CLOUDTRAIL_CONFIGURATION</code></td>
+                <td>Disallow changes to CloudTrail configuration</td>
+                <td><span class="badge-sm badge-critical">Pr&eacute;ventif (SCP)</span></td>
+                <td>Strongly Recommended</td>
+                <td>Attaquant d&eacute;sactivant les traces de son intrusion</td>
+                <td>Tous comptes hors Management</td>
+            </tr>
+            <tr class="row-warn">
+                <td><code>AWS-GR_DISALLOW_CHANGES_TO_CONFIG_RULES</code></td>
+                <td>Disallow changes to AWS Config</td>
+                <td><span class="badge-sm badge-critical">Pr&eacute;ventif (SCP)</span></td>
+                <td>Strongly Recommended</td>
+                <td>D&eacute;sactivation des r&egrave;gles de conformit&eacute;</td>
+                <td>Tous comptes hors Management</td>
+            </tr>
+            <tr class="row-warn">
+                <td><code>AWS-GR_DISALLOW_VPC_INTERNET_ACCESS_IN_SECURITY_OU</code></td>
+                <td>Disallow internet access in Security OU</td>
+                <td><span class="badge-sm badge-critical">Pr&eacute;ventif (SCP)</span></td>
+                <td>Strongly Recommended</td>
+                <td>Comptes Log Archive / Audit accessibles depuis Internet</td>
+                <td>Security OU uniquement</td>
+            </tr>
+            <tr class="row-ok">
+                <td><code>AWS-GR_DETECT_CLOUDTRAIL_ENABLED_FOR_GLOBAL_SERVICES</code></td>
+                <td>Detect CloudTrail enabled for global services</td>
+                <td><span class="badge-sm badge-medium">D&eacute;tectif (Config)</span></td>
+                <td>Strongly Recommended</td>
+                <td>Actions IAM globales non trac&eacute;es (STS, IAM)</td>
+                <td>Tous comptes</td>
+            </tr>
+            <tr class="row-ok">
+                <td><code>AWS-GR_MFA_ENABLED_FOR_IAM_CONSOLE_ACCESS</code></td>
+                <td>Detect MFA not enabled for IAM users</td>
+                <td><span class="badge-sm badge-high">D&eacute;tectif (Config)</span></td>
+                <td>Strongly Recommended</td>
+                <td>Acc&egrave;s console IAM sans MFA = prise de contr&ocirc;le par phishing</td>
+                <td>Tous comptes</td>
+            </tr>
+            <tr class="row-ok">
+                <td><code>AWS-GR_DISALLOW_CROSS_REGION_NETWORKING</code></td>
+                <td>Disallow cross-region networking (configurable)</td>
+                <td><span class="badge-sm badge-medium">Pr&eacute;ventif (SCP)</span></td>
+                <td>Elective</td>
+                <td>Mouvements lat&eacute;raux vers des r&eacute;gions non autoris&eacute;es</td>
+                <td>Configurable par OU</td>
+            </tr>
+        </tbody>
+    </table>
+    </div>
+
+    <h3>2.2 &mdash; Activer un Guardrail (double chemin)</h3>
+    <div class="code-block">
+        <div class="code-header">
+            <span>&#x1F5A5;&#xFE0F; Console AWS &mdash; Activation d'un guardrail sur une OU</span>
+            <button class="copy-btn" onclick="navigator.clipboard.writeText(this.closest('.code-block').querySelector('pre').innerText)">Copier</button>
+        </div>
+        <pre><span class="comment"># Console > AWS Control Tower > Controls (ex-Guardrails)</span>
+<span class="comment"># 1. Sélectionner le contrôle (ex: "Detect public S3 buckets")</span>
+<span class="comment"># 2. Onglet "Organizational units"</span>
+<span class="comment"># 3. Cliquer "Enable control on OU"</span>
+<span class="comment"># 4. Sélectionner la ou les OUs cibles</span>
+<span class="comment"># 5. Cliquer "Enable control"</span>
+<span class="comment"># Délai d'activation : 2-5 minutes par OU</span></pre>
+    </div>
+
+    <div class="code-block">
+        <div class="code-header">
+            <span>&#x2600;&#xFE0F; AWS CLI &mdash; Activation / Vérification Guardrails</span>
+            <button class="copy-btn" onclick="navigator.clipboard.writeText(this.closest('.code-block').querySelector('pre').innerText)">Copier</button>
+        </div>
+        <pre><span class="comment"># Lister tous les guardrails disponibles dans Control Tower</span>
+aws controltower list-controls \
+  <span class="param">--query</span> <span class="string">'controls[?implementationDetails.type==`AWS::ControlTower::Control`].{Name:name,Guidance:implementationDetails.type}'</span> \
+  <span class="param">--output</span> table
+
+<span class="comment"># Activer un guardrail sur une OU</span>
+<span class="var">OU_ARN</span>=<span class="string">"arn:aws:organizations::123456789012:ou/o-xxxx/ou-xxxx-xxxxxxxx"</span>
+<span class="var">CONTROL_ARN</span>=<span class="string">"arn:aws:controltower:us-east-1::control/AWS-GR_RESTRICT_ROOT_USER"</span>
+
+aws controltower enable-control \
+  <span class="param">--control-identifier</span> <span class="var">$CONTROL_ARN</span> \
+  <span class="param">--target-identifier</span> <span class="var">$OU_ARN</span>
+
+<span class="comment"># Vérifier le statut des contrôles actifs sur une OU</span>
+aws controltower list-enabled-controls \
+  <span class="param">--target-identifier</span> <span class="var">$OU_ARN</span> \
+  <span class="param">--query</span> <span class="string">'enabledControls[].{Control:controlIdentifier,Status:statusSummary.status}'</span> \
+  <span class="param">--output</span> table
+
+<span class="comment"># Identifier les non-conformités détectées par les guardrails détectifs</span>
+aws configservice describe-compliance-by-config-rule \
+  <span class="param">--compliance-types</span> NON_COMPLIANT \
+  <span class="param">--query</span> <span class="string">'ComplianceByConfigRules[].{Rule:ConfigRuleName,Compliance:Compliance.ComplianceType}'</span></pre>
+    </div>
+
+    <div class="alert alert-warn">
+        <span class="alert-icon">&#x26A0;&#xFE0F;</span>
+        <div>
+            <strong>Pi&egrave;ge : Guardrails pr&eacute;ventifs dans le Management Account :</strong> Les SCPs ne s'appliquent pas au Management Account lui-m&ecirc;me. Activer les guardrails sur les OUs enfants, mais le Management Account reste non couvert par les SCP. Il faut surveiller le Management Account via d'autres moyens (CloudTrail alerting, GuardDuty, AWS Security Hub).
+        </div>
+    </div>
+
+    <h3>2.3 &mdash; Checklist &eacute;tat des lieux Guardrails</h3>
+    <div class="checklist-item"><input type="checkbox"> <span>Guardrail "Restrict root user" activ&eacute; sur toutes les OUs workloads</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>Guardrail "Restrict root user access keys" activ&eacute; sur toutes les OUs</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>Guardrail "Disallow S3 public access" activ&eacute; (d&eacute;tectif)</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>Guardrail "Disallow internet via RDP/SSH" activ&eacute; sur workloads OU</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>Guardrail "Detect unencrypted EBS volumes" activ&eacute;</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>Guardrail "Detect RDS public access" activ&eacute;</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>Guardrail "Disallow changes to CloudTrail" activ&eacute;</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>Guardrail "Disallow changes to AWS Config" activ&eacute;</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>Guardrail "MFA enabled for IAM console" activ&eacute; (d&eacute;tectif)</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>Aucun guardrail en statut <code>DRIFT_DETECTED</code> sur le dashboard CT</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>Guardrails Elective &eacute;valu&eacute;s et activ&eacute;s selon le secteur (HIPAA, PCI si applicable)</span></div>
+</div>
+
+<!-- ═══════════════════════ S3 — ACCOUNT FACTORY ═══════════════════════ -->
+<div class="section" id="s3">
+    <div class="section-header red">
+        <div class="section-number red">3</div>
+        <div>
+            <div class="section-title">Account Factory <span class="lic lic-aws-free">Inclus</span></div>
+            <div class="section-desc">Account vending, AFT, customizations, enrollment de comptes existants, VPC baseline, IAM Identity Center assignments</div>
+        </div>
+    </div>
+    <div class="alert alert-error">
+        <span class="alert-icon">&#x1F6A8;</span>
+        <div>
+            <strong>Sc&eacute;nario :</strong> Une entreprise de 200 comptes AWS cr&eacute;e chaque nouveau compte manuellement : CloudTrail oubli&eacute; sur 20% des comptes, VPC par d&eacute;faut actif partout, GuardDuty non activ&eacute; dans 40% des comptes. 6 mois de dette technique accumulée, impossible d'auditer. Account Factory r&eacute;sout ce probl&egrave;me : chaque nouveau compte re&ccedil;oit automatiquement les m&ecirc;mes baselines.
+            <br><strong>Analogie :</strong> Account Factory = <em>"plan standard"</em> — chaque nouveau logement est construit selon le même plan de base, avec les m&ecirc;mes normes de s&eacute;curit&eacute; appliqu&eacute;es automatiquement.
+        </div>
+    </div>
+
+    <h3>3.1 &mdash; Tableau Account Factory vs AFT</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr>
+            <th>Fonctionnalit&eacute;</th>
+            <th>Account Factory (natif)</th>
+            <th>Account Factory for Terraform (AFT)</th>
+            <th>Recommandation</th>
+        </tr></thead>
+        <tbody>
+            <tr class="row-ok">
+                <td><strong>Interface de création</strong></td>
+                <td>Console AWS Control Tower / Service Catalog</td>
+                <td>Pull Request Git (GitOps)</td>
+                <td>AFT pour &gt;20 comptes ou multi-équipes</td>
+            </tr>
+            <tr class="row-warn">
+                <td><strong>Customizations pr&eacute;-cr&eacute;ation</strong></td>
+                <td>Limit&eacute;e (Account customization product)</td>
+                <td>Hooks Terraform pre-creation complets</td>
+                <td>AFT si besoin d'actions pr&eacute;-cr&eacute;ation</td>
+            </tr>
+            <tr class="row-warn">
+                <td><strong>Customizations post-cr&eacute;ation</strong></td>
+                <td>Account customization via Service Catalog</td>
+                <td>Hooks Terraform post-creation + global customizations</td>
+                <td>AFT recommand&eacute; (plus flexible)</td>
+            </tr>
+            <tr class="row-ok">
+                <td><strong>Versionning / GitOps</strong></td>
+                <td>Non</td>
+                <td>Oui (Git-based workflow)</td>
+                <td>AFT obligatoire pour GitOps</td>
+            </tr>
+            <tr class="row-ok">
+                <td><strong>Effort initial</strong></td>
+                <td>Faible (activ&eacute; par d&eacute;faut)</td>
+                <td>Moyen-&eacute;lev&eacute; (1-3j de setup)</td>
+                <td>Account Factory natif pour d&eacute;marrage rapide</td>
+            </tr>
+            <tr class="row-ok">
+                <td><strong>Enrollment de comptes existants</strong></td>
+                <td>Oui (via re-enrollment)</td>
+                <td>Oui (via account import)</td>
+                <td>Les deux supportent l'enrollment</td>
+            </tr>
+            <tr class="row-ok">
+                <td><strong>Co&ucirc;t</strong></td>
+                <td>Pas de frais additionnels hors services de landing zone</td>
+                <td>Services AFT factur&eacute;s &agrave; l'usage (pipeline, stockage, compute, VPC optionnel)</td>
+                <td>Natif pour d&eacute;marrage rapide ; AFT si GitOps et customizations avanc&eacute;es</td>
+            </tr>
+        </tbody>
+    </table>
+    </div>
+
+    <h3>3.2 &mdash; Cr&eacute;er un compte via Account Factory (double chemin)</h3>
+    <div class="code-block">
+        <div class="code-header">
+            <span>&#x1F5A5;&#xFE0F; Console AWS &mdash; Création compte via Account Factory</span>
+            <button class="copy-btn" onclick="navigator.clipboard.writeText(this.closest('.code-block').querySelector('pre').innerText)">Copier</button>
+        </div>
+        <pre><span class="comment"># Console > AWS Control Tower > Account Factory</span>
+<span class="comment"># Cliquer "Enroll account" (compte existant) ou "Create account" (nouveau)</span>
+<span class="comment"></span>
+<span class="comment"># Champs requis :</span>
+<span class="comment"># - Account email      : aws-dev-projectX@company.com (unique dans Organizations)</span>
+<span class="comment"># - Display name       : ProjectX-Dev</span>
+<span class="comment"># - IAM Identity Center email : Propriétaire du compte</span>
+<span class="comment"># - IAM Identity Center user  : Prénom Nom</span>
+<span class="comment"># - Organizational unit : Workloads/Dev (sélectionner dans la hiérarchie)</span>
+<span class="comment"># - AWS SSO user : Attribuer le permission set approprié</span>
+<span class="comment"></span>
+<span class="comment"># Durée : 15-30 minutes. Baselines appliquées automatiquement :</span>
+<span class="comment"># - CloudTrail activé</span>
+<span class="comment"># - AWS Config activé</span>
+<span class="comment"># - IAM Identity Center assignment créé</span>
+<span class="comment"># - Guardrails hérités de l'OU parent</span></pre>
+    </div>
+
+    <div class="code-block">
+        <div class="code-header">
+            <span>&#x2600;&#xFE0F; AWS CLI &mdash; Account Factory via Service Catalog</span>
+            <button class="copy-btn" onclick="navigator.clipboard.writeText(this.closest('.code-block').querySelector('pre').innerText)">Copier</button>
+        </div>
+        <pre><span class="comment"># Account Factory utilise Service Catalog en interne</span>
+<span class="comment"># Identifier le product et l'artifact Account Factory</span>
+<span class="var">PRODUCT_ID</span>=$(aws servicecatalog search-products \
+  <span class="param">--filters</span> <span class="string">'FullTextSearch=["AWS Control Tower Account Factory"]'</span> \
+  <span class="param">--query</span> <span class="string">'ProductViewSummaries[0].ProductId'</span> \
+  <span class="param">--output</span> text)
+
+<span class="var">ARTIFACT_ID</span>=$(aws servicecatalog list-provisioning-artifacts \
+  <span class="param">--product-id</span> <span class="var">$PRODUCT_ID</span> \
+  <span class="param">--query</span> <span class="string">'ProvisioningArtifactDetails[-1].Id'</span> \
+  <span class="param">--output</span> text)
+
+<span class="comment"># Créer un nouveau compte via Account Factory</span>
+aws servicecatalog provision-product \
+  <span class="param">--product-id</span> <span class="var">$PRODUCT_ID</span> \
+  <span class="param">--provisioning-artifact-id</span> <span class="var">$ARTIFACT_ID</span> \
+  <span class="param">--provisioned-product-name</span> <span class="string">"ProjectX-Dev"</span> \
+  <span class="param">--provisioning-parameters</span> \
+    <span class="string">'[
+      {"Key":"AccountName","Value":"ProjectX-Dev"},
+      {"Key":"AccountEmail","Value":"aws-dev-projectx@company.com"},
+      {"Key":"SSOUserEmail","Value":"john.doe@company.com"},
+      {"Key":"SSOUserFirstName","Value":"John"},
+      {"Key":"SSOUserLastName","Value":"Doe"},
+      {"Key":"ManagedOrganizationalUnit","Value":"Workloads/Dev"},
+      {"Key":"VPCOptions","Value":"No VPC"}
+    ]'</span>
+
+<span class="comment"># Surveiller l'état de provisioning</span>
+aws servicecatalog describe-provisioned-product \
+  <span class="param">--name</span> <span class="string">"ProjectX-Dev"</span> \
+  <span class="param">--query</span> <span class="string">'ProvisionedProductDetail.{Status:Status,StatusMessage:StatusMessage}'</span></pre>
+    </div>
+
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x1F4A1;</span>
+        <div>
+            <strong>Enrollment de comptes existants :</strong> Pour intégrer un compte AWS déjà existant dans Control Tower, le compte doit : (1) ne pas avoir d'AWS Config dans des r&eacute;gions g&eacute;r&eacute;es avec un enregistreur d&eacute;j&agrave; actif, (2) ne pas avoir de CloudTrail organization trail en conflit, (3) &ecirc;tre dans l'organisation AWS. Utiliser "Enroll account" dans Account Factory plut&ocirc;t que "Create account".
+        </div>
+    </div>
+
+    <h3>3.3 &mdash; Checklist Account Factory</h3>
+    <div class="checklist-item"><input type="checkbox"> <span>Account Factory configur&eacute; avec l'OU de destination par d&eacute;faut</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>VPC par d&eacute;faut Account Factory d&eacute;sactiv&eacute; (option "No VPC" s&eacute;lectionn&eacute;e)</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>Processus de cr&eacute;ation de compte document&eacute; et test&eacute;</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>Comptes existants non enroll&eacute;s identifi&eacute;s et plan d'enrollment d&eacute;fini</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>Permission sets IAM Identity Center assign&eacute;s automatiquement lors de la cr&eacute;ation</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>Baseline de s&eacute;curit&eacute; v&eacute;rifi&eacute;e sur le premier compte cr&eacute;&eacute; par Account Factory</span></div>
+</div>
+
+<!-- ═══════════════════════ S4 — OU STRUCTURE & GOVERNANCE ═══════════════════════ -->
+<div class="section" id="s4">
+    <div class="section-header orange">
+        <div class="section-number">4</div>
+        <div>
+            <div class="section-title">OU Structure &amp; Gouvernance <span class="lic lic-aws-org">AWS Organizations</span></div>
+            <div class="section-desc">Structure OU recommand&eacute;e, nested OUs, SCP inheritance, Quarantine OU, moving accounts</div>
+        </div>
+    </div>
+    <div class="alert alert-error">
+        <span class="alert-icon">&#x1F6A8;</span>
+        <div>
+            <strong>Sc&eacute;nario :</strong> Une entreprise a tous ses comptes AWS dans une seule OU "root". Les SCPs de quarantaine ne peuvent pas &ecirc;tre appliqu&eacute;es &agrave; un compte compromis sans affecter tous les autres. Un compte de test a le m&ecirc;me niveau d'acc&egrave;s qu'un compte de production. Sans hi&eacute;rarchie OU structur&eacute;e, la gestion des acc&egrave;s et l'isolation sont impossibles.
+        </div>
+    </div>
+
+    <h3>4.1 &mdash; Structure OU recommand&eacute;e</h3>
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x1F4A1;</span>
+        <div>
+            <strong>Principe d'h&eacute;ritage SCP :</strong> Une SCP attach&eacute;e &agrave; une OU s'applique &agrave; tous les comptes enfants ET &agrave; toutes les sous-OUs. La racine Organizations ne doit porter que des politiques minimales communes. Plus vous descendez dans la hi&eacute;rarchie, plus les restrictions peuvent &ecirc;tre sp&eacute;cifiques.
+        </div>
+    </div>
+
+    <div class="diagram-block">
+    <div class="flow-diagram">
+<pre>
+Root (Organization)
+├── Security OU (créé par CT — Log Archive + Audit)
+│   ├── [Guardrails CT obligatoires]
+│   └── [SCP: pas de workloads, accès lecture seule]
+│
+├── Infrastructure OU
+│   ├── Network Account (Transit Gateway, VPC partagés)
+│   ├── DNS Account (Route 53 Resolver)
+│   └── Shared Services Account
+│
+├── Workloads OU
+│   ├── Production OU
+│   │   ├── App1-Prod Account
+│   │   └── App2-Prod Account
+│   ├── Staging OU
+│   │   └── App1-Staging Account
+│   └── Dev OU
+│       └── App1-Dev Account
+│
+├── Sandbox OU (créé par CT — expérimentation libre)
+│   └── [SCP: pas d'accès Internet en sortie vers production]
+│
+├── Suspended OU
+│   └── [SCP "Quarantaine" : deny tout sauf lecture logs]
+│
+└── Graveyard OU
+    └── [Comptes à fermer — aucun accès actif]
+</pre>
+    </div>
+    </div>
+
+    <h3>4.2 &mdash; Tableau des SCPs par OU</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr>
+            <th>OU</th>
+            <th>SCPs recommand&eacute;es</th>
+            <th>Guardrails CT</th>
+            <th>Cas d'usage</th>
+        </tr></thead>
+        <tbody>
+            <tr class="row-ko">
+                <td><strong>Security</strong></td>
+                <td>Deny EC2/S3 non-audit, deny resource création</td>
+                <td>Tous mandatory + recommended</td>
+                <td>Log Archive, Audit — isolation totale</td>
+            </tr>
+            <tr class="row-ko">
+                <td><strong>Production</strong></td>
+                <td>Deny disable CloudTrail/Config, deny IAM Admin hors brise-glace</td>
+                <td>Tous mandatory + recommended + elective PCI si applicable</td>
+                <td>Workloads de production</td>
+            </tr>
+            <tr class="row-warn">
+                <td><strong>Dev</strong></td>
+                <td>Deny accès ressources production, limit&eacute; &agrave; r&eacute;gions autoris&eacute;es</td>
+                <td>Mandatory + quelques recommended</td>
+                <td>D&eacute;veloppement actif</td>
+            </tr>
+            <tr class="row-ok">
+                <td><strong>Sandbox</strong></td>
+                <td>Deny peering prod, deny IGW hors subnet sandbox</td>
+                <td>Mandatory uniquement</td>
+                <td>Exp&eacute;rimentation, POC, formation</td>
+            </tr>
+            <tr class="row-ko">
+                <td><strong>Suspended</strong></td>
+                <td><strong>Deny * sauf CloudTrail:Get*, S3:Get*</strong> (lecture logs uniquement)</td>
+                <td>Tous (compte en quarantaine)</td>
+                <td>Compte suspect — investigation en cours</td>
+            </tr>
+        </tbody>
+    </table>
+    </div>
+
+    <div class="alert alert-warn">
+        <span class="alert-icon">&#x26A0;&#xFE0F;</span>
+        <div>
+            <strong>Pi&egrave;ge : OU Sandbox non isol&eacute;e de la production :</strong> Par d&eacute;faut, les comptes Sandbox peuvent cr&eacute;er des VPC peerings vers d'autres comptes de l'organisation. Ajouter une SCP explicite <code>"Deny": "ec2:CreateVpcPeeringConnection"</code> vers les CIDR de production, et <code>"Deny": "sts:AssumeRole"</code> vers les comptes de production dans l'OU Sandbox.
+        </div>
+    </div>
+
+    <div class="code-block">
+        <div class="code-header">
+            <span>&#x2600;&#xFE0F; AWS CLI &mdash; Gestion structure OU et SCPs</span>
+            <button class="copy-btn" onclick="navigator.clipboard.writeText(this.closest('.code-block').querySelector('pre').innerText)">Copier</button>
+        </div>
+        <pre><span class="comment"># Créer une OU sous la root</span>
+<span class="var">ROOT_ID</span>=$(aws organizations list-roots \
+  <span class="param">--query</span> <span class="string">'Roots[0].Id'</span> <span class="param">--output</span> text)
+
+aws organizations create-organizational-unit \
+  <span class="param">--parent-id</span> <span class="var">$ROOT_ID</span> \
+  <span class="param">--name</span> <span class="string">"Workloads"</span>
+
+<span class="comment"># Créer une sous-OU (ex: Production sous Workloads)</span>
+<span class="var">WORKLOADS_OU_ID</span>=$(aws organizations list-organizational-units-for-parent \
+  <span class="param">--parent-id</span> <span class="var">$ROOT_ID</span> \
+  <span class="param">--query</span> <span class="string">"OrganizationalUnits[?Name=='Workloads'].Id"</span> \
+  <span class="param">--output</span> text)
+
+aws organizations create-organizational-unit \
+  <span class="param">--parent-id</span> <span class="var">$WORKLOADS_OU_ID</span> \
+  <span class="param">--name</span> <span class="string">"Production"</span>
+
+<span class="comment"># Créer et attacher une SCP de quarantaine (Suspended OU)</span>
+<span class="var">QUARANTINE_SCP</span>=<span class="string">'{
+  "Version": "2012-10-17",
+  "Statement": [{
+    "Sid": "DenyAllExceptAudit",
+    "Effect": "Deny",
+    "NotAction": [
+      "cloudtrail:Get*", "cloudtrail:Describe*",
+      "s3:GetObject", "s3:ListBucket",
+      "logs:Get*", "logs:Describe*"
+    ],
+    "Resource": "*"
+  }]
+}'</span>
+
+<span class="var">SCP_ID</span>=$(aws organizations create-policy \
+  <span class="param">--content</span> <span class="string">"$QUARANTINE_SCP"</span> \
+  <span class="param">--name</span> <span class="string">"QuarantinePolicy"</span> \
+  <span class="param">--type</span> SERVICE_CONTROL_POLICY \
+  <span class="param">--query</span> <span class="string">'Policy.PolicySummary.Id'</span> \
+  <span class="param">--output</span> text)
+
+<span class="comment"># Déplacer un compte compromis vers la Suspended OU</span>
+aws organizations move-account \
+  <span class="param">--account-id</span> <span class="string">"COMPROMISED_ACCOUNT_ID"</span> \
+  <span class="param">--source-parent-id</span> <span class="var">$WORKLOADS_OU_ID</span> \
+  <span class="param">--destination-parent-id</span> <span class="string">"SUSPENDED_OU_ID"</span></pre>
+    </div>
+
+    <h3>4.3 &mdash; Checklist structure OU</h3>
+    <div class="checklist-item"><input type="checkbox"> <span>Hi&eacute;rarchie OU document&eacute;e : Security / Infrastructure / Workloads / Sandbox / Suspended</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>Aucun compte de workload directement sous la Root</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>SCP de quarantaine cr&eacute;&eacute;e et attach&eacute;e &agrave; l'OU Suspended</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>OUs Production et Dev distinctes (SCPs diff&eacute;rentes)</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>OU Sandbox isol&eacute;e de Production (SCP deny peering + deny assume role cross-account)</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>Proc&eacute;dure de quarantaine document&eacute;e (move-account vers Suspended OU)</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>Guardrails CT activ&eacute;s sur chaque OU apr&egrave;s cr&eacute;ation</span></div>
+</div>
+
+<!-- ═══════════════════════ S5 — DRIFT DETECTION & REMEDIATION ═══════════════════════ -->
+<div class="section" id="s5">
+    <div class="section-header orange">
+        <div class="section-number">5</div>
+        <div>
+            <div class="section-title">Drift Detection &amp; Remediation <span class="lic lic-aws-free">Inclus</span></div>
+            <div class="section-desc">Types de drift, d&eacute;tection automatique, re-registration, re-enrollment, notifications</div>
+        </div>
+    </div>
+    <div class="alert alert-error">
+        <span class="alert-icon">&#x1F6A8;</span>
+        <div>
+            <strong>Sc&eacute;nario :</strong> Un administrateur modifie directement une SCP depuis la console Organizations pour "d&eacute;bloquer temporairement" une action. Il oublie de la r&eacute;tablir. 3 mois plus tard, lors d'un audit, on d&eacute;couvre que le guardrail "Restrict root user" &eacute;tait en drift depuis 90 jours — et qu'un acteur malveillant a utilis&eacute; root dans 5 comptes pendant cette p&eacute;riode.
+        </div>
+    </div>
+
+    <h3>5.1 &mdash; Types de dérives et détection</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr>
+            <th>Type de d&eacute;rive</th>
+            <th>Cause fr&eacute;quente</th>
+            <th>D&eacute;tect&eacute; par</th>
+            <th>Correction</th>
+            <th>Criticité</th>
+        </tr></thead>
+        <tbody>
+            <tr class="row-ko">
+                <td><strong>SCP Guard&shy;rail modifi&eacute;e</strong></td>
+                <td>Modification manuelle dans Organizations</td>
+                <td>CT dashboard (DRIFT_DETECTED)</td>
+                <td>Re-register OU dans CT</td>
+                <td><span class="hl-red">Critique</span></td>
+            </tr>
+            <tr class="row-ko">
+                <td><strong>Compte sorti de CT</strong></td>
+                <td>Move account hors OU g&eacute;r&eacute;e par CT</td>
+                <td>CT dashboard (Account drifted)</td>
+                <td>Re-enroll le compte</td>
+                <td><span class="hl-red">Critique</span></td>
+            </tr>
+            <tr class="row-ko">
+                <td><strong>CloudTrail org trail supprim&eacute;</strong></td>
+                <td>CLI/console hors CT</td>
+                <td>CT drift + Config rule</td>
+                <td>Re-register Landing Zone</td>
+                <td><span class="hl-red">Critique</span></td>
+            </tr>
+            <tr class="row-warn">
+                <td><strong>Config Recorder arr&ecirc;t&eacute;</strong></td>
+                <td>Optimisation co&ucirc;ts non autoris&eacute;e</td>
+                <td>Config rule (CT guardrail)</td>
+                <td>Re-activer + re-register</td>
+                <td><span class="hl-orange">Haut</span></td>
+            </tr>
+            <tr class="row-warn">
+                <td><strong>IAM Identity Center d&eacute;sactiv&eacute;</strong></td>
+                <td>Migration vers autre IdP sans coordination CT</td>
+                <td>CT dashboard</td>
+                <td>R&eacute;activer IAM IC + re-register LZ</td>
+                <td><span class="hl-orange">Haut</span></td>
+            </tr>
+            <tr class="row-ok">
+                <td><strong>Permission set modifi&eacute; hors CT</strong></td>
+                <td>Modification manuelle IAM IC</td>
+                <td>CT dashboard (soft drift)</td>
+                <td>Resync depuis CT</td>
+                <td><span class="hl">Moyen</span></td>
+            </tr>
+        </tbody>
+    </table>
+    </div>
+
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x1F4A1;</span>
+        <div>
+            <strong>Correction de d&eacute;rive :</strong> Pour la plupart des dérives, la correction consiste à <strong>re-register l'OU ou le compte</strong> dans Control Tower (sans recr&eacute;er). Dans CT Console &gt; Organization &gt; s&eacute;lectionner l'OU ou le compte en drift &gt; "Re-register". CT reapplique les configurations attendues sans toucher aux workloads. Dur&eacute;e : 5-15 minutes.
+        </div>
+    </div>
+
+    <div class="code-block">
+        <div class="code-header">
+            <span>&#x2600;&#xFE0F; AWS CLI &mdash; Détection et correction des dérives</span>
+            <button class="copy-btn" onclick="navigator.clipboard.writeText(this.closest('.code-block').querySelector('pre').innerText)">Copier</button>
+        </div>
+        <pre><span class="comment"># Vérifier le statut de drift de la Landing Zone</span>
+<span class="var">LZ_ARN</span>=$(aws controltower list-landing-zones \
+  <span class="param">--query</span> <span class="string">'landingZones[0].arn'</span> <span class="param">--output</span> text)
+
+aws controltower get-landing-zone \
+  <span class="param">--landing-zone-identifier</span> <span class="var">$LZ_ARN</span> \
+  <span class="param">--query</span> <span class="string">'landingZone.driftStatus'</span>
+
+<span class="comment"># Lister les OUs et comptes en drift</span>
+aws controltower list-landing-zone-operations \
+  <span class="param">--filter</span> <span class="string">'{"statuses":["FAILED","SUCCEEDED"]}'</span> \
+  <span class="param">--query</span> <span class="string">'landingZoneOperations[].{Type:operationType,Status:status,StartTime:startTime}'</span> \
+  <span class="param">--max-results</span> 20
+
+<span class="comment"># Déclencher une réparation (reset) de la Landing Zone</span>
+aws controltower reset-landing-zone \
+  <span class="param">--landing-zone-identifier</span> <span class="var">$LZ_ARN</span>
+
+<span class="comment"># Alerting automatique : EventBridge rule sur les events CT drift</span>
+aws events put-rule \
+  <span class="param">--name</span> <span class="string">"ControlTowerDriftAlert"</span> \
+  <span class="param">--event-pattern</span> <span class="string">'{
+    "source": ["aws.controltower"],
+    "detail-type": ["AWS Control Tower Notification"],
+    "detail": {"eventName": ["CreateManagedAccount","UpdateManagedAccount"]}
+  }'</span> \
+  <span class="param">--state</span> ENABLED</pre>
+    </div>
+
+    <h3>5.2 &mdash; Checklist Drift Detection</h3>
+    <div class="checklist-item"><input type="checkbox"> <span>Dashboard CT consult&eacute; hebdomadairement (statut DRIFT_DETECTED sur toutes les OUs)</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>EventBridge rule configur&eacute;e pour alerter sur les &eacute;v&eacute;nements CT drift</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>Proc&eacute;dure de re-register document&eacute;e et test&eacute;e</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>Alerte SNS configur&eacute;e pour recevoir les notifications CT par e-mail</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>Aucune modification directe des SCPs CT via Organizations Console (seulement via CT)</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>D&eacute;rive r&eacute;solue sous 24h (SLA interne recommand&eacute;)</span></div>
+</div>
+
+<!-- ═══════════════════════ S6 — CfCT ═══════════════════════ -->
+<div class="section" id="s6">
+    <div class="section-header orange">
+        <div class="section-number">6</div>
+        <div>
+            <div class="section-title">Customizations for Control Tower (CfCT) <span class="lic lic-aws-pay">CodePipeline</span></div>
+            <div class="section-desc">StackSets + SCPs, pipeline CodePipeline, manifest.yaml, comparaison CfCT vs AFT</div>
+        </div>
+    </div>
+    <div class="alert alert-error">
+        <span class="alert-icon">&#x1F6A8;</span>
+        <div>
+            <strong>Sc&eacute;nario :</strong> Une organisation de 100 comptes d&eacute;ploie des ressources de baseline (Security Hub, GuardDuty, budgets) en cliquant manuellement dans chaque compte. 3 personnes y passent 2 semaines. Lors d'une r&eacute;organisation des OUs, toutes les customizations sont perdues et doivent &ecirc;tre r&eacute;appliqu&eacute;es manuellement. CfCT (Customizations for Control Tower) automatise ce processus via un pipeline GitOps.
+        </div>
+    </div>
+
+    <h3>6.1 &mdash; Architecture CfCT</h3>
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x1F4A1;</span>
+        <div>
+            <strong>CfCT vs Account Factory Customizations :</strong> CfCT est un pipeline CodePipeline d&eacute;clench&eacute; par des &eacute;v&eacute;nements CT (nouveau compte, mise &agrave; jour OU). Il d&eacute;ploie des <strong>StackSets CloudFormation</strong> dans les comptes cibles. Diff&eacute;rence cl&eacute; : CfCT est <strong>d&eacute;claratif et GitOps</strong> — toute la configuration est dans un d&eacute;p&ocirc;t Git. Pour les nouveaux projets &gt;20 comptes, pr&eacute;f&eacute;rer <a href="aws-control-tower.html#s7" class="cross-ref">AFT (S7)</a> qui est plus complet.
+        </div>
+    </div>
+
+    <div class="table-container">
+    <table>
+        <thead><tr>
+            <th>Composant CfCT</th>
+            <th>R&ocirc;le</th>
+            <th>Technologie</th>
+            <th>Quand utiliser</th>
+        </tr></thead>
+        <tbody>
+            <tr class="row-ok">
+                <td><strong>manifest.yaml</strong></td>
+                <td>D&eacute;finit quelles StackSets d&eacute;ployer sur quelles OUs/comptes</td>
+                <td>YAML CfCT</td>
+                <td>Toujours (fichier de config central)</td>
+            </tr>
+            <tr class="row-ok">
+                <td><strong>CodeCommit / S3 bucket</strong></td>
+                <td>Source des templates CloudFormation</td>
+                <td>Git / S3</td>
+                <td>Toujours</td>
+            </tr>
+            <tr class="row-ok">
+                <td><strong>CodePipeline</strong></td>
+                <td>Orchestre le d&eacute;ploiement des StackSets</td>
+                <td>AWS CodePipeline</td>
+                <td>Automatique &agrave; chaque commit / &eacute;v&eacute;nement CT</td>
+            </tr>
+            <tr class="row-ok">
+                <td><strong>CloudFormation StackSets</strong></td>
+                <td>D&eacute;ploie les ressources dans les comptes cibles</td>
+                <td>CloudFormation</td>
+                <td>D&eacute;ploiements multi-comptes</td>
+            </tr>
+            <tr class="row-warn">
+                <td><strong>Service Control Policies (SCPs custom)</strong></td>
+                <td>D&eacute;ploie des SCPs additionnelles via CfCT</td>
+                <td>CfCT + Organizations</td>
+                <td>SCPs m&eacute;tier non g&eacute;r&eacute;es par CT natif</td>
+            </tr>
+        </tbody>
+    </table>
+    </div>
+
+    <div class="code-block">
+        <div class="code-header">
+            <span>&#x1F4C4; CfCT manifest.yaml &mdash; Exemple de déploiement baseline</span>
+            <button class="copy-btn" onclick="navigator.clipboard.writeText(this.closest('.code-block').querySelector('pre').innerText)">Copier</button>
+        </div>
+        <pre><span class="comment"># manifest.yaml — CfCT configuration</span>
+<span class="comment"># Déployer Security Hub sur tous les comptes de l'OU Workloads</span>
+region: us-east-1
+version: 2021-03-15
+
+resources:
+  - name: SecurityHubBaseline
+    description: Active Security Hub sur tous les comptes workloads
+    resource_file: templates/security-hub-baseline.yaml
+    deploy_method: stack_set
+    deployment_targets:
+      organizational_units:
+        - Workloads/Production
+        - Workloads/Dev
+    regions:
+      - us-east-1
+      - eu-west-1
+    export_outputs:
+      - name: SecurityHubArn
+        value: $[output_SecurityHubArn]
+
+  - name: BudgetAlerts
+    description: Budgets et alertes par compte
+    resource_file: templates/budget-alerts.yaml
+    deploy_method: stack_set
+    deployment_targets:
+      accounts:
+        - ALL_ACCOUNTS_IN_OU:Workloads
+    parameters:
+      MonthlyBudgetUSD: <span class="string">"500"</span>
+      AlertEmail: aws-billing@company.com</pre>
+    </div>
+
+    <div class="alert alert-warn">
+        <span class="alert-icon">&#x26A0;&#xFE0F;</span>
+        <div>
+            <strong>Pi&egrave;ge : CfCT ne d&eacute;ploie pas en temps r&eacute;el</strong> — CfCT est d&eacute;clench&eacute; par des &eacute;v&eacute;nements CT (nouveau compte cr&eacute;&eacute; via Account Factory). Si un compte est cr&eacute;&eacute; manuellement hors Account Factory, CfCT n'est pas d&eacute;clench&eacute;. Toujours utiliser Account Factory pour cr&eacute;er des comptes afin que CfCT re&ccedil;oive le trigger d'automatisation.
+        </div>
+    </div>
+
+    <h3>6.2 &mdash; Checklist CfCT</h3>
+    <div class="checklist-item"><input type="checkbox"> <span>CfCT deploy&eacute; depuis le <a href="https://github.com/aws-solutions/aws-control-tower-customizations" target="_blank">solution GitHub officielle AWS</a></span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>manifest.yaml dans CodeCommit / S3 versionn&eacute;</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>Pipeline test&eacute; sur un compte sandbox avant d&eacute;ploiement production</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>Tous les nouveaux comptes cr&eacute;&eacute;s via Account Factory (pour trigger CfCT)</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>Templates CloudFormation valid&eacute;s (cfn-lint) avant commit</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>StackSets en mode SELF_MANAGED pour Management Account; DELEGATED_ADMIN pour les autres</span></div>
+</div>
+
+<!-- ═══════════════════════ S7 — AFT ═══════════════════════ -->
+<div class="section" id="s7">
+    <div class="section-header orange">
+        <div class="section-number">7</div>
+        <div>
+            <div class="section-title">Account Factory for Terraform (AFT) <span class="lic lic-aws-pay">Terraform</span></div>
+            <div class="section-desc">Architecture AFT, account request Terraform, customizations, GitOps, account data</div>
+        </div>
+    </div>
+    <div class="alert alert-error">
+        <span class="alert-icon">&#x1F6A8;</span>
+        <div>
+            <strong>Sc&eacute;nario :</strong> Une banque cr&eacute;e 50 comptes AWS par an. Avec Account Factory natif, chaque compte n&eacute;cessite une customization manuelle post-cr&eacute;ation (TGW attachment, DNS, Security Hub, budget, tags). L'&eacute;quipe Cloud passe 4h par compte. AFT r&eacute;duit ce temps &agrave; 0h (tout est automatique, GitOps, versionn&eacute;, auditabl).
+        </div>
+    </div>
+
+    <h3>7.1 &mdash; Architecture AFT</h3>
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x1F4A1;</span>
+        <div>
+            <strong>Pr&eacute;requis AFT :</strong> Un compte AFT d&eacute;di&eacute; ("AFT Management Account") est n&eacute;cessaire, distinct du CT Management Account. AFT supporte Terraform Community Edition, Terraform Cloud et Terraform Enterprise en version <code>1.6.1</code> ou ult&eacute;rieure. Un fournisseur VCS est requis ; AWS indique CodeCommit par d&eacute;faut, mais une premi&egrave;re installation sans d&eacute;p&ocirc;t CodeCommit existant doit utiliser un VCS externe tel que GitHub ou Bitbucket. AFT d&eacute;ploie ensuite ses propres services (pipeline, orchestration, stockage, notifications) dans le compte AFT.
+        </div>
+    </div>
+
+    <div class="table-container">
+    <table>
+        <thead><tr>
+            <th>Composant AFT</th>
+            <th>R&ocirc;le</th>
+            <th>D&eacute;clencheur</th>
+        </tr></thead>
+        <tbody>
+            <tr class="row-ok">
+                <td><strong>Account Request</strong></td>
+                <td>Fichier Terraform <code>.tf</code> d&eacute;finissant un compte &agrave; cr&eacute;er</td>
+                <td>Pull Request Git approuv&eacute;e</td>
+            </tr>
+            <tr class="row-ok">
+                <td><strong>Account Provisioning Pipeline</strong></td>
+                <td>Cr&eacute;e le compte via Account Factory CT</td>
+                <td>Merge de la PR</td>
+            </tr>
+            <tr class="row-ok">
+                <td><strong>Global Customizations</strong></td>
+                <td>Customizations appliqu&eacute;es &agrave; TOUS les nouveaux comptes</td>
+                <td>Post-cr&eacute;ation automatique</td>
+            </tr>
+            <tr class="row-ok">
+                <td><strong>Account Customizations</strong></td>
+                <td>Customizations sp&eacute;cifiques &agrave; un compte ou groupe</td>
+                <td>Post-cr&eacute;ation selon tags du compte</td>
+            </tr>
+            <tr class="row-warn">
+                <td><strong>Account Provisioning Customizations</strong></td>
+                <td>Hooks pre/post cr&eacute;ation de compte</td>
+                <td>Avant/apr&egrave;s Account Factory</td>
+            </tr>
+        </tbody>
+    </table>
+    </div>
+
+    <div class="code-block">
+        <div class="code-header">
+            <span>&#x1F4C4; AFT &mdash; Exemple account request Terraform</span>
+            <button class="copy-btn" onclick="navigator.clipboard.writeText(this.closest('.code-block').querySelector('pre').innerText)">Copier</button>
+        </div>
+        <pre><span class="comment"># account-requests/projectx-dev.tf</span>
+<span class="comment"># Pull Request dans le dépôt AFT account-requests</span>
+module <span class="string">"projectx_dev"</span> {
+  source = <span class="string">"./modules/aft-account-request"</span>
+
+  control_tower_parameters = {
+    AccountEmail              = <span class="string">"aws-dev-projectx@company.com"</span>
+    AccountName               = <span class="string">"ProjectX-Dev"</span>
+    ManagedOrganizationalUnit = <span class="string">"Workloads/Dev"</span>
+    SSOUserEmail              = <span class="string">"john.doe@company.com"</span>
+    SSOUserFirstName          = <span class="string">"John"</span>
+    SSOUserLastName           = <span class="string">"Doe"</span>
+  }
+
+  account_tags = {
+    Environment = <span class="string">"dev"</span>
+    Project     = <span class="string">"ProjectX"</span>
+    CostCenter  = <span class="string">"CC-1234"</span>
+    Owner       = <span class="string">"team-projectx"</span>
+  }
+
+  change_management_parameters = {
+    change_requested_by = <span class="string">"John Doe"</span>
+    change_reason       = <span class="string">"Nouveau compte dev pour ProjectX"</span>
+  }
+
+  <span class="comment"># Customizations à appliquer en plus des global customizations</span>
+  account_customizations_name = <span class="string">"dev-workload"</span>
+}</pre>
+    </div>
+
+    <div class="alert alert-warn">
+        <span class="alert-icon">&#x26A0;&#xFE0F;</span>
+        <div>
+            <strong>Pi&egrave;ge : Co&ucirc;t AFT :</strong> AFT n'a pas de licence d&eacute;di&eacute;e, mais il d&eacute;ploie plusieurs services AWS factur&eacute;s &agrave; l'usage dans le compte AFT. Le co&ucirc;t d&eacute;pend surtout de l'activit&eacute; des pipelines, du stockage, des notifications et de l'usage r&eacute;seau ; AWS pr&eacute;cise aussi que d&eacute;sactiver le VPC AFT via <code>aft_enable_vpc=false</code> peut r&eacute;duire le co&ucirc;t pour certains patterns. Pour des besoins simples, Account Factory natif + CfCT reste souvent plus l&eacute;ger.
+        </div>
+    </div>
+
+    <h3>7.2 &mdash; Checklist AFT</h3>
+    <div class="checklist-item"><input type="checkbox"> <span>Compte AFT Management d&eacute;di&eacute; cr&eacute;&eacute; (s&eacute;par&eacute; du CT Management Account)</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>D&eacute;p&ocirc;ts Git cr&eacute;&eacute;s : account-requests, global-customizations, account-customizations</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>AFT deploy&eacute; via module Terraform officiel <code>aws-ia/control_tower_account_factory/aws</code></span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>Global customizations : Security Hub, GuardDuty, budget alerting</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>Premier compte test cr&eacute;&eacute; via AFT et valid&eacute;</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>Pipeline de revue PR configur&eacute; (approbation manuelle avant merge)</span></div>
+</div>
+
+<!-- ═══════════════════════ S8 — SECURITY BASELINE ═══════════════════════ -->
+<div class="section" id="s8">
+    <div class="section-header blue">
+        <div class="section-number blue">8</div>
+        <div>
+            <div class="section-title">Security Baseline Automatique <span class="lic lic-aws-free">Inclus</span> <span class="lic lic-aws-pay">Services sous-jacents</span></div>
+            <div class="section-desc">Mandatory controls, Strongly Recommended, Security Hub, GuardDuty, IAM Access Analyzer, Macie, Inspector</div>
+        </div>
+    </div>
+    <div class="alert alert-error">
+        <span class="alert-icon">&#x1F6A8;</span>
+        <div>
+            <strong>Sc&eacute;nario :</strong> Un attaquant compromet un compte AWS. Amazon GuardDuty n'est pas activ&eacute;. AWS Security Hub n'est pas configur&eacute;. Amazon Macie n'est pas activ&eacute;. L'intrusion dure 21 jours avant d'&ecirc;tre d&eacute;tect&eacute;e par une alerte de facturation. Avec la Security Baseline, la d&eacute;tection aurait eu lieu en &lt;1h via GuardDuty + SNS alert.
+        </div>
+    </div>
+
+    <h3>8.1 &mdash; Services de la Security Baseline</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr>
+            <th>Service</th>
+            <th>R&ocirc;le</th>
+            <th>Pr&eacute;requis CT</th>
+            <th>Delegated Admin</th>
+            <th>Mod&egrave;le de co&ucirc;t 2026</th>
+            <th>Licence</th>
+        </tr></thead>
+        <tbody>
+            <tr class="row-ko">
+                <td><strong>Amazon GuardDuty</strong></td>
+                <td>D&eacute;tection de menaces ML (IPs malveillantes, comportements anormaux)</td>
+                <td>Non (mais fortement recommand&eacute;)</td>
+                <td>Compte Audit CT</td>
+                <td>Pay-as-you-go selon volume de logs, d'&eacute;v&eacute;nements, de workloads et de protection plans activ&eacute;s</td>
+                <td><span class="lic lic-aws-pay">GuardDuty</span></td>
+            </tr>
+            <tr class="row-ko">
+                <td><strong>AWS Security Hub</strong></td>
+                <td>Posture, vuln&eacute;rabilit&eacute;s, risk analytics, corr&eacute;lation et r&eacute;ponse multi-comptes</td>
+                <td>Non</td>
+                <td>Compte Audit CT</td>
+                <td>Essentials plan par resource unit ; Threat Analytics et Extended plan en add-ons pay-as-you-go</td>
+                <td><span class="lic lic-aws-pay">Security Hub</span></td>
+            </tr>
+            <tr class="row-warn">
+                <td><strong>Amazon Macie</strong></td>
+                <td>D&eacute;tection de donn&eacute;es sensibles (PII) dans S3</td>
+                <td>Non</td>
+                <td>Compte Audit CT</td>
+                <td>Nombre de buckets, objets surveill&eacute;s et volume de donn&eacute;es inspect&eacute;es</td>
+                <td><span class="lic lic-aws-pay">Macie</span></td>
+            </tr>
+            <tr class="row-warn">
+                <td><strong>AWS Config + Conformance Packs</strong></td>
+                <td>Conformit&eacute; CIS / PCI-DSS / NIST automatique</td>
+                <td>Activ&eacute; par CT</td>
+                <td>Non requis</td>
+                <td>Configuration items, rule evaluations et conformance pack evaluations</td>
+                <td><span class="lic lic-aws-pay">Config</span></td>
+            </tr>
+            <tr class="row-ok">
+                <td><strong>Amazon Inspector</strong></td>
+                <td>Scan de vuln&eacute;rabilit&eacute;s EC2, Lambda, ECR et repositories</td>
+                <td>Non</td>
+                <td>Management Account</td>
+                <td>Facturation proratis&eacute;e ou par scan selon EC2, Lambda, ECR, CI/CD et code repositories</td>
+                <td><span class="lic lic-aws-pay">Inspector</span></td>
+            </tr>
+        </tbody>
+    </table>
+    </div>
+
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x1F4A1;</span>
+        <div>
+            <strong>Delegated Administrator :</strong> Pour GuardDuty, Security Hub, Macie et Inspector, configurer le <strong>compte Audit de Control Tower</strong> comme Delegated Administrator. Cela permet de centraliser tous les findings de tous les comptes de l'organisation dans un seul compte, sans acc&egrave;s aux workloads eux-m&ecirc;mes.
+        </div>
+    </div>
+
+    <div class="code-block">
+        <div class="code-header">
+            <span>&#x2600;&#xFE0F; AWS CLI &mdash; Activation GuardDuty + Security Hub org-wide</span>
+            <button class="copy-btn" onclick="navigator.clipboard.writeText(this.closest('.code-block').querySelector('pre').innerText)">Copier</button>
+        </div>
+        <pre><span class="comment"># Configurer Audit Account comme Delegated Admin GuardDuty</span>
+<span class="var">AUDIT_ACCOUNT_ID</span>=<span class="string">"XXXXXXXXXXXX"</span>  <span class="comment"># ID du compte Audit CT</span>
+
+aws guardduty enable-organization-admin-account \
+  <span class="param">--admin-account-id</span> <span class="var">$AUDIT_ACCOUNT_ID</span>
+
+<span class="comment"># Depuis le compte Audit — activer GuardDuty sur tous les membres</span>
+<span class="var">DETECTOR_ID</span>=$(aws guardduty create-detector \
+  <span class="param">--enable</span> \
+  <span class="param">--query</span> <span class="string">'DetectorId'</span> <span class="param">--output</span> text)
+
+aws guardduty update-organization-configuration \
+  <span class="param">--detector-id</span> <span class="var">$DETECTOR_ID</span> \
+  <span class="param">--auto-enable-organization-members</span> ALL
+
+<span class="comment"># Activer Security Hub org-wide</span>
+aws securityhub enable-organization-admin-account \
+  <span class="param">--admin-account-id</span> <span class="var">$AUDIT_ACCOUNT_ID</span>
+
+<span class="comment"># Depuis le compte Audit — activer CIS AWS Foundations Benchmark</span>
+aws securityhub batch-enable-standards \
+  <span class="param">--standards-subscription-requests</span> \
+    <span class="string">'[{"StandardsArn":"arn:aws:securityhub:::ruleset/cis-aws-foundations-benchmark/v/1.4.0"}]'</span>
+
+<span class="comment"># Vérifier le score de sécurité Security Hub</span>
+aws securityhub get-findings \
+  <span class="param">--filters</span> <span class="string">'{"WorkflowStatus":[{"Value":"NEW","Comparison":"EQUALS"}],"SeverityLabel":[{"Value":"CRITICAL","Comparison":"EQUALS"}]}'</span> \
+  <span class="param">--query</span> <span class="string">'length(Findings)'</span></pre>
+    </div>
+
+    <div class="alert alert-warn">
+        <span class="alert-icon">&#x26A0;&#xFE0F;</span>
+        <div>
+            <strong>Pi&egrave;ge : GuardDuty 30 premiers jours gratuits</strong> — GuardDuty offre 30 jours d'essai gratuit par compte. Apr&egrave;s 30 jours, la facturation commence. Anticiper le co&ucirc;t et configurer des alertes de budget d&egrave;s le d&eacute;part. Activer GuardDuty en bloc sur tous les comptes au m&ecirc;me moment pour synchroniser la fin de la p&eacute;riode d'essai.
+        </div>
+    </div>
+
+    <h3>8.2 &mdash; Checklist Security Baseline</h3>
+    <div class="checklist-item"><input type="checkbox"> <span>Amazon GuardDuty activ&eacute; sur tous les comptes (via Delegated Admin compte Audit)</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>AWS Security Hub activ&eacute; avec CIS AWS Foundations Benchmark (v1.4 ou v3.0)</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>Compte Audit configur&eacute; comme Delegated Administrator pour GuardDuty + Security Hub</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>Alertes SNS sur findings CRITICAL de GuardDuty + Security Hub</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>Conformance Pack CIS deploy&eacute; via AWS Config</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>Amazon Inspector activ&eacute; pour scan EC2/ECR/Lambda (si applicable)</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>Budget GuardDuty configur&eacute; (alerte si d&eacute;passement pr&eacute;vu)</span></div>
+</div>
+
+<!-- ═══════════════════════ S9 — REPORTING & COMPLIANCE ═══════════════════════ -->
+<div class="section" id="s9">
+    <div class="section-header blue">
+        <div class="section-number blue">9</div>
+        <div>
+            <div class="section-title">Reporting &amp; Compliance Dashboard <span class="lic lic-aws-pay">Audit Manager</span></div>
+            <div class="section-desc">Dashboard Control Tower, Audit Manager, compliance reports par OU, noncompliant resources</div>
+        </div>
+    </div>
+    <div class="alert alert-error">
+        <span class="alert-icon">&#x1F6A8;</span>
+        <div>
+            <strong>Sc&eacute;nario :</strong> Un RSSI demande un rapport de conformit&eacute; mensuel sur l'&eacute;tat des guardrails et la posture de s&eacute;curit&eacute; des 80 comptes AWS. Sans reporting centralis&eacute;, l'&eacute;quipe Cloud passe 2 jours &agrave; collecter manuellement les informations dans chaque compte. Avec Security Hub + AWS Config Aggregator + QuickSight, ce rapport est g&eacute;n&eacute;r&eacute; automatiquement en 5 minutes.
+        </div>
+    </div>
+
+    <h3>9.1 &mdash; Outils de reporting Control Tower</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr>
+            <th>Outil</th>
+            <th>Ce qu'il mesure</th>
+            <th>Acc&egrave;s</th>
+            <th>Automatisable</th>
+        </tr></thead>
+        <tbody>
+            <tr class="row-ok">
+                <td><strong>CT Dashboard (Console)</strong></td>
+                <td>Guardrails en drift, comptes en d&eacute;rive, OUs g&eacute;r&eacute;es</td>
+                <td>Console CT > Dashboard</td>
+                <td>Non (manuel)</td>
+            </tr>
+            <tr class="row-ok">
+                <td><strong>AWS Security Hub</strong></td>
+                <td>Score de s&eacute;curit&eacute; par compte, findings CRITICAL/HIGH, conformit&eacute; CIS</td>
+                <td>Console Security Hub ou API</td>
+                <td>Oui (API + exports S3)</td>
+            </tr>
+            <tr class="row-ok">
+                <td><strong>AWS Config Aggregator</strong></td>
+                <td>&Eacute;tat de conformit&eacute; des r&egrave;gles Config sur tous les comptes</td>
+                <td>Config > Aggregators</td>
+                <td>Oui (API + CloudWatch)</td>
+            </tr>
+            <tr class="row-warn">
+                <td><strong>Amazon CloudWatch Dashboards</strong></td>
+                <td>M&eacute;triques CloudTrail, Config, GuardDuty en temps r&eacute;el</td>
+                <td>Console CloudWatch</td>
+                <td>Oui (templates CloudFormation)</td>
+            </tr>
+            <tr class="row-ok">
+                <td><strong>Amazon QuickSight</strong></td>
+                <td>Tableaux de bord ex&eacute;cutifs sur posture s&eacute;curit&eacute;</td>
+                <td>Console QuickSight (source : Athena + S3)</td>
+                <td>Oui (refresh programm&eacute;)</td>
+            </tr>
+        </tbody>
+    </table>
+    </div>
+
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x1F4A1;</span>
+        <div>
+            <strong>Pourquoi chaque outil de reporting :</strong> Le <em>CT Dashboard</em> donne une vue instantan&eacute;e des drifts ; <em>Security Hub</em> consolide tous les findings de s&eacute;curit&eacute; dans un score normalis&eacute; ; <em>Config Aggregator</em> mesure la conformit&eacute; des r&egrave;gles de configuration sur l'ensemble des comptes ; <em>QuickSight</em> produit les rapports ex&eacute;cutifs. Chaque outil a un r&ocirc;le distinct — les combiner &eacute;vite les angles morts.
+        </div>
+    </div>
+
+    <div class="code-block">
+        <div class="code-header">
+            <span>&#x2600;&#xFE0F; AWS CLI &mdash; Rapport de conformité Security Hub multi-comptes</span>
+            <button class="copy-btn" onclick="navigator.clipboard.writeText(this.closest('.code-block').querySelector('pre').innerText)">Copier</button>
+        </div>
+        <pre><span class="comment"># Obtenir le score de sécurité Security Hub (compte Audit — aggregateur)</span>
+aws securityhub get-insights \
+  <span class="param">--query</span> <span class="string">'Insights[?Name==`Top accounts by number of failed security checks`]'</span>
+
+<span class="comment"># Rapport des findings CRITICAL non résolus</span>
+aws securityhub get-findings \
+  <span class="param">--filters</span> <span class="string">'{
+    "SeverityLabel": [{"Value": "CRITICAL", "Comparison": "EQUALS"}],
+    "WorkflowStatus": [{"Value": "NEW", "Comparison": "EQUALS"}],
+    "RecordState": [{"Value": "ACTIVE", "Comparison": "EQUALS"}]
+  }'</span> \
+  <span class="param">--query</span> <span class="string">'Findings[].{Account:AwsAccountId,Title:Title,Product:ProductName,Region:Region}'</span> \
+  <span class="param">--output</span> table
+
+<span class="comment"># État de conformité AWS Config Aggregator</span>
+aws configservice describe-aggregate-compliance-by-config-rules \
+  <span class="param">--configuration-aggregator-name</span> <span class="string">"OrganizationAggregator"</span> \
+  <span class="param">--filters</span> <span class="string">'{"ComplianceType":"NON_COMPLIANT"}'</span> \
+  <span class="param">--query</span> <span class="string">'AggregateComplianceByConfigRules[].{Rule:ConfigRuleName,Account:AccountId,Compliance:Compliance.ComplianceType}'</span></pre>
+    </div>
+
+    <h3>9.2 &mdash; Checklist Reporting</h3>
+    <div class="checklist-item"><input type="checkbox"> <span>Config Aggregator cr&eacute;&eacute; dans le compte Audit (aggregation organisation-wide)</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>Dashboard Security Hub configur&eacute; avec les standards CIS/PCI/NIST activ&eacute;s</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>Rapport mensuel de conformit&eacute; automatis&eacute; (EventBridge + Lambda + S3 export)</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>Alertes CloudWatch sur KPIs : findings CRITICAL non r&eacute;solus &gt; seuil</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>Acc&egrave;s en lecture seule au compte Audit pour l'&eacute;quipe s&eacute;curit&eacute;</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>SLA de r&eacute;solution d&eacute;fini : CRITICAL &lt; 4h, HIGH &lt; 24h, MEDIUM &lt; 7 jours</span></div>
+</div>
+
+<!-- ═══════════════════════ S10 — MIGRATION & ENROLLMENT ═══════════════════════ -->
+<div class="section" id="s10">
+    <div class="section-header blue">
+        <div class="section-number blue">10</div>
+        <div>
+            <div class="section-title">Migration &amp; Enrollment de Comptes Existants <span class="lic lic-aws-free">Inclus</span></div>
+            <div class="section-desc">Enrollment de comptes AWS existants, pr&eacute;requis, step-by-step, gestion ressources pr&eacute;-existantes</div>
+        </div>
+    </div>
+    <div class="alert alert-error">
+        <span class="alert-icon">&#x1F6A8;</span>
+        <div>
+            <strong>Sc&eacute;nario :</strong> Une entreprise a 40 comptes AWS cr&eacute;&eacute;s manuellement sur 3 ans, sans structure. L'audit r&eacute;v&egrave;le : 15 comptes sans CloudTrail, 30 comptes avec VPC par d&eacute;faut actif, 8 comptes orphelins. La migration vers Control Tower doit se faire sans interruption des workloads de production.
+        </div>
+    </div>
+
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x1F4A1;</span>
+        <div>
+            <strong>Pourquoi un plan de migration structur&eacute; :</strong> Enroller un compte mal pr&eacute;par&eacute; dans CT (CloudTrail en doublon, Config Recorder actif) provoque des &eacute;checs d'enrollment et potentiellement la perte de logs entre deux &eacute;tapes. L'ordre des 6 &eacute;tapes est impératif : nettoyer avant d'enroller, tester sur non-production avant production.
+        </div>
+    </div>
+
+    <h3>10.1 &mdash; Plan de migration vers Control Tower</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr>
+            <th>&Eacute;tape</th>
+            <th>Action</th>
+            <th>Pr&eacute;-requis</th>
+            <th>Risque</th>
+            <th>Dur&eacute;e</th>
+        </tr></thead>
+        <tbody>
+            <tr class="row-ko">
+                <td><span class="step step-n">1</span> Inventaire</td>
+                <td>Lister tous les comptes, OUs, CloudTrails, Config existants</td>
+                <td>AWS Organizations activ&eacute;</td>
+                <td>Faible</td>
+                <td>1-2 jours</td>
+            </tr>
+            <tr class="row-warn">
+                <td><span class="step step-n">2</span> Nettoyage pr&eacute;-migration</td>
+                <td>Supprimer CloudTrails en conflit, arr&ecirc;ter Config Recorders multi-r&eacute;gions</td>
+                <td>Liste des ressources en conflit</td>
+                <td>Moyen (perte temporaire de logs)</td>
+                <td>1-3 jours</td>
+            </tr>
+            <tr class="row-warn">
+                <td><span class="step step-n">3</span> D&eacute;ploiement Landing Zone</td>
+                <td>D&eacute;ployer CT dans un Management Account vierge (ou existant si compatible)</td>
+                <td>MFA root, emails LZ, All Features Organizations</td>
+                <td>Moyen (30-60 min indisponibilit&eacute; CT setup)</td>
+                <td>1 jour</td>
+            </tr>
+            <tr class="row-ok">
+                <td><span class="step step-n">4</span> Cr&eacute;ation OUs</td>
+                <td>Recr&eacute;er la hi&eacute;rarchie OU dans CT</td>
+                <td>Landing Zone active</td>
+                <td>Faible</td>
+                <td>0.5 jour</td>
+            </tr>
+            <tr class="row-warn">
+                <td><span class="step step-n">5</span> Enrollment comptes</td>
+                <td>Enroller les comptes existants via Account Factory (Enroll account)</td>
+                <td>Comptes nettoy&eacute;s (step 2)</td>
+                <td>Moyen (15-30 min/compte)</td>
+                <td>1-5 jours selon volume</td>
+            </tr>
+            <tr class="row-ok">
+                <td><span class="step step-n">6</span> Activation guardrails</td>
+                <td>Activer les guardrails Strongly Recommended sur toutes les OUs</td>
+                <td>Comptes enroll&eacute;s</td>
+                <td>Faible si comptes &eacute;taient conformes</td>
+                <td>0.5 jour</td>
+            </tr>
+        </tbody>
+    </table>
+    </div>
+
+    <div class="alert alert-warn">
+        <span class="alert-icon">&#x26A0;&#xFE0F;</span>
+        <div>
+            <strong>Pi&egrave;ge majeur &mdash; Enrollment d'un compte avec des ressources existantes :</strong> L'enrollment CT applique des restrictions. Si un compte a des ressources utilisant des actions que les guardrails bloquent (ex: root user actif, S3 buckets publics), l'enrollment peut &eacute;chouer ou provoquer des alertes. Toujours tester sur un compte non-production en premier. V&eacute;rifier la <a href="https://docs.aws.amazon.com/controltower/latest/userguide/enroll-account.html" target="_blank">documentation AWS enrollment prerequisites</a>.
+        </div>
+    </div>
+
+    <div class="code-block">
+        <div class="code-header">
+            <span>&#x2600;&#xFE0F; AWS CLI &mdash; Inventaire et préparation migration</span>
+            <button class="copy-btn" onclick="navigator.clipboard.writeText(this.closest('.code-block').querySelector('pre').innerText)">Copier</button>
+        </div>
+        <pre><span class="comment"># 1. Lister tous les comptes de l'organisation</span>
+aws organizations list-accounts \
+  <span class="param">--query</span> <span class="string">'Accounts[].{Id:Id,Name:Name,Email:Email,Status:Status}'</span> \
+  <span class="param">--output</span> table
+
+<span class="comment"># 2. Identifier les CloudTrails existants par compte (à exécuter dans chaque compte)</span>
+aws cloudtrail describe-trails \
+  <span class="param">--include-shadow-trails</span> false \
+  <span class="param">--query</span> <span class="string">'trailList[].{Name:Name,IsMultiRegion:IsMultiRegionTrail,IsOrg:IsOrganizationTrail}'</span>
+
+<span class="comment"># 3. Identifier les Config Recorders (conflits potentiels)</span>
+aws configservice describe-configuration-recorders \
+  <span class="param">--query</span> <span class="string">'ConfigurationRecorders[].{Name:name,AllSupported:recordingGroup.allSupported}'</span>
+
+<span class="comment"># 4. Arrêter un Config Recorder en conflit avant enrollment</span>
+aws configservice stop-configuration-recorder \
+  <span class="param">--configuration-recorder-name</span> <span class="string">"default"</span>
+
+<span class="comment"># 5. Vérifier l'état d'enrollment d'un compte dans CT</span>
+aws controltower list-enabled-controls \
+  <span class="param">--target-identifier</span> <span class="string">"arn:aws:organizations::MGMT_ACCT:account/o-xxxx/ACCOUNT_ID"</span> \
+  <span class="param">--query</span> <span class="string">'enabledControls[].{Control:controlIdentifier,Status:statusSummary.status}'</span></pre>
+    </div>
+
+    <h3>10.2 &mdash; Checklist migration vers Control Tower</h3>
+    <div class="checklist-item"><input type="checkbox"> <span>Inventaire complet : liste des comptes, OUs, CloudTrails, Config Recorders existants</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>Conflits identifi&eacute;s : CloudTrails multi-r&eacute;gions en doublon supprim&eacute;s</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>Test d'enrollment sur 2-3 comptes non-production r&eacute;ussi</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>Plan de rollback d&eacute;fini (que faire si l'enrollment &eacute;choue sur un compte de production)</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>Communication &eacute;quipes effectu&eacute;e : fenêtres de maintenance pour enrollment</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>Tous les comptes enroll&eacute;s et en statut <code>ENROLLED</code> dans CT</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>Aucun compte en statut <code>DRIFTED</code> apr&egrave;s enrollment</span></div>
+</div>
+
+<!-- ═══════════════════════ SCORES ═══════════════════════ -->
+<div class="section" id="scores">
+    <div class="section-header orange">
+        <div class="section-number dark">&#x1F4CA;</div>
+        <div>
+            <div class="section-title">Tableau de Scoring Global</div>
+            <div class="section-desc">Score de maturit&eacute; AWS Control Tower — Total 100 points</div>
+        </div>
+    </div>
+    <p>Calculez votre score en cochant chaque &eacute;l&eacute;ment configur&eacute; dans votre environnement. Score par d&eacute;faut AWS (rien configur&eacute;) : <strong>10-20/100</strong>.</p>
+
+    <div class="table-container">
+    <table>
+        <thead><tr>
+            <th>Section</th>
+            <th>Th&egrave;me</th>
+            <th>Points max</th>
+            <th>Score d&eacute;faut AWS</th>
+            <th>Cr&egrave;re d'attribution</th>
+        </tr></thead>
+        <tbody>
+            <tr class="row-ko">
+                <td><strong>S1 &mdash; Landing Zone</strong></td>
+                <td>Setup de base CT</td>
+                <td><span class="hl-green"><strong>15</strong></span></td>
+                <td><span class="hl-red">0</span></td>
+                <td>LZ active + MFA root + CloudTrail + Config + IAM IC</td>
+            </tr>
+            <tr class="row-ko">
+                <td><strong>S2 &mdash; Guardrails</strong></td>
+                <td>Contr&ocirc;les de s&eacute;curit&eacute;</td>
+                <td><span class="hl-green"><strong>15</strong></span></td>
+                <td><span class="hl-red">5</span> (mandatory seuls)</td>
+                <td>Strongly Recommended activ&eacute;s = +10 pts</td>
+            </tr>
+            <tr class="row-ko">
+                <td><strong>S3 &mdash; Account Factory</strong></td>
+                <td>Vending de comptes</td>
+                <td><span class="hl-green"><strong>15</strong></span></td>
+                <td><span class="hl-red">0</span></td>
+                <td>AF configur&eacute; + VPC no default + processus document&eacute;</td>
+            </tr>
+            <tr class="row-warn">
+                <td><strong>S4 &mdash; OU Structure</strong></td>
+                <td>Hi&eacute;rarchie organisations</td>
+                <td><span class="hl"><strong>10</strong></span></td>
+                <td><span class="hl-red">2</span> (Security OU CT)</td>
+                <td>Hi&eacute;rarchie compl&egrave;te + SCP quarantaine + Sandbox isol&eacute;</td>
+            </tr>
+            <tr class="row-warn">
+                <td><strong>S5 &mdash; Drift Detection</strong></td>
+                <td>D&eacute;tection de d&eacute;rive</td>
+                <td><span class="hl"><strong>10</strong></span></td>
+                <td><span class="hl-red">0</span></td>
+                <td>Monitoring actif + EventBridge + proc&eacute;dure correction</td>
+            </tr>
+            <tr class="row-warn">
+                <td><strong>S6 &mdash; CfCT</strong></td>
+                <td>Customizations GitOps</td>
+                <td><span class="hl"><strong>10</strong></span></td>
+                <td><span class="hl-red">0</span></td>
+                <td>Pipeline CfCT d&eacute;ploy&eacute; + manifest.yaml versionn&eacute;</td>
+            </tr>
+            <tr class="row-ok">
+                <td><strong>S7 &mdash; AFT</strong></td>
+                <td>Account Factory Terraform</td>
+                <td><span class="hl"><strong>8</strong></span></td>
+                <td><span class="hl-red">0</span></td>
+                <td>AFT d&eacute;ploy&eacute; + PR workflow + global customizations</td>
+            </tr>
+            <tr class="row-ok">
+                <td><strong>S8 &mdash; Security Baseline</strong></td>
+                <td>Services de s&eacute;curit&eacute;</td>
+                <td><span class="hl"><strong>7</strong></span></td>
+                <td><span class="hl-red">0</span></td>
+                <td>GuardDuty + Security Hub + Delegated Admin Audit</td>
+            </tr>
+            <tr class="row-ok">
+                <td><strong>S9 &mdash; Reporting</strong></td>
+                <td>Tableaux de bord conformit&eacute;</td>
+                <td><span class="hl"><strong>5</strong></span></td>
+                <td><span class="hl-red">0</span></td>
+                <td>Config Aggregator + rapport mensuel automatis&eacute;</td>
+            </tr>
+            <tr class="row-ok">
+                <td><strong>S10 &mdash; Migration</strong></td>
+                <td>Enrollment comptes existants</td>
+                <td><span class="hl"><strong>5</strong></span></td>
+                <td><span class="hl-red">0</span></td>
+                <td>100% comptes enroll&eacute;s + aucun en DRIFTED</td>
+            </tr>
+            <tr>
+                <td colspan="2"><strong>TOTAL</strong></td>
+                <td><span class="hl-green"><strong>100</strong></span></td>
+                <td><span class="hl-red"><strong>~7</strong></span></td>
+                <td>&bull; &lt;30 = Critique &bull; 30-59 = Insuffisant &bull; 60-79 = Correct &bull; 80+ = Optimal</td>
+            </tr>
+        </tbody>
+    </table>
+    </div>
+</div>
+
+<!-- ═══════════════════════ MATRICE D'INTERACTIONS ═══════════════════════ -->
+<div class="section" id="matrice">
+    <div class="section-header blue">
+        <div class="section-number blue">&#x1F9E9;</div>
+        <div>
+            <div class="section-title">Matrice d'Interactions entre Sections</div>
+            <div class="section-desc">D&eacute;pendances et interactions entre les composants AWS Control Tower</div>
+        </div>
+    </div>
+    <p>D&eacute;pendances et interactions entre les sections de ce guide.</p>
+    <div class="table-container">
+    <table>
+        <thead><tr>
+            <th>Section</th>
+            <th>D&eacute;pend de</th>
+            <th>Requis par</th>
+            <th>Interaction cl&eacute;</th>
+        </tr></thead>
+        <tbody>
+            <tr>
+                <td><strong>S1 Landing Zone</strong></td>
+                <td>&mdash; (pr&eacute;requis initial)</td>
+                <td>S2, S3, S4, S5, S6, S7, S8, S9, S10</td>
+                <td>Fondation : rien ne fonctionne sans LZ active</td>
+            </tr>
+            <tr>
+                <td><strong>S2 Guardrails</strong></td>
+                <td>S1 (LZ), S4 (OUs cr&eacute;&eacute;es)</td>
+                <td>S5 (drift guardrails), S8 (compl&eacute;ment s&eacute;curit&eacute;)</td>
+                <td>Les guardrails s'activent sur des OUs — OU structure n&eacute;cessaire</td>
+            </tr>
+            <tr>
+                <td><strong>S3 Account Factory</strong></td>
+                <td>S1 (LZ), S4 (OUs), S2 (guardrails h&eacute;rit&eacute;s)</td>
+                <td>S6 (CfCT trigger), S7 (AFT remplace AF)</td>
+                <td>Chaque compte cr&eacute;&eacute; h&eacute;rite guardrails de l'OU de destination</td>
+            </tr>
+            <tr>
+                <td><strong>S4 OU Structure</strong></td>
+                <td>S1 (LZ)</td>
+                <td>S2, S3, S6, S7, S10</td>
+                <td>SCP appliqu&eacute;es hi&eacute;rarchiquement — structurer avant d'activer guardrails</td>
+            </tr>
+            <tr>
+                <td><strong>S5 Drift Detection</strong></td>
+                <td>S1, S2, S4</td>
+                <td>S9 (reporting d&eacute;rive)</td>
+                <td>Monitoring du bon &eacute;tat des S1-S4 ; alertes sur r&eacute;gressions</td>
+            </tr>
+            <tr>
+                <td><strong>S6 CfCT</strong></td>
+                <td>S1, S3 (AF natif comme trigger)</td>
+                <td>S7 (AFT le remplace pour Terraform)</td>
+                <td>D&eacute;clench&eacute; par &eacute;v&eacute;nements CT Account Factory</td>
+            </tr>
+            <tr>
+                <td><strong>S7 AFT</strong></td>
+                <td>S1, S3 (remplace AF natif), S4</td>
+                <td>S8 (global customizations AFT)</td>
+                <td>AFT pr&eacute;f&eacute;r&eacute; &agrave; CfCT pour projets Terraform-first</td>
+            </tr>
+            <tr>
+                <td><strong>S8 Security Baseline</strong></td>
+                <td>S1 (compte Audit), S2 (guardrails d&eacute;tectifs)</td>
+                <td>S9 (reporting Security Hub)</td>
+                <td>GuardDuty + Security Hub compl&egrave;tent les guardrails CT</td>
+            </tr>
+            <tr>
+                <td><strong>S9 Reporting</strong></td>
+                <td>S5, S8</td>
+                <td>&mdash;</td>
+                <td>Agr&egrave;ge signals de S5 (drift) et S8 (security findings)</td>
+            </tr>
+            <tr>
+                <td><strong>S10 Migration</strong></td>
+                <td>S1, S2, S4 (structure cible d&eacute;finie)</td>
+                <td>S3 (enrollment = AF), S6/S7 (customizations post-enrollment)</td>
+                <td>Pr&eacute;c&egrave;de S3 pour les comptes existants</td>
+            </tr>
+        </tbody>
+    </table>
+    </div>
+</div>
+
+<!-- ═══════════════════════ GLOSSAIRE ═══════════════════════ -->
+<div class="section" id="glossaire">
+    <div class="section-header blue">
+        <div class="section-number blue">&#x1F4D7;</div>
+        <div>
+            <div class="section-title">Glossaire</div>
+            <div class="section-desc">D&eacute;finitions des acronymes et termes techniques AWS Control Tower</div>
+        </div>
+    </div>
+    <div class="table-container">
+    <table>
+        <thead><tr><th>Acronyme</th><th>D&eacute;finition</th><th>Contexte dans CT</th></tr></thead>
+        <tbody>
+            <tr><td><strong>CT</strong></td><td>AWS Control Tower</td><td>Service principal de ce guide</td></tr>
+            <tr><td><strong>LZ</strong></td><td>Landing Zone</td><td>Configuration de base CT : comptes partagés, CloudTrail, Config, IAM IC</td></tr>
+            <tr><td><strong>OU</strong></td><td>Organizational Unit</td><td>Conteneur logique de comptes AWS dans Organizations</td></tr>
+            <tr><td><strong>SCP</strong></td><td>Service Control Policy</td><td>Politique Organizations qui bloque des actions &agrave; l'&eacute;chelle d'une OU</td></tr>
+            <tr><td><strong>AFT</strong></td><td>Account Factory for Terraform</td><td>Solution GitOps pour automatiser la cr&eacute;ation de comptes via Terraform</td></tr>
+            <tr><td><strong>CfCT</strong></td><td>Customizations for Control Tower</td><td>Pipeline CodePipeline pour d&eacute;ployer des StackSets sur les comptes CT</td></tr>
+            <tr><td><strong>AFC</strong></td><td>Account Factory Customization</td><td>Customization native CT (sans Terraform) via Service Catalog</td></tr>
+            <tr><td><strong>AMB</strong></td><td>AWS Management &amp; Billing</td><td>Fonctionnalit&eacute;s de facturation consolidée Organizations</td></tr>
+            <tr><td><strong>IAM IC</strong></td><td>IAM Identity Center</td><td>Service SSO AWS (ex-AWS SSO). G&egrave;re les acc&egrave;s multi-comptes</td></tr>
+            <tr><td><strong>CIS</strong></td><td>Center for Internet Security</td><td>Benchmark CIS AWS Foundations &mdash; r&eacute;f&eacute;rence de durcissement AWS</td></tr>
+            <tr><td><strong>NIST</strong></td><td>National Institute of Standards and Technology</td><td>Framework NIST CSF / SP 800-53 pour la conformit&eacute; US</td></tr>
+            <tr><td><strong>PCI-DSS</strong></td><td>Payment Card Industry Data Security Standard</td><td>Norme de s&eacute;curit&eacute; pour les environnements de paiement</td></tr>
+            <tr><td><strong>WORM</strong></td><td>Write Once Read Many</td><td>Mode S3 Object Lock &mdash; logs immuables, non supprimables</td></tr>
+            <tr><td><strong>CMK</strong></td><td>Customer Managed Key</td><td>Cl&eacute; KMS g&eacute;r&eacute;e par le client (vs AWS-managed key)</td></tr>
+            <tr><td><strong>IGW</strong></td><td>Internet Gateway</td><td>Composant VPC permettant l'acc&egrave;s Internet &agrave; un subnet public</td></tr>
+            <tr><td><strong>TGW</strong></td><td>Transit Gateway</td><td>Hub r&eacute;seau AWS pour connecter plusieurs VPCs et VPNs</td></tr>
+            <tr><td><strong>AFT PR</strong></td><td>Account Factory for Terraform Pull Request</td><td>Workflow GitOps : une PR Git = un compte AWS &agrave; cr&eacute;er</td></tr>
+        </tbody>
+    </table>
+    </div>
+</div>
+
+<!-- ═══════════════════════ SCRIPT ALL-IN-ONE ═══════════════════════ -->
+<div class="section" id="script">
+    <div class="section-header orange">
+        <div class="section-number dark">&#x1F4DC;</div>
+        <div>
+            <div class="section-title">Script All-in-One AWS CLI</div>
+            <div class="section-desc">Script complet de d&eacute;ploiement et audit AWS Control Tower — idempotent</div>
+        </div>
+    </div>
+    <p>Script bash idempotent — ex&eacute;cuter depuis le Management Account (ou Audit Account pour certaines sections).</p>
+    <div class="code-block">
+        <div class="code-header">
+            <span>&#x1F4DC; Script All-in-One &mdash; Vérification complète Control Tower</span>
+            <button class="copy-btn" onclick="navigator.clipboard.writeText(this.closest('.code-block').querySelector('pre').innerText)">Copier</button>
+        </div>
+        <pre>#!/usr/bin/env bash
+# ============================================================
+# AWS Control Tower — Script de vérification all-in-one
+# Exécuter depuis le Management Account
+# Prérequis : awscli v2, jq, permissions Organizations + CT
+# ============================================================
+
+<span class="comment"># ---- VARIABLES (à adapter) --------------------------------</span>
+<span class="var">AUDIT_ACCOUNT_ID</span>=<span class="string">""</span>           <span class="comment"># ID du compte Audit CT</span>
+<span class="var">HOME_REGION</span>=<span class="string">"us-east-1"</span>        <span class="comment"># Région home Control Tower</span>
+<span class="var">GOVERNED_REGIONS</span>=<span class="string">"us-east-1 eu-west-1"</span>
+<span class="var">CHECK_S1</span>=<span class="string">"Y"</span>    <span class="comment"># [Y/N] Landing Zone</span>
+<span class="var">CHECK_S2</span>=<span class="string">"Y"</span>    <span class="comment"># [Y/N] Guardrails</span>
+<span class="var">CHECK_S4</span>=<span class="string">"Y"</span>    <span class="comment"># [Y/N] OU Structure</span>
+<span class="var">CHECK_S5</span>=<span class="string">"Y"</span>    <span class="comment"># [Y/N] Drift Detection</span>
+<span class="var">CHECK_S8</span>=<span class="string">"Y"</span>    <span class="comment"># [Y/N] Security Baseline</span>
+
+<span class="comment"># ---- FONCTIONS -------------------------------------------- </span>
+ok()   { echo "[OK]  $1"; }
+warn() { echo "[WARN] $1"; }
+fail() { echo "[FAIL] $1"; }
+
+<span class="comment"># ---- S1 : LANDING ZONE ----------------------------------- </span>
+<span class="keyword">if</span> [ "<span class="var">$CHECK_S1</span>" = "Y" ]; then
+  echo ""
+  echo "=== S1 — Landing Zone ==="
+  <span class="var">LZ_STATUS</span>=$(aws controltower list-landing-zones \
+    <span class="param">--query</span> <span class="string">'landingZones[0].status'</span> <span class="param">--output</span> text 2>/dev/null)
+  [ "<span class="var">$LZ_STATUS</span>" = "ACTIVE" ] && ok "Landing Zone ACTIVE" || fail "Landing Zone non ACTIVE (statut: $LZ_STATUS)"
+
+  <span class="var">LZ_DRIFT</span>=$(aws controltower list-landing-zones \
+    <span class="param">--query</span> <span class="string">'landingZones[0].driftStatus'</span> <span class="param">--output</span> text 2>/dev/null)
+  [ "<span class="var">$LZ_DRIFT</span>" = "NOT_DRIFTED" ] && ok "Landing Zone pas en drift" || fail "Landing Zone en drift: $LZ_DRIFT"
+
+  <span class="var">CT</span>=$(aws cloudtrail describe-trails <span class="param">--include-shadow-trails</span> \
+    <span class="param">--query</span> <span class="string">'trailList[?IsOrganizationTrail==`true`] | length(@)'</span> <span class="param">--output</span> text)
+  [ "<span class="var">$CT</span>" -ge 1 ] && ok "CloudTrail organization trail actif" || fail "Pas de CloudTrail organization trail"
+fi
+
+<span class="comment"># ---- S2 : GUARDRAILS ------------------------------------- </span>
+<span class="keyword">if</span> [ "<span class="var">$CHECK_S2</span>" = "Y" ]; then
+  echo ""
+  echo "=== S2 — Guardrails ==="
+  <span class="var">ROOT_ID</span>=$(aws organizations list-roots <span class="param">--query</span> <span class="string">'Roots[0].Id'</span> <span class="param">--output</span> text)
+  <span class="var">OUS</span>=$(aws organizations list-organizational-units-for-parent \
+    <span class="param">--parent-id</span> <span class="var">$ROOT_ID</span> <span class="param">--query</span> <span class="string">'OrganizationalUnits[].Id'</span> <span class="param">--output</span> text)
+  <span class="keyword">for</span> <span class="var">OU</span> in <span class="var">$OUS</span>; do
+    <span class="var">OU_ARN</span>=<span class="string">"arn:aws:organizations::$(aws sts get-caller-identity --query Account --output text):ou/$(aws organizations list-roots --query 'Roots[0].Id' --output text)/$OU"</span>
+    <span class="var">CTRL_COUNT</span>=$(aws controltower list-enabled-controls \
+      <span class="param">--target-identifier</span> <span class="var">$OU_ARN</span> \
+      <span class="param">--query</span> <span class="string">'length(enabledControls)'</span> <span class="param">--output</span> text 2>/dev/null || echo "0")
+    [ "<span class="var">$CTRL_COUNT</span>" -ge 5 ] && ok "OU $OU : $CTRL_COUNT guardrails actifs" || warn "OU $OU : seulement $CTRL_COUNT guardrails"
+  done
+fi
+
+<span class="comment"># ---- S5 : DRIFT ------------------------------------------ </span>
+<span class="keyword">if</span> [ "<span class="var">$CHECK_S5</span>" = "Y" ]; then
+  echo ""
+  echo "=== S5 — Drift Detection ==="
+  <span class="var">LZ_ARN</span>=$(aws controltower list-landing-zones \
+    <span class="param">--query</span> <span class="string">'landingZones[0].arn'</span> <span class="param">--output</span> text)
+  <span class="var">DRIFT</span>=$(aws controltower get-landing-zone \
+    <span class="param">--landing-zone-identifier</span> <span class="var">$LZ_ARN</span> \
+    <span class="param">--query</span> <span class="string">'landingZone.driftStatus.status'</span> <span class="param">--output</span> text)
+  [ "<span class="var">$DRIFT</span>" = "NOT_DRIFTED" ] && ok "Pas de drift détecté" || fail "DRIFT DÉTECTÉ : $DRIFT — Exécuter reset-landing-zone"
+fi
+
+<span class="comment"># ---- S8 : SECURITY BASELINE ------------------------------ </span>
+<span class="keyword">if</span> [ "<span class="var">$CHECK_S8</span>" = "Y" ] && [ -n "<span class="var">$AUDIT_ACCOUNT_ID</span>" ]; then
+  echo ""
+  echo "=== S8 — Security Baseline ==="
+  <span class="var">GD_ADMIN</span>=$(aws guardduty list-organization-admin-accounts \
+    <span class="param">--query</span> <span class="string">'AdminAccounts[0].AdminAccountId'</span> <span class="param">--output</span> text 2>/dev/null)
+  [ "<span class="var">$GD_ADMIN</span>" = "<span class="var">$AUDIT_ACCOUNT_ID</span>" ] && ok "GuardDuty Delegated Admin = compte Audit" || warn "GuardDuty Delegated Admin non configuré"
+
+  <span class="var">SH_ADMIN</span>=$(aws securityhub list-organization-admin-accounts \
+    <span class="param">--query</span> <span class="string">'AdminAccounts[0].AccountId'</span> <span class="param">--output</span> text 2>/dev/null)
+  [ "<span class="var">$SH_ADMIN</span>" = "<span class="var">$AUDIT_ACCOUNT_ID</span>" ] && ok "Security Hub Delegated Admin = compte Audit" || warn "Security Hub Delegated Admin non configuré"
+fi
+
+echo ""
+echo "=== Vérification terminée ==="</pre>
+    </div>
+</div>
+
+<!-- ═══════════════════════ CHECKLIST ═══════════════════════ -->
+<div class="section" id="checklist">
+    <div class="section-header green">
+        <div class="section-number green">&#x2705;</div>
+        <div>
+            <div class="section-title">Checklist de D&eacute;ploiement</div>
+            <div class="section-desc">Checklist compl&egrave;te pr&eacute;/pendant/post d&eacute;ploiement AWS Control Tower — 50+ items</div>
+        </div>
+    </div>
+    <p>Checklist compl&egrave;te de d&eacute;ploiement &mdash; 50+ items organis&eacute;s par phase.</p>
+
+    <h3>&#x1F4CB; Pr&eacute;-d&eacute;ploiement</h3>
+    <div class="checklist-item"><input type="checkbox"> <span>Management Account cr&eacute;&eacute; et d&eacute;di&eacute; (aucun workload)</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>MFA activ&eacute; sur le compte root du Management Account</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>Adresses email pr&eacute;par&eacute;es : Log Archive, Audit (bo&icirc;tes fonctionnelles)</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>AWS Organizations en mode All Features (pas Consolidated Billing uniquement)</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>IAM Identity Center activ&eacute; ou acc&egrave;pt&eacute; d'activer</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>R&eacute;gion Home s&eacute;lectionn&eacute;e (coh&eacute;rente avec RGPD si besoin)</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>Liste des r&eacute;gions &agrave; gouverner valid&eacute;e avec l'&eacute;quipe s&eacute;curit&eacute;</span></div>
+
+    <h3>&#x1F3D7;&#xFE0F; S1 &mdash; Landing Zone</h3>
+    <div class="checklist-item"><input type="checkbox"> <span>Landing Zone deploy&eacute;e avec statut ACTIVE</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>Compte Log Archive cr&eacute;&eacute; et accessible</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>Compte Audit cr&eacute;&eacute; et accessible</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>S3 bucket CloudTrail chiffr&eacute; avec CMK dans Log Archive</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>Organization CloudTrail actif et multi-r&eacute;gions</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>Config Aggregator actif dans Audit</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>IAM Identity Center configur&eacute; avec au moins un Permission Set Admin</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>VPC par d&eacute;faut supprim&eacute; dans Management Account</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>Acc&egrave;s au Management Account restreint (&lt;5 admins)</span></div>
+
+    <h3>&#x1F6E1;&#xFE0F; S2 &mdash; Guardrails</h3>
+    <div class="checklist-item"><input type="checkbox"> <span>Guardrails Mandatory actifs (v&eacute;rifi&eacute;s dans dashboard CT)</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>Guardrails Strongly Recommended activ&eacute;s sur toutes les OUs de production</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>Guardrail "Disallow root user" actif sur toutes les OUs membres</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>Guardrail "Require MFA for IAM users" actif</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>Guardrail "Deny public S3 buckets" actif sur OUs production</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>Aucun contr&ocirc;le en statut UNKNOWN ou FAILED</span></div>
+
+    <h3>&#x1F3ED; S3 &mdash; Account Factory</h3>
+    <div class="checklist-item"><input type="checkbox"> <span>Account Factory configur&eacute; avec Network Customization (VPC sans IGW par d&eacute;faut)</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>VPC par d&eacute;faut d&eacute;sactiv&eacute; pour les nouveaux comptes</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>Processus de demande de compte document&eacute; et connu des &eacute;quipes</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>OU de destination d&eacute;finie pour chaque type de workload</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>Tous les comptes cr&eacute;&eacute;s via Account Factory (plus de cr&eacute;ation manuelle)</span></div>
+
+    <h3>&#x1F5C2;&#xFE0F; S4 &mdash; OU Structure</h3>
+    <div class="checklist-item"><input type="checkbox"> <span>OU Security cr&eacute;&eacute;e (Log Archive + Audit d&eacute;di&eacute;s)</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>OU Infrastructure cr&eacute;&eacute;e (r&eacute;seau, shared services)</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>OU Workloads cr&eacute;&eacute;e avec sous-OUs (Prod/Dev/Test)</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>OU Sandbox isol&eacute;e avec SCP bloquant les acc&egrave;s production</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>OU Suspended avec SCP de quarantaine sur les comptes d&eacute;sactiv&eacute;s</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>Hi&eacute;rarchie OU document&eacute;e et valid&eacute;e en gouvernance</span></div>
+
+    <h3>&#x1F50D; S5 &mdash; Drift Detection</h3>
+    <div class="checklist-item"><input type="checkbox"> <span>Proc&eacute;dure de v&eacute;rification mensuelle du drift d&eacute;finie</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>Alerte EventBridge configur&eacute;e sur les &eacute;v&eacute;nements CT Drift</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>Responsable d&eacute;sign&eacute; pour la correction du drift</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>Proc&eacute;dure de re-registration de compte document&eacute;e</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>Aucun contr&ocirc;le en DRIFTED dans le dashboard CT</span></div>
+
+    <h3>&#x1F4CB; S6 &mdash; CfCT (si applicable)</h3>
+    <div class="checklist-item"><input type="checkbox"> <span>Pipeline CfCT d&eacute;ploy&eacute; dans Management Account</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>manifest.yaml versionn&eacute; dans Git (main branch = prod)</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>Tests de non-r&eacute;gression sur les StackSets</span></div>
+
+    <h3>&#x1F9F0; S7 &mdash; AFT (si applicable)</h3>
+    <div class="checklist-item"><input type="checkbox"> <span>Module Terraform AFT d&eacute;ploy&eacute; dans le compte AFT Management d&eacute;di&eacute;</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>R&eacute;pertoire account-requests configur&eacute; dans Git</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>Global customizations (r&ocirc;les, tags, CloudTrail) d&eacute;finis et test&eacute;s</span></div>
+
+    <h3>&#x1F6E1;&#xFE0F; S8 &mdash; Security Baseline</h3>
+    <div class="checklist-item"><input type="checkbox"> <span>Amazon GuardDuty activ&eacute; sur tous les comptes avec Delegated Admin = Audit</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>AWS Security Hub activ&eacute; avec standards CIS AWS Foundations</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>Amazon Macie activ&eacute; sur le compte Log Archive</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>AWS Config Aggregator actif couvrant toutes les r&eacute;gions gouvern&eacute;es</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>Proc&eacute;dure de traitement des findings Security Hub d&eacute;finie (SLA)</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>Alertes sur les findings CRITICAL configur&eacute;es</span></div>
+
+    <h3>&#x1F4CA; S9 &mdash; Reporting</h3>
+    <div class="checklist-item"><input type="checkbox"> <span>Config Aggregator couvrant tous les comptes et toutes les r&eacute;gions</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>Rapport mensuel de conformit&eacute; automatis&eacute; (Security Hub)</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>KPIs de conformit&eacute; d&eacute;finis et partag&eacute;s avec le management</span></div>
+
+    <h3>&#x1F504; S10 &mdash; Migration</h3>
+    <div class="checklist-item"><input type="checkbox"> <span>Tous les comptes existants enroll&eacute;s (statut ENROLLED)</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>Aucun compte en statut DRIFTED post-enrollment</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>Plan de migration valid&eacute; et communiqu&eacute;</span></div>
+    <div class="checklist-item"><input type="checkbox"> <span>Cl&ocirc;ture de la migration : documentation mise &agrave; jour</span></div>
+</div>
+
+</div><!-- /container -->
+
+<!-- ═══════════════════════ FOOTER ═══════════════════════ -->
+<footer>
+    <strong>AWS Control Tower Guide</strong> &mdash; Version 1.0 &mdash; Avril 2026<br>
+    Console : <a href="https://console.aws.amazon.com/controltower/" target="_blank" style="color: var(--aws-orange);">console.aws.amazon.com/controltower</a> &mdash;
+    Doc officielle : <a href="https://docs.aws.amazon.com/controltower/latest/userguide/" target="_blank" style="color: var(--aws-orange);">AWS Control Tower User Guide</a><br>
+    <small>Guides connexes :
+        <a href="aws-organizations.html" style="color: var(--aws-orange);">aws_organizations_guide</a> &bull;
+        <a href="aws-iam-identity-center.html" style="color: var(--aws-orange);">aws_iam_identity_center_guide</a> &bull;
+        <a href="aws-security-hub.html" style="color: var(--aws-orange);">aws_security_hub_guide</a> &bull;
+        <a href="aws-guardduty.html" style="color: var(--aws-orange);">aws_guardduty_guide</a>
+    </small>
+</footer>
+
+<script>
+document.querySelectorAll('.copy-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const pre = this.closest('.code-block').querySelector('pre');
+        const text = pre.innerText || pre.textContent;
+        navigator.clipboard.writeText(text).then(() => {
+            const orig = this.textContent;
+            this.textContent = '✓ Copié';
+            setTimeout(() => this.textContent = orig, 1500);
+        });
+    });
+});
+</script>
+
+<script id="v1a-script">
+(function(){
+  const sidebar = document.querySelector('.v1a-sidebar');
+  if(!sidebar) return;
+  const accs = [...sidebar.querySelectorAll('details.acc')];
+  accs.forEach(a => a.addEventListener('toggle', () => {
+    if(a.open) accs.forEach(o => { if(o!==a) o.open = false; });
+  }));
+  const links = [...sidebar.querySelectorAll('.acc-body a[href^="#"]')];
+  const map = new Map(links.map(a => [a.getAttribute('href').slice(1), a]));
+  const sections = [...document.querySelectorAll('.section[id], section[id]')];
+  function onScroll(){
+    const y = window.scrollY + 120;
+    let cur = null;
+    for(const s of sections){ if(s.offsetTop <= y) cur = s; else break; }
+    links.forEach(a => a.classList.remove('active'));
+    if(cur){
+      const a = map.get(cur.id);
+      if(a){
+        a.classList.add('active');
+        const det = a.closest('details.acc');
+        if(det && !det.open){ accs.forEach(o=>o.open=false); det.open = true; }
+      }
+    }
+  }
+  document.addEventListener('scroll', onScroll, {passive:true});
+  onScroll();
+})();
+</script>
+</main>
+</div>
+</body>
+</html>

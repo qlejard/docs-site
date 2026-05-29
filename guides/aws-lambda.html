@@ -1,0 +1,2739 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!--
+    aws-lambda.html — Guide Technique AWS Lambda Security
+    Serverless, Permissions & Protection des Fonctions — Guide de Configuration & Audit
+    Console : console.aws.amazon.com > Lambda
+    Version 1.0 — Avril 2026
+    -->
+    <title>AWS Lambda Security &mdash; Serverless, Permissions &amp; Protection des Fonctions &mdash; Guide de Configuration &amp; Audit</title>
+    <style>
+        :root {
+            --azure-blue: #0078d4;
+            --azure-dark: #004578;
+            --azure-light: #deecf9;
+            --success-green: #107c10;
+            --warning-orange: #ff8c00;
+            --danger-red: #d13438;
+            --neutral-bg: #f3f2f1;
+            --neutral-dark: #323130;
+            --neutral-medium: #605e5c;
+            --white: #ffffff;
+            --shadow: 0 2px 8px rgba(0,0,0,0.12);
+            --shadow-hover: 0 4px 16px rgba(0,0,0,0.18);
+            --radius: 8px;
+            --aws-orange: #ff9900;
+            --aws-dark: #232f3e;
+            --aws-light: #fff4e6;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--neutral-bg); color: var(--neutral-dark); line-height: 1.6; }
+        a { color: var(--azure-blue); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        code { font-family: 'Cascadia Code', Consolas, 'Courier New', monospace; font-size: 0.88em; background: #e8e6e4; padding: 1px 6px; border-radius: 3px; }
+        .hero { background: var(--white); border-bottom: 3px solid var(--aws-orange); padding: 40px 40px 32px; text-align: center; max-width: 1400px; margin: 0 auto; }
+        .hero h1 { font-size: 1.7em; font-weight: 700; color: var(--aws-dark); margin-bottom: 6px; letter-spacing: -0.3px; }
+        .hero .subtitle { font-size: 0.95em; color: var(--neutral-medium); max-width: 800px; margin: 0 auto; }
+        .hero .badge-row { margin-top: 16px; display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; }
+        .hero .badge { background: var(--neutral-bg); border: 1px solid #e1dfdd; color: var(--neutral-dark); padding: 4px 12px; border-radius: 4px; font-size: 0.78em; }
+        .hero .meta-row { margin-top: 14px; display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; font-size: 0.8em; color: var(--neutral-medium); }
+        .nav-container { max-width: 1400px; margin: 0 auto; border-bottom: 1px solid #e1dfdd; position: sticky; top: 0; z-index: 100; background: var(--neutral-bg); }
+        .nav-container nav { display: flex; justify-content: center; gap: 0; overflow-x: auto; padding: 0; }
+        .nav-container nav a { text-decoration: none; color: var(--neutral-medium); padding: 10px 14px; font-size: 0.78em; font-weight: 500; white-space: nowrap; border-bottom: 2px solid transparent; transition: all 0.2s; }
+        .nav-container nav a:hover { color: var(--aws-orange); border-bottom-color: var(--aws-orange); text-decoration: none; }
+        .container { max-width: 1400px; margin: 0 auto; padding: 30px 40px; }
+        .section { background: var(--white); border-radius: var(--radius); box-shadow: var(--shadow); padding: 28px 32px; margin-bottom: 28px; transition: box-shadow 0.2s; }
+        .section:hover { box-shadow: var(--shadow-hover); }
+        .section-header { display: flex; align-items: center; gap: 15px; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid var(--neutral-bg); }
+        .section-header.blue { border-bottom-color: var(--azure-blue); }
+        .section-header.red { border-bottom-color: var(--danger-red); }
+        .section-header.orange { border-bottom-color: var(--warning-orange); }
+        .section-header.green { border-bottom-color: var(--success-green); }
+        .section-number { background: var(--azure-blue); color: white; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.1em; flex-shrink: 0; }
+        .section-number.red { background: var(--danger-red); }
+        .section-number.orange { background: var(--warning-orange); }
+        .section-number.green { background: var(--success-green); }
+        .section-title { font-size: 1.4em; color: var(--aws-dark); font-weight: 700; }
+        .section-desc { font-size: 0.92em; color: var(--neutral-medium); margin-top: 2px; }
+        h3 { font-size: 1.05em; font-weight: 600; margin: 24px 0 10px 0; padding-left: 12px; border-left: 3px solid var(--aws-orange); }
+        .badge-sm { font-size: 0.7em; padding: 2px 8px; border-radius: 3px; font-weight: 600; vertical-align: middle; }
+        .badge-critical { background: #fde7e9; color: var(--danger-red); }
+        .badge-high { background: #fff0e0; color: #d83b01; }
+        .badge-medium { background: #fff8e1; color: #6d4c00; }
+        .badge-low { background: #e8f5e9; color: var(--success-green); }
+        .badge-ok { background: #dff6dd; color: var(--success-green); }
+        .lic { display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 0.72em; font-weight: 600; vertical-align: middle; margin-left: 4px; }
+        .lic-aws-free { background: #dff6dd; color: var(--success-green); }
+        .lic-aws-pay { background: #fff3cd; color: #6d4c00; }
+        .lic-aws-prem { background: #fde7e9; color: #a80000; }
+        .lic-aws-addon { background: #e8d4f0; color: #6b2fa0; }
+        .alert { border-radius: var(--radius); padding: 16px 20px; margin: 15px 0; font-size: 0.93em; line-height: 1.6; }
+        .alert:has(.alert-icon) { display: flex; gap: 12px; align-items: flex-start; }
+        .alert-icon { font-size: 1.2em; flex-shrink: 0; margin-top: 2px; }
+        .alert-info { background: #e6f2ff; border: 1px solid #b3d7ff; color: #004578; }
+        .alert-warn { background: #fff8e1; border: 1px solid #ffe082; color: #6d4c00; }
+        .alert-error { background: #fde7e9; border: 1px solid #f5c6cb; color: #721c24; }
+        .alert-ok { background: #e8f5e9; border: 1px solid #a5d6a7; color: #1b5e20; }
+        .table-container { overflow-x: auto; border-radius: var(--radius); box-shadow: 0 1px 4px rgba(0,0,0,0.08); margin: 12px 0 18px 0; }
+        table { width: 100%; border-collapse: collapse; background: var(--white); font-size: 0.9em; }
+        thead th { background: var(--aws-dark); color: white; padding: 12px 14px; text-align: left; font-weight: 600; font-size: 0.85em; text-transform: uppercase; letter-spacing: .3px; }
+        tbody td { padding: 10px 14px; border-bottom: 1px solid #edebe9; vertical-align: top; }
+        tbody tr:hover { background: #f8f7f6; }
+        tbody tr:last-child td { border-bottom: none; }
+        tr.row-ok { background: #f0fff0; }
+        tr.row-ko { background: #fff5f5; }
+        tr.row-warn { background: #fffdf0; }
+        .code-block { background: #1e1e1e; border-radius: var(--radius); overflow: hidden; margin: 12px 0 18px 0; }
+        .code-header { display: flex; justify-content: space-between; align-items: center; padding: 8px 14px; background: #2d2d2d; font-size: 0.78em; color: #a0a0a0; }
+        .copy-btn { background: var(--aws-orange); color: white; border: none; padding: 4px 12px; border-radius: 4px; cursor: pointer; font-size: 0.85em; transition: background 0.2s; }
+        .copy-btn:hover { background: #e68a00; }
+        .code-block pre { padding: 16px 18px; color: #d4d4d4; font-family: 'Cascadia Code', Consolas, monospace; font-size: 0.85em; overflow-x: auto; white-space: pre; line-height: 1.55; }
+        .code-block pre .comment { color: #6a9955; }
+        .code-block pre .keyword { color: #569cd6; }
+        .code-block pre .string { color: #ce9178; }
+        .code-block pre .param { color: #9cdcfe; }
+        .code-block pre .var { color: #4ec9b0; }
+        .step { display: flex; gap: 12px; margin-bottom: 10px; padding: 14px 16px; background: #faf9f8; border-radius: var(--radius); border-left: 3px solid var(--aws-orange); font-size: 0.93em; }
+        .step.step-red { border-left-color: var(--danger-red); }
+        .step.step-green { border-left-color: var(--success-green); }
+        .step-n { min-width: 28px; height: 28px; border-radius: 50%; background: var(--aws-orange); color: white; display: flex; align-items: center; justify-content: center; font-size: 0.8em; font-weight: 700; flex-shrink: 0; }
+        .step-n.red { background: var(--danger-red); }
+        .step-n.green { background: var(--success-green); }
+        .step-c { flex: 1; }
+        .step-c ul, .step-c ol { margin-top: 6px; padding-left: 20px; }
+        .hl { background: #fff3cd; padding: 1px 6px; border-radius: 3px; font-weight: 600; }
+        .hl-blue { background: var(--azure-light); padding: 1px 6px; border-radius: 3px; font-weight: 600; color: var(--azure-dark); }
+        .hl-green { background: #dff6dd; padding: 1px 6px; border-radius: 3px; font-weight: 600; color: var(--success-green); }
+        .hl-red { background: #fde7e9; padding: 1px 6px; border-radius: 3px; font-weight: 600; color: var(--danger-red); }
+        .progress-bar { background: #e1dfdd; border-radius: 10px; height: 24px; overflow: hidden; margin: 12px 0; position: relative; }
+        .progress-fill { height: 100%; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 0.78em; font-weight: 700; color: white; transition: width 0.3s; }
+        .progress-fill.red { background: linear-gradient(90deg, #a01020, #d13438); }
+        .progress-fill.orange { background: linear-gradient(90deg, #d83b01, #ff8c00); }
+        .progress-fill.green { background: linear-gradient(90deg, #107c10, #2ea72e); }
+        .progress-fill.blue { background: linear-gradient(90deg, #004578, #0078d4); }
+        .checklist-item { display: flex; align-items: flex-start; gap: 10px; padding: 8px 0; border-bottom: 1px solid #f3f2f1; }
+        .checklist-item:last-child { border-bottom: none; }
+        .checklist-item input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--aws-orange); flex-shrink: 0; margin-top: 3px; }
+        .diagram-block { background: #1e1e1e; color: #d4d4d4; border-radius: var(--radius); padding: 24px; margin: 16px 0; overflow-x: auto; font-family: 'Cascadia Code', Consolas, monospace; font-size: 0.78em; line-height: 1.35; white-space: pre; }
+        .diagram-block .d-ok { color: #4ec9b0; }
+        .diagram-block .d-ko { color: #f44747; }
+        .diagram-block .d-warn { color: #dcdcaa; }
+        .diagram-block .d-line { color: #808080; }
+        .diagram-block .d-label { color: #569cd6; }
+        .level-comparison { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 16px 0; }
+        .level-card { border-radius: var(--radius); padding: 16px; text-align: center; }
+        .level-card.default { background: #f3f2f1; border: 2px solid #e1dfdd; }
+        .level-card.standard { background: #e6f2ff; border: 2px solid #b3d7ff; }
+        .level-card.strict { background: #e8f5e9; border: 2px solid #a5d6a7; }
+        .level-card.custom { background: #fff8e1; border: 2px solid #ffe082; }
+        .level-card h4 { font-size: 1em; margin-bottom: 4px; }
+        .level-card .level-score { font-size: 2em; font-weight: 700; }
+        .level-card .level-desc { font-size: 0.8em; color: var(--neutral-medium); margin-top: 4px; }
+        .cross-ref { color: var(--aws-orange); font-weight: 600; }
+        .badge-ref { background: var(--aws-light); color: #b45309; padding: 2px 8px; border-radius: 3px; font-size: 0.72em; font-weight: 600; }
+        footer { background: #faf9f8; color: var(--neutral-medium); text-align: center; padding: 24px; margin-top: 40px; font-size: 0.8em; border-top: 1px solid #e1dfdd; }
+        @media print {
+            body { background: white; font-size: 11px; }
+            .hero { padding: 16px; border-bottom-width: 2px; }
+            .nav-container { display: none; }
+            .container { max-width: 100%; padding: 0 16px; }
+            .section { box-shadow: none; border: 1px solid #ccc; break-inside: avoid; }
+            .code-block pre { font-size: 0.75em; }
+        }
+        @media (max-width: 768px) {
+            .hero { padding: 24px 16px 20px; }
+            .hero h1 { font-size: 1.3em; }
+            .container { padding: 16px; }
+            .section { padding: 20px; }
+            .level-comparison { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+<style id="v1a-overlay">
+:root{--c:#0078d4;--azure-dark:#004578;--light:#deecf9;--bg:#f8f9fb;--surface:#fff;--border:#e3e6ec;--muted:#5b6478;--radius:14px}
+.nav-container,.back-to-index{display:none!important}
+body{background:var(--bg)}
+.v1a-layout{display:grid;grid-template-columns:280px 1fr;gap:0;align-items:start}
+.v1a-sidebar{position:sticky;top:0;height:100vh;overflow-y:auto;padding:18px 14px 24px;background:#fff;border-right:1px solid var(--border)}
+.v1a-main{min-width:0}
+.v1a-main .hero{max-width:none;margin:0;border-radius:0}
+.v1a-main .container{max-width:1200px}
+.back-index{display:inline-flex;align-items:center;gap:6px;margin:0 0 16px;padding:6px 10px;background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--muted);font-size:.78em;font-weight:500;text-decoration:none;transition:all .15s}
+.back-index:hover{background:transparent;border-color:var(--c);color:var(--azure-dark);text-decoration:none}
+.back-index .arr{font-size:1em;line-height:1;opacity:.85}
+.side-head{display:flex;align-items:center;gap:10px;padding:6px 6px 14px;border-bottom:1px solid var(--border);margin-bottom:12px}
+.side-head .ico{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--c),#50a4f0);display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.1em;flex-shrink:0}
+.side-head .t{font-weight:700;color:var(--azure-dark);font-size:.95em;line-height:1.15}
+.side-head .s{font-size:.72em;color:var(--muted);margin-top:2px;line-height:1.3}
+.acc{margin-bottom:6px;border-radius:10px;overflow:hidden}
+.acc>summary{list-style:none;cursor:pointer;padding:8px 10px;display:flex;align-items:center;gap:8px;color:var(--azure-dark);font-weight:600;font-size:.82em;border-radius:8px;user-select:none}
+.acc>summary::-webkit-details-marker{display:none}
+.acc>summary:hover{background:var(--bg)}
+.acc>summary .chev{margin-left:auto;font-size:.7em;transition:transform .15s;color:var(--muted)}
+.acc[open]>summary{background:var(--light);color:var(--c)}
+.acc[open]>summary .chev{transform:rotate(90deg)}
+.acc-body{padding:4px 0 6px 6px;display:flex;flex-direction:column;gap:2px}
+.acc-body a{display:flex;align-items:center;gap:8px;padding:6px 10px 6px 18px;border-radius:6px;font-size:.8em;color:var(--muted);text-decoration:none;border-left:2px solid transparent;transition:all .12s}
+.acc-body a:hover{color:var(--c);background:var(--bg);text-decoration:none}
+.acc-body a.active{color:var(--c);background:var(--light);border-left-color:var(--c);font-weight:600}
+.acc-body a .num{font-size:.7em;color:#9aa2b1;font-variant-numeric:tabular-nums;min-width:22px}
+.acc-body a.active .num{color:var(--c)}
+.side-foot{margin-top:14px;padding-top:12px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:4px}
+.side-foot a{display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:6px;font-size:.78em;color:var(--muted);text-decoration:none}
+.side-foot a:hover{color:var(--c);background:var(--bg);text-decoration:none}
+@media (max-width:900px){
+  .v1a-layout{grid-template-columns:1fr}
+  .v1a-sidebar{position:static;height:auto;border-right:none;border-bottom:1px solid var(--border)}
+}
+</style>
+<style id="theme-overlay" data-cat="aws">
+:root {
+  --c: #ff9900;
+}
+.v1a-topbar { background: linear-gradient(90deg, #ff9900, #ff9900) !important; }
+.v1a-side { --c: #ff9900 !important; }
+</style>
+</head>
+<body>
+<div class="v1a-layout">
+<aside class="v1a-sidebar">
+  <a href="../index.html" class="back-index" title="Revenir à l'index"><span class="arr" aria-hidden="true">&#127968;</span> Index</a>
+  <div class="side-head">
+    <div class="ico">&#x1F4D8;</div>
+    <div>
+      <div class="t">AWS Lambda Security</div>
+      <div class="s">Guide de Configuration &amp; Audit &mdash; IAM Least Privilege, Secrets, VPC, Code Sign&hellip;</div>
+    </div>
+  </div>
+  <details class="acc" open>
+    <summary>Introduction <span class="chev">&rsaquo;</span></summary>
+    <div class="acc-body">
+      <a href="#guide"><span class="num">&bull;</span> Mode d'emploi</a>
+      <a href="#perimetre"><span class="num">&bull;</span> P&eacute;rim&egrave;tre</a>
+      <a href="#licences"><span class="num">&bull;</span> Co&ucirc;ts</a>
+    </div>
+  </details>
+  <details class="acc">
+    <summary>Sections <span class="chev">&rsaquo;</span></summary>
+    <div class="acc-body">
+      <a href="#s1"><span class="num">S1</span> &middot; IAM Role</a>
+      <a href="#s2"><span class="num">S2</span> &middot; Secrets</a>
+      <a href="#s3"><span class="num">S3</span> &middot; VPC</a>
+      <a href="#s4"><span class="num">S4</span> &middot; URLs &amp; API</a>
+      <a href="#s5"><span class="num">S5</span> &middot; Code</a>
+      <a href="#s6"><span class="num">S6</span> &middot; Logs</a>
+      <a href="#s7"><span class="num">S7</span> &middot; Events</a>
+      <a href="#s8"><span class="num">S8</span> &middot; Runtime</a>
+      <a href="#s9"><span class="num">S9</span> &middot; Conc.</a>
+      <a href="#s10"><span class="num">S10</span> &middot; Audit</a>
+    </div>
+  </details>
+  <details class="acc">
+    <summary>Annexes <span class="chev">&rsaquo;</span></summary>
+    <div class="acc-body">
+      <a href="#matrice"><span class="num">&bull;</span> Matrice</a>
+      <a href="#scores"><span class="num">&bull;</span> &#x1F4CA; Scores</a>
+      <a href="#script"><span class="num">&bull;</span> &#x1F4DC; Script</a>
+      <a href="#checklist"><span class="num">&bull;</span> &#x2705; Checklist</a>
+      <a href="#glossaire"><span class="num">&bull;</span> &#x1F4D6; Glossaire</a>
+    </div>
+  </details>
+  <div class="side-foot">
+    <a href="#top">&uarr; Retour en haut</a>
+    <a href="#" onclick="window.print();return false;">&#x2B07; Imprimer / PDF</a>
+    <a href="#" onclick="navigator.clipboard.writeText(location.href);this.textContent='&#x2713; Lien copié';return false;">&#x2398; Copier le lien</a>
+  </div>
+</aside>
+<main class="v1a-main">
+
+
+
+<!-- ═══════════════════════ BACK TO INDEX ═══════════════════════ -->
+<a href="../index.html" class="back-to-index" style="position:fixed;top:16px;left:16px;z-index:1000;display:inline-flex;align-items:center;gap:6px;padding:8px 14px;background:#0078d4;color:#fff;text-decoration:none;border-radius:8px;font:600 14px/1 'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;box-shadow:0 2px 8px rgba(0,0,0,0.15);transition:background .2s" onmouseover="this.style.background='#004578'" onmouseout="this.style.background='#0078d4'" aria-label="Retour à l'index">&larr;&nbsp;Index</a>
+<!-- ═══════════════════════ HEADER ═══════════════════════ -->
+<header class="hero">
+    <h1>AWS Lambda Security &mdash; Serverless, Permissions &amp; Protection des Fonctions</h1>
+    <p class="subtitle">Guide de Configuration &amp; Audit &mdash; IAM Least Privilege, Secrets, VPC, Code Signing, Logging, Conformit&eacute;</p>
+    <div class="badge-row">
+        <span class="badge">AWS Lambda</span>
+        <span class="badge">AWS IAM</span>
+        <span class="badge">AWS Secrets Manager</span>
+        <span class="badge">Amazon VPC</span>
+        <span class="badge">AWS KMS</span>
+        <span class="badge">Amazon CloudWatch</span>
+        <span class="badge">AWS X-Ray</span>
+        <span class="badge">AWS Security Hub</span>
+    </div>
+    <div class="meta-row">
+        <span>Version : <strong>1.0</strong></span>
+        <span>Derni&egrave;re MAJ : <strong>Avril 2026</strong></span>
+        <span>Co&ucirc;t Lambda : <strong>1M req/mois + 400 000 Go-sec gratuits &bull; au-del&agrave; : 0,20 $/M req + 0,0000166667 $/Go-sec</strong></span>
+        <span>Outils : <strong>AWS CLI &bull; AWS SAM &bull; Terraform</strong></span>
+        <span>R&eacute;f. : <a href="https://docs.aws.amazon.com/lambda/latest/dg/security.html" target="_blank">AWS Lambda Security Guide</a></span>
+    </div>
+</header>
+
+<!-- ═══════════════════════ NAV ═══════════════════════ -->
+<div class="nav-container">
+    <nav>
+        <a href="#guide">Mode d'emploi</a>
+        <a href="#perimetre">P&eacute;rim&egrave;tre</a>
+        <a href="#licences">Co&ucirc;ts</a>
+        <a href="#s1">S1 &middot; IAM Role</a>
+        <a href="#s2">S2 &middot; Secrets</a>
+        <a href="#s3">S3 &middot; VPC</a>
+        <a href="#s4">S4 &middot; URLs &amp; API</a>
+        <a href="#s5">S5 &middot; Code</a>
+        <a href="#s6">S6 &middot; Logs</a>
+        <a href="#s7">S7 &middot; Events</a>
+        <a href="#s8">S8 &middot; Runtime</a>
+        <a href="#s9">S9 &middot; Conc.</a>
+        <a href="#s10">S10 &middot; Audit</a>
+        <a href="#matrice">Matrice</a>
+        <a href="#scores">&#x1F4CA; Scores</a>
+        <a href="#script">&#x1F4DC; Script</a>
+        <a href="#checklist">&#x2705; Checklist</a>
+        <a href="#glossaire">&#x1F4D6; Glossaire</a>
+    </nav>
+</div>
+
+<div class="container">
+
+<!-- ═══════════════════════ MODE D'EMPLOI ═══════════════════════ -->
+<div class="section" id="guide">
+    <div class="section-header blue">
+        <div class="section-number">&#x1F4D6;</div>
+        <div>
+            <div class="section-title">Mode d'emploi de ce guide</div>
+            <div class="section-desc">Comment utiliser ce document comme r&eacute;f&eacute;rentiel d'audit et de s&eacute;curisation AWS Lambda</div>
+        </div>
+    </div>
+
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x1F4CB;</span>
+        <div>
+            Ce document est un <strong>r&eacute;f&eacute;rentiel technique complet</strong> couvrant toutes les configurations de s&eacute;curit&eacute; AWS Lambda
+            avec les best practices AWS Well-Architected Framework, CIS AWS Benchmark v7.0.0 et AWS Foundational Security Best Practices.
+            Triple chemin : <strong>AWS CLI</strong> + <strong>Terraform</strong> + <strong>AWS SAM</strong>.
+        </div>
+    </div>
+
+    <h3>Analogies cl&eacute;s &mdash; Lambda comme employ&eacute; int&eacute;rimaire</h3>
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x1F465;</span>
+        <div>
+            <strong>Lambda</strong> = <strong>employ&eacute; int&eacute;rimaire</strong>. Il fait sa mission puis dispara&icirc;t &mdash; il ne doit avoir que les droits pour cette mission.<br>
+            <strong>Execution Role</strong> = <strong>badge d'acc&egrave;s limit&eacute;</strong>. L'int&eacute;rimaire a acc&egrave;s qu'aux pi&egrave;ces dont il a besoin, pas &agrave; tout l'immeuble.<br>
+            <strong>AWS Secrets Manager</strong> = <strong>coffre-fort</strong>. Les secrets ne voyagent pas dans les poches de l'int&eacute;rimaire (variables d'env).<br>
+            <strong>Lambda dans VPC</strong> = <strong>bureau s&eacute;curis&eacute;</strong>. La fonction travaille dans un espace isol&eacute; du reste du r&eacute;seau.<br>
+            <strong>Function URL sans auth</strong> = <strong>interphone sans code</strong>. N'importe qui peut d&eacute;clencher la fonction depuis Internet.<br>
+            <strong>Code Signing</strong> = <strong>signature du contrat</strong>. Seul le code approuv&eacute; et sign&eacute; peut &ecirc;tre ex&eacute;cut&eacute;.
+        </div>
+    </div>
+
+    <h3>Convention des colonnes</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr><th>Colonne</th><th>Signification</th><th>Effort</th></tr></thead>
+        <tbody>
+            <tr><td><strong>D&eacute;faut AWS</strong></td><td>Valeur appliqu&eacute;e automatiquement &agrave; la cr&eacute;ation de la fonction &mdash; aucune action</td><td>0 min</td></tr>
+            <tr><td><strong>&#x26A1; Quick Win</strong></td><td>Corrections imm&eacute;diates, haut impact, faible effort &mdash; <span class="hl-green">Priorit&eacute; 1</span></td><td>~15 min</td></tr>
+            <tr><td><strong>&#x1F512; Avanc&eacute;</strong></td><td>Configuration durcie conforme CIS AWS Benchmark v7.0.0</td><td>~1-2h</td></tr>
+            <tr><td><strong>&#x1F3AF; Optimal</strong></td><td>Configuration compl&egrave;te conforme AWS Well-Architected + Security Hub</td><td>Variable</td></tr>
+        </tbody>
+    </table>
+    </div>
+
+    <h3>Convention des badges de co&ucirc;t</h3>
+    <p>
+        <span class="lic lic-aws-free">Gratuit</span> Inclus sans co&ucirc;t suppl&eacute;mentaire (Lambda execution role, CloudWatch Logs de base)<br>
+        <span class="lic lic-aws-pay">Payant</span> Service factur&eacute; &agrave; l'usage (Secrets Manager, KMS, X-Ray, GuardDuty Lambda)<br>
+        <span class="lic lic-aws-prem">Premium</span> Co&ucirc;t &eacute;lev&eacute; (Shield Advanced, WAF devant API Gateway)<br>
+        <span class="lic lic-aws-addon">Add-on</span> Fonctionnalit&eacute; n&eacute;cessitant une configuration ou un service tiers
+    </p>
+
+    <h3>Triple chemin : AWS CLI + Terraform + AWS SAM</h3>
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x1F6E0;&#xFE0F;</span>
+        <div>
+            Chaque configuration cl&eacute; est document&eacute;e en <strong>trois chemins</strong> :<br>
+            <strong>1. AWS CLI</strong> (<code>aws lambda</code>, <code>aws iam</code>) — toujours avec <code>--profile</code> et <code>--region</code><br>
+            <strong>2. Terraform</strong> — pour l'Infrastructure as Code r&eacute;p&eacute;table (recommand&eacute;)<br>
+            <strong>3. AWS SAM</strong> (<code>template.yaml</code>) — sp&eacute;cifique serverless, le plus adapt&eacute; &agrave; Lambda
+        </div>
+    </div>
+
+    <h3>Strat&eacute;gie de d&eacute;ploiement recommand&eacute;e</h3>
+    <div class="step step-green">
+        <div class="step-n green">1</div>
+        <div class="step-c"><strong>Quick Win (15 min)</strong> &mdash; D&eacute;dier un execution role par fonction + retirer <code>*</code> resources + Secrets Manager + log retention (~+25 pts)</div>
+    </div>
+    <div class="step step-green">
+        <div class="step-n green">2</div>
+        <div class="step-c"><strong>VPC + R&eacute;seau (1-2h)</strong> &mdash; D&eacute;placer Lambda dans VPC priv&eacute; + security groups + VPC endpoints pour KMS/S3/SSM</div>
+    </div>
+    <div class="step">
+        <div class="step-n">3</div>
+        <div class="step-c"><strong>Code Security (2-4h)</strong> &mdash; Code signing + pipeline SAST + scan des d&eacute;pendances + X-Ray tracing</div>
+    </div>
+    <div class="step">
+        <div class="step-n">4</div>
+        <div class="step-c"><strong>Conformit&eacute; (ongoing)</strong> &mdash; Security Hub Lambda controls + GuardDuty Lambda Protection + Config rules + routines mensuelles</div>
+    </div>
+</div>
+
+<!-- ═══════════════════════ PÉRIMÈTRE ═══════════════════════ -->
+<div class="section" id="perimetre">
+    <div class="section-header blue">
+        <div class="section-number">&#x1F50D;</div>
+        <div>
+            <div class="section-title">P&eacute;rim&egrave;tre &amp; Hors-p&eacute;rim&egrave;tre</div>
+            <div class="section-desc">Ce que ce guide couvre et ce qu'il exclut explicitement</div>
+        </div>
+    </div>
+
+    <h3>Dans le p&eacute;rim&egrave;tre</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr><th>#</th><th>Section</th><th>Criticit&eacute;</th><th>Contenu cl&eacute;</th></tr></thead>
+        <tbody>
+            <tr><td>S1</td><td>IAM Execution Role &amp; Least Privilege</td><td><span class="badge-sm badge-critical">&#x1F534; Critique</span></td><td>Execution role d&eacute;di&eacute;, least privilege, confused deputy, permission boundaries</td></tr>
+            <tr><td>S2</td><td>Secrets &amp; Variables d'Environnement</td><td><span class="badge-sm badge-critical">&#x1F534; Critique</span></td><td>Secrets Manager, KMS CMK, rotation, interdiction credentials en env vars</td></tr>
+            <tr><td>S3</td><td>R&eacute;seau &amp; VPC Integration</td><td><span class="badge-sm badge-critical">&#x1F534; Critique</span></td><td>Lambda dans VPC, subnets priv&eacute;s, security groups, VPC endpoints</td></tr>
+            <tr><td>S4</td><td>Function URL &amp; API Gateway Security</td><td><span class="badge-sm badge-high">&#x1F7E0; &Eacute;lev&eacute;</span></td><td>auth_type IAM vs NONE, throttling, WAF, input validation</td></tr>
+            <tr><td>S5</td><td>Code Security &amp; Supply Chain</td><td><span class="badge-sm badge-high">&#x1F7E0; &Eacute;lev&eacute;</span></td><td>SAST, DAST, code signing, dependency scanning, container images ECR</td></tr>
+            <tr><td>S6</td><td>Logging, Tracing &amp; Observabilit&eacute;</td><td><span class="badge-sm badge-high">&#x1F7E0; &Eacute;lev&eacute;</span></td><td>CloudWatch Logs r&eacute;tention, X-Ray, Lambda Powertools, CloudTrail data events</td></tr>
+            <tr><td>S7</td><td>Event Source Security</td><td><span class="badge-sm badge-medium">&#x1F7E1; Moyen</span></td><td>SQS DLQ, SNS cross-account, S3 trigger validation, Kinesis consumer security</td></tr>
+            <tr><td>S8</td><td>Runtime &amp; Dependency Management</td><td><span class="badge-sm badge-medium">&#x1F7E1; Moyen</span></td><td>Runtimes support&eacute;s, Amazon Inspector, /tmp ephemeral storage, lifecycle</td></tr>
+            <tr><td>S9</td><td>Concurrence &amp; R&eacute;silience</td><td><span class="badge-sm badge-low">&#x1F535; Faible</span></td><td>Reserved concurrency, timeout, idempotency, retry behavior</td></tr>
+            <tr><td>S10</td><td>Conformit&eacute; &amp; Audit</td><td><span class="badge-sm badge-low">&#x1F535; Faible</span></td><td>Security Hub Lambda.1/2/5, GuardDuty Lambda Protection, Config rules, CIS</td></tr>
+        </tbody>
+    </table>
+    </div>
+
+    <h3>Hors-p&eacute;rim&egrave;tre (explicite)</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr><th>Sujet</th><th>Raison</th><th>Renvoi</th></tr></thead>
+        <tbody>
+            <tr><td>Amazon API Gateway (configuration d&eacute;taill&eacute;e)</td><td>Couche d'exposition distincte de Lambda</td><td><a href="aws-api-gateway.html" class="cross-ref">aws-api-gateway.html</a></td></tr>
+            <tr><td>Amazon EC2 (instances)</td><td>Lambda = serverless, pas de VM &agrave; g&eacute;rer</td><td>aws-ec2.html</td></tr>
+            <tr><td>AWS Step Functions</td><td>Consomme Lambda, produit orchestration distinct</td><td>Documentation Step Functions</td></tr>
+            <tr><td>Amazon EventBridge (bus d'&eacute;v&eacute;nements)</td><td>Event source de Lambda, produit distinct</td><td>Documentation EventBridge</td></tr>
+            <tr><td>Amazon ECS / EKS (conteneurs)</td><td>Alternative &agrave; Lambda, pas du serverless</td><td><a href="aws-eks.html" class="cross-ref">aws-eks.html</a></td></tr>
+        </tbody>
+    </table>
+    </div>
+
+    <h3>Solutions &eacute;cart&eacute;es</h3>
+    <div class="table-container"><table>
+        <thead><tr><th>Alternative</th><th>Raison d'&eacute;limination</th></tr></thead>
+        <tbody>
+            <tr><td><strong>Function URL avec AuthType : NONE</strong></td><td>Expose la fonction publiquement sans aucune authentification. Toujours utiliser <code>AWS_IAM</code> ou API Gateway avec Cognito</td></tr>
+            <tr><td><strong>Variables d'environnement en clair pour les secrets</strong></td><td>Visibles dans la console AWS, dans les logs de d&eacute;ploiement et dans les exports CloudFormation. Utiliser Secrets Manager ou Parameter Store (SecureString)</td></tr>
+            <tr><td><strong>Role d'ex&eacute;cution partag&eacute; entre plusieurs fonctions</strong></td><td>Une compromission affecte toutes les fonctions attach&eacute;es. Un r&ocirc;le IAM d&eacute;di&eacute; par fonction est obligatoire</td></tr>
+            <tr><td><strong>Lambda hors VPC pour acc&eacute;der &agrave; des ressources priv&eacute;es</strong></td><td>Force &agrave; exposer RDS, ElasticSearch ou Redis sur Internet. Lambda dans VPC + VPC Endpoints = acc&egrave;s priv&eacute; sans NAT Gateway</td></tr>
+        </tbody>
+    </table></div>
+</div>
+
+<!-- ═══════════════════════ COÛTS ═══════════════════════ -->
+<div class="section" id="licences">
+    <div class="section-header blue">
+        <div class="section-number">&#x1F4B3;</div>
+        <div>
+            <div class="section-title">Matrice des Co&ucirc;ts &mdash; Services Lambda &amp; S&eacute;curit&eacute;</div>
+            <div class="section-desc">Ce qui est gratuit, ce qui est pay&eacute; &agrave; l'usage &mdash; sources : AWS Pricing (v&eacute;rifi&eacute; Avril 2026)</div>
+        </div>
+    </div>
+
+    <div class="table-container">
+    <table>
+        <thead><tr>
+            <th>Service</th>
+            <th>Mod&egrave;le de facturation</th>
+            <th>Free Tier</th>
+            <th>Co&ucirc;t estim&eacute; (usage moyen)</th>
+            <th>Badge</th>
+        </tr></thead>
+        <tbody>
+            <tr class="row-ok"><td><strong>AWS Lambda</strong></td><td>Requêtes + dur&eacute;e d'ex&eacute;cution (Go-sec)</td><td>1M req/mois + 400 000 Go-sec/mois <strong>always free</strong></td><td>~0-5 $/mois pour la plupart des workloads</td><td><span class="lic lic-aws-free">Gratuit</span></td></tr>
+            <tr class="row-ok"><td><strong>AWS IAM (Execution Role)</strong></td><td>Gratuit</td><td>Illimit&eacute;</td><td>0 $</td><td><span class="lic lic-aws-free">Gratuit</span></td></tr>
+            <tr class="row-ok"><td><strong>Amazon CloudWatch Logs</strong></td><td>Ingestion 0,50 $/Go + stockage 0,03 $/Go/mois</td><td>5 Go ingestion + 5 Go stockage/mois (12 mois)</td><td>~5-30 $/mois selon le volume de logs</td><td><span class="lic lic-aws-pay">Payant</span></td></tr>
+            <tr class="row-warn"><td><strong>AWS Secrets Manager</strong></td><td>0,40 $/secret/mois + 0,05 $/10 000 appels API</td><td>30 jours d'essai par secret</td><td>~5-20 $/mois (10-50 secrets)</td><td><span class="lic lic-aws-pay">Payant</span></td></tr>
+            <tr class="row-warn"><td><strong>AWS KMS (CMK)</strong></td><td>1 $/mois par cl&eacute; CMK + 0,03 $/10 000 req API</td><td>AWS managed keys gratuites</td><td>~5-20 $/mois (5-10 cl&eacute;s)</td><td><span class="lic lic-aws-pay">Payant</span></td></tr>
+            <tr class="row-warn"><td><strong>AWS X-Ray</strong></td><td>0 $ pour 100 000 traces/mois, puis 5 $/million</td><td>100 000 traces + 1 million scans/mois</td><td>~0-10 $/mois (usage standard)</td><td><span class="lic lic-aws-pay">Payant</span></td></tr>
+            <tr class="row-warn"><td><strong>Amazon GuardDuty Lambda Protection</strong></td><td>Par invocation Lambda analys&eacute;e</td><td>30 jours d'essai</td><td>~20-100 $/mois selon le trafic</td><td><span class="lic lic-aws-pay">Payant</span></td></tr>
+            <tr class="row-warn"><td><strong>AWS Security Hub</strong></td><td>0,001 $/finding apr&egrave;s 10 000 gratuits/mois</td><td>10 000 findings/mois + 30j trial</td><td>~20-80 $/mois</td><td><span class="lic lic-aws-pay">Payant</span></td></tr>
+            <tr class="row-warn"><td><strong>AWS WAF (devant API Gateway)</strong></td><td>5 $/Web ACL/mois + 1 $/r&egrave;gle + 0,60 $/M req</td><td>Aucun</td><td>~30-100 $/mois</td><td><span class="lic lic-aws-prem">Premium</span></td></tr>
+            <tr class="row-ok"><td><strong>Amazon VPC (subnets, SG)</strong></td><td>VPC et subnets gratuits &bull; NAT Gateway factur&eacute;</td><td>VPC/Subnets/SG gratuits</td><td>NAT Gateway : ~32 $/mois + trafic</td><td><span class="lic lic-aws-free">Gratuit</span></td></tr>
+            <tr class="row-warn"><td><strong>AWS Config (r&egrave;gles Lambda)</strong></td><td>0,003 $/config item recorded</td><td>Aucun</td><td>~10-30 $/mois</td><td><span class="lic lic-aws-pay">Payant</span></td></tr>
+        </tbody>
+    </table>
+    </div>
+
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x1F4A1;</span>
+        <div>
+            <strong>Ordre de priorit&eacute; co&ucirc;t/b&eacute;n&eacute;fice :</strong><br>
+            1. IAM + CloudWatch Logs (gratuit ou quasi) &rarr; <strong>Quick Win imm&eacute;diat</strong><br>
+            2. AWS Secrets Manager (~10 $/mois) &rarr; <strong>critique pour la s&eacute;curit&eacute;, co&ucirc;t faible</strong><br>
+            3. AWS KMS CMK (~5 $/mois) &rarr; <strong>chiffrement fort, tr&egrave;s abordable</strong><br>
+            4. AWS X-Ray + GuardDuty Lambda (~30-50 $/mois) &rarr; <strong>observabilit&eacute; + d&eacute;tection</strong><br>
+            5. WAF (~50-100 $/mois) &rarr; r&eacute;server aux fonctions expos&eacute;es &agrave; Internet &agrave; fort trafic
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════ S1 — IAM EXECUTION ROLE ═══════════════════════ -->
+<div class="section" id="s1">
+    <div class="section-header red">
+        <div class="section-number red">1</div>
+        <div>
+            <div class="section-title">IAM Execution Role &amp; Least Privilege <span class="lic lic-aws-free">Gratuit</span></div>
+            <div class="section-desc">L'identit&eacute; de la fonction Lambda &mdash; principe du moindre privil&egrave;ge, confused deputy, permission boundaries</div>
+        </div>
+    </div>
+
+    <!-- 1. ALERTE CONTEXTE -->
+    <div class="alert alert-error">
+        <span class="alert-icon">&#x1F6A8;</span>
+        <div>
+            <strong>Sc&eacute;nario d'attaque :</strong> Une fonction Lambda avec un execution role ayant <code>"Action": "*", "Resource": "*"</code>
+            est compromise via une injection de code dans son event source (SQS, S3). L'attaquant utilise les credentials STS
+            de la fonction pour pivoter sur l'ensemble du compte AWS : lire tous les secrets, exfiltrer des donn&eacute;es S3,
+            cr&eacute;er des utilisateurs IAM backdoor. C'est l'attaque de l'<strong>employ&eacute; int&eacute;rimaire qui copie les cl&eacute;s de tout l'immeuble</strong>.<br>
+            <strong>Statistique :</strong> 73% des fonctions Lambda en production ont un execution role trop permissif
+            (source : rapport Datadog State of Serverless 2024).
+        </div>
+    </div>
+
+    <!-- 2. TABLEAU COMPARATIF -->
+    <h3>1.1 &mdash; Tableau de configuration &mdash; Execution Role</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr>
+            <th>Param&egrave;tre</th>
+            <th>D&eacute;faut AWS</th>
+            <th>&#x26A1; Quick Win</th>
+            <th>&#x1F512; Avanc&eacute;</th>
+            <th>&#x1F3AF; Optimal</th>
+            <th>Source</th>
+        </tr></thead>
+        <tbody>
+            <tr class="row-ko">
+                <td><strong>Role d&eacute;di&eacute; par fonction</strong></td>
+                <td><span class="hl-red">Role partag&eacute; fr&eacute;quent</span></td>
+                <td><span class="hl-green">1 role = 1 fonction</span></td>
+                <td><span class="hl-green">1 role = 1 fonction</span></td>
+                <td>1 role = 1 fonction</td>
+                <td><a href="https://docs.aws.amazon.com/lambda/latest/dg/lambda-intro-execution-role.html" target="_blank">AWS docs</a></td>
+            </tr>
+            <tr class="row-ko">
+                <td><strong>Resource ARN dans les policies</strong><br><small>Pas de <code>"Resource": "*"</code></small></td>
+                <td><span class="hl-red">AWSLambdaBasicExecutionRole = <code>logs:* *</code></span></td>
+                <td><span class="hl-green">ARN sp&eacute;cifiques (/aws/lambda/nom)</span></td>
+                <td><span class="hl-green">ARN + conditions</span></td>
+                <td>ARN + condition keys</td>
+                <td>CIS AWS Foundations v7.0.0 &sect;2.14 (no full *:* admin)</td>
+            </tr>
+            <tr class="row-ko">
+                <td><strong>Trust policy &mdash; Confused Deputy</strong><br><small><code>aws:SourceArn</code> + <code>aws:SourceAccount</code></small></td>
+                <td><span class="hl-red">Absent (trust lambda.amazonaws.com sans condition)</span></td>
+                <td><span class="hl-green">Ajout <code>aws:SourceAccount</code></span></td>
+                <td><span class="hl-green">Ajout <code>aws:SourceArn</code> + <code>aws:SourceAccount</code></span></td>
+                <td>Condition keys + SCP</td>
+                <td><a href="https://docs.aws.amazon.com/IAM/latest/UserGuide/confused-deputy.html" target="_blank">AWS Confused Deputy</a></td>
+            </tr>
+            <tr class="row-warn">
+                <td><strong>Permission Boundary</strong><br><small>Plafond max des permissions du role</small></td>
+                <td><span class="hl-red">Absent</span></td>
+                <td>Absent</td>
+                <td><span class="hl-green">Boundary appliqu&eacute;e</span></td>
+                <td>Boundary + SCP</td>
+                <td>AWS Well-Architected SEC05</td>
+            </tr>
+            <tr class="row-warn">
+                <td><strong>IAM Access Analyzer</strong><br><small>D&eacute;tection acc&egrave;s excessifs</small></td>
+                <td><span class="hl-red">Non activ&eacute;</span></td>
+                <td><span class="hl-green">Activ&eacute; (r&eacute;gion)</span></td>
+                <td><span class="hl-green">Activ&eacute; + findings revu&eacute;s</span></td>
+                <td>Activ&eacute; + auto-remediation</td>
+                <td>CIS AWS Foundations v7.0.0 &sect;2.18 (External Access Analyzer)</td>
+            </tr>
+            <tr class="row-warn">
+                <td><strong>Inline policy vs Managed policy</strong></td>
+                <td>AWS managed (trop larges)</td>
+                <td><span class="hl-green">Customer managed policies</span></td>
+                <td><span class="hl-green">Customer managed + versioning</span></td>
+                <td>Managed + IAM Analyzer validation</td>
+                <td>AWS Best Practices</td>
+            </tr>
+            <tr class="row-warn">
+                <td><strong>PassRole restriction</strong><br><small>Emp&ecirc;cher l'escalade de privil&egrave;ges</small></td>
+                <td><span class="hl-red">Souvent absent</span></td>
+                <td>Absent</td>
+                <td><span class="hl-green">iam:PassRole restreint aux roles Lambda</span></td>
+                <td>PassRole + conditions</td>
+                <td>AWS Privilege Escalation Guide</td>
+            </tr>
+        </tbody>
+    </table>
+    </div>
+
+    <!-- 3. POURQUOI CHAQUE PARAMÈTRE -->
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x1F4A1;</span>
+        <div>
+            <strong>Pourquoi chaque param&egrave;tre compte :</strong><br>
+            <strong>Role d&eacute;di&eacute; :</strong> Un role partag&eacute; entre plusieurs fonctions signifie qu'une compromission d'une fonction donne acc&egrave;s aux permissions de toutes. Principe d'isolation.<br>
+            <strong>Resource ARN sp&eacute;cifique :</strong> <code>"Resource": "*"</code> sur S3 = acc&egrave;s &agrave; <em>tous</em> les buckets du compte. Un ARN sp&eacute;cifique limite l'impact d'une compromission au seul bucket n&eacute;cessaire.<br>
+            <strong>Confused Deputy :</strong> Sans <code>aws:SourceArn</code>, n'importe quel service AWS peut assumer votre role en se faisant passer pour Lambda. Avec la condition, seule votre fonction sp&eacute;cifique peut l'assumer (CWE-441).<br>
+            <strong>Permission Boundary :</strong> Emp&ecirc;che qu'un d&eacute;veloppeur puisse cr&eacute;er un role Lambda avec plus de permissions que ce que le boundary autorise. Contre l'escalade de privil&egrave;ges interne.<br>
+            <strong>IAM Access Analyzer :</strong> D&eacute;tecte automatiquement les policies qui permettent un acc&egrave;s externe non intentionnel (cross-account, public). Source : <a href="https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html" target="_blank">AWS IAM Access Analyzer docs</a>.
+        </div>
+    </div>
+
+    <!-- 4. PIÈGE -->
+    <div class="alert alert-warn">
+        <span class="alert-icon">&#x26A0;&#xFE0F;</span>
+        <div>
+            <strong>Pi&egrave;ge fr&eacute;quent :</strong> La policy g&eacute;r&eacute;e <code>AWSLambdaBasicExecutionRole</code> est souvent consid&eacute;r&eacute;e comme "minimale" mais elle autorise <code>logs:CreateLogGroup</code>, <code>logs:CreateLogStream</code> et <code>logs:PutLogEvents</code> sur <code>"Resource": "*"</code>.
+            En pratique, cela signifie que la fonction peut &eacute;crire dans <em>n'importe quel</em> log group AWS de votre compte &mdash; y compris les logs CloudTrail ou de s&eacute;curit&eacute;.
+            <strong>Toujours restreindre &agrave; <code>arn:aws:logs:&lt;region&gt;:&lt;account&gt;:log-group:/aws/lambda/&lt;function-name&gt;:*</code></strong>.
+        </div>
+    </div>
+
+    <!-- 5. CODE CONFIG -->
+    <h3>1.2 &mdash; Configuration &mdash; Policy Least Privilege</h3>
+
+    <h4 style="margin:12px 0 6px; font-size:0.9em; color: var(--neutral-medium);">Exemple 1 : Lecture S3 sp&eacute;cifique</h4>
+    <div class="code-block">
+        <div class="code-header"><span>AWS CLI &mdash; Policy S3 ReadOnly sur un bucket sp&eacute;cifique</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div>
+<pre><span class="comment"># 1. Cr&eacute;er le r&ocirc;le d'ex&eacute;cution d&eacute;di&eacute; &agrave; la fonction</span>
+aws iam create-role \
+  --role-name <span class="string">"lambda-my-function-role"</span> \
+  --assume-role-policy-document <span class="string">'{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":{"Service":"lambda.amazonaws.com"},"Action":"sts:AssumeRole","Condition":{"StringEquals":{"aws:SourceAccount":"&lt;ACCOUNT_ID&gt;"},"ArnLike":{"aws:SourceArn":"arn:aws:lambda:eu-west-1:&lt;ACCOUNT_ID&gt;:function:my-function"}}}]}'</span> \
+  --profile <span class="param">audit</span> --region <span class="param">eu-west-1</span>
+
+<span class="comment"># 2. Attacher une policy CloudWatch Logs minimale (log group d&eacute;di&eacute;)</span>
+aws iam put-role-policy \
+  --role-name <span class="string">"lambda-my-function-role"</span> \
+  --policy-name <span class="string">"CloudWatchLogsMinimal"</span> \
+  --policy-document <span class="string">'{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":["logs:CreateLogStream","logs:PutLogEvents"],"Resource":"arn:aws:logs:eu-west-1:&lt;ACCOUNT_ID&gt;:log-group:/aws/lambda/my-function:*"}]}'</span> \
+  --profile <span class="param">audit</span> --region <span class="param">eu-west-1</span>
+
+<span class="comment"># 3. Attacher la policy S3 ReadOnly sp&eacute;cifique</span>
+aws iam put-role-policy \
+  --role-name <span class="string">"lambda-my-function-role"</span> \
+  --policy-name <span class="string">"S3ReadSpecificBucket"</span> \
+  --policy-document <span class="string">'{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":["s3:GetObject","s3:ListBucket"],"Resource":["arn:aws:s3:::my-bucket","arn:aws:s3:::my-bucket/*"]}]}'</span> \
+  --profile <span class="param">audit</span> --region <span class="param">eu-west-1</span></pre>
+    </div>
+
+    <h4 style="margin:12px 0 6px; font-size:0.9em; color: var(--neutral-medium);">Terraform &mdash; Execution Role avec least privilege</h4>
+    <div class="code-block">
+        <div class="code-header"><span>Terraform &mdash; aws_iam_role + aws_iam_role_policy</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div>
+<pre><span class="comment"># terraform/lambda_iam.tf</span>
+resource <span class="string">"aws_iam_role"</span> <span class="string">"lambda_exec"</span> {
+  name = <span class="string">"lambda-my-function-role"</span>
+
+  assume_role_policy = jsonencode({
+    Version = <span class="string">"2012-10-17"</span>
+    Statement = [{
+      Effect    = <span class="string">"Allow"</span>
+      Principal = { Service = <span class="string">"lambda.amazonaws.com"</span> }
+      Action    = <span class="string">"sts:AssumeRole"</span>
+      Condition = {
+        StringEquals = { <span class="string">"aws:SourceAccount"</span> = var.account_id }
+        ArnLike = { <span class="string">"aws:SourceArn"</span> = <span class="string">"arn:aws:lambda:${var.region}:${var.account_id}:function:my-function"</span> }
+      }
+    }]
+  })
+}
+
+resource <span class="string">"aws_iam_role_policy"</span> <span class="string">"lambda_logs"</span> {
+  name = <span class="string">"CloudWatchLogsMinimal"</span>
+  role = aws_iam_role.lambda_exec.id
+
+  policy = jsonencode({
+    Version = <span class="string">"2012-10-17"</span>
+    Statement = [{
+      Effect   = <span class="string">"Allow"</span>
+      Action   = [<span class="string">"logs:CreateLogStream"</span>, <span class="string">"logs:PutLogEvents"</span>]
+      Resource = <span class="string">"arn:aws:logs:${var.region}:${var.account_id}:log-group:/aws/lambda/my-function:*"</span>
+    }]
+  })
+}
+
+resource <span class="string">"aws_iam_role_policy"</span> <span class="string">"lambda_s3"</span> {
+  name = <span class="string">"S3ReadSpecificBucket"</span>
+  role = aws_iam_role.lambda_exec.id
+
+  policy = jsonencode({
+    Version = <span class="string">"2012-10-17"</span>
+    Statement = [{
+      Effect   = <span class="string">"Allow"</span>
+      Action   = [<span class="string">"s3:GetObject"</span>, <span class="string">"s3:ListBucket"</span>]
+      Resource = [<span class="string">"arn:aws:s3:::my-bucket"</span>, <span class="string">"arn:aws:s3:::my-bucket/*"</span>]
+    }]
+  })
+}</pre>
+    </div>
+
+    <h4 style="margin:12px 0 6px; font-size:0.9em; color: var(--neutral-medium);">AWS SAM &mdash; Policies minimales dans template.yaml</h4>
+    <div class="code-block">
+        <div class="code-header"><span>AWS SAM &mdash; template.yaml &mdash; Policies pr&eacute;d&eacute;finies least privilege</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div>
+<pre><span class="comment"># template.yaml</span>
+Resources:
+  MyFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: my-function
+      Runtime: python3.12
+      Handler: app.handler
+      <span class="keyword">Policies:</span>
+        <span class="comment"># Policy pr&eacute;d&eacute;finie SAM = S3ReadPolicy limit&eacute;e au bucket</span>
+        - <span class="string">S3ReadPolicy</span>:
+            BucketName: !Ref MyBucket
+        <span class="comment"># Policy custom minimale CloudWatch Logs</span>
+        - <span class="string">Statement</span>:
+            - Effect: Allow
+              Action:
+                - logs:CreateLogStream
+                - logs:PutLogEvents
+              Resource: !Sub <span class="string">'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/my-function:*'</span>
+      <span class="comment"># Pas de PermissionsBoundary par d&eacute;faut SAM &mdash; ajouter en Avanc&eacute;</span>
+      <span class="keyword"># PermissionsBoundary:</span> !Sub <span class="string">'arn:aws:iam::${AWS::AccountId}:policy/LambdaPermissionsBoundary'</span></pre>
+    </div>
+
+    <h3>1.3 &mdash; Templates de policies minimales (5 cas d'usage)</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr><th>Cas d'usage</th><th>Actions autoris&eacute;es</th><th>Resource ARN pattern</th></tr></thead>
+        <tbody>
+            <tr><td><strong>Lecture S3</strong></td><td><code>s3:GetObject</code>, <code>s3:ListBucket</code></td><td><code>arn:aws:s3:::&lt;bucket&gt;</code> + <code>arn:aws:s3:::&lt;bucket&gt;/*</code></td></tr>
+            <tr><td><strong>&Eacute;criture DynamoDB</strong></td><td><code>dynamodb:PutItem</code>, <code>dynamodb:UpdateItem</code></td><td><code>arn:aws:dynamodb:&lt;region&gt;:&lt;account&gt;:table/&lt;table&gt;</code></td></tr>
+            <tr><td><strong>Envoi SQS</strong></td><td><code>sqs:SendMessage</code></td><td><code>arn:aws:sqs:&lt;region&gt;:&lt;account&gt;:&lt;queue-name&gt;</code></td></tr>
+            <tr><td><strong>Secrets Manager (lecture)</strong></td><td><code>secretsmanager:GetSecretValue</code></td><td><code>arn:aws:secretsmanager:&lt;region&gt;:&lt;account&gt;:secret:&lt;name&gt;-*</code></td></tr>
+            <tr><td><strong>Cross-account invoke</strong></td><td><code>lambda:InvokeFunction</code></td><td><code>arn:aws:lambda:&lt;region&gt;:&lt;account&gt;:function:&lt;name&gt;</code> + condition <code>aws:SourceAccount</code></td></tr>
+        </tbody>
+    </table>
+    </div>
+
+    <!-- 6. CODE VÉRIFICATION -->
+    <h3>1.4 &mdash; V&eacute;rification</h3>
+    <div class="code-block">
+        <div class="code-header"><span>AWS CLI &mdash; Audit des permissions du role d'ex&eacute;cution</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div>
+<pre><span class="comment"># V&eacute;rifier le role attach&eacute; &agrave; la fonction</span>
+aws lambda get-function-configuration \
+  --function-name <span class="string">"my-function"</span> \
+  --query <span class="string">'Role'</span> \
+  --output text \
+  --profile <span class="param">audit</span> --region <span class="param">eu-west-1</span>
+
+<span class="comment"># Lister les policies inline du r&ocirc;le (v&eacute;rifier l'absence de "*")</span>
+aws iam list-role-policies \
+  --role-name <span class="string">"lambda-my-function-role"</span> \
+  --profile <span class="param">audit</span> --region <span class="param">eu-west-1</span>
+
+<span class="comment"># D&eacute;tail d'une policy inline</span>
+aws iam get-role-policy \
+  --role-name <span class="string">"lambda-my-function-role"</span> \
+  --policy-name <span class="string">"S3ReadSpecificBucket"</span> \
+  --query <span class="string">'PolicyDocument'</span> \
+  --profile <span class="param">audit</span> --region <span class="param">eu-west-1</span>
+
+<span class="comment"># V&eacute;rifier IAM Access Analyzer (doit &ecirc;tre ACTIVE)</span>
+aws accessanalyzer list-analyzers \
+  --profile <span class="param">audit</span> --region <span class="param">eu-west-1</span> \
+  --output table
+
+<span class="comment"># Lister les findings Access Analyzer actifs</span>
+aws accessanalyzer list-findings \
+  --analyzer-arn <span class="string">"arn:aws:access-analyzer:eu-west-1:&lt;ACCOUNT&gt;:analyzer/default"</span> \
+  --filter <span class="string">'status={eq=[ACTIVE]}'</span> \
+  --profile <span class="param">audit</span> --region <span class="param">eu-west-1</span></pre>
+    </div>
+
+    <!-- 7. CHECKLIST ÉTAT DES LIEUX -->
+    <h3>1.5 &mdash; Checklist &eacute;tat des lieux</h3>
+    <div class="checklist-item"><input type="checkbox"><span>Chaque fonction Lambda a son propre execution role d&eacute;di&eacute; (aucun role partag&eacute;)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Aucune policy ne contient <code>"Resource": "*"</code> (sauf exception justifi&eacute;e et document&eacute;e)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>La trust policy inclut <code>aws:SourceAccount</code> (protection confused deputy)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>IAM Access Analyzer activ&eacute; dans toutes les r&eacute;gions utilis&eacute;es</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Permission boundaries appliqu&eacute;es aux roles Lambda (niveaux Avanc&eacute;/Optimal)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Aucune policy <code>AWSLambdaFullAccess</code> ni <code>AdministratorAccess</code> attach&eacute;e &agrave; un execution role</span></div>
+</div>
+
+<!-- ═══════════════════════ S2 — SECRETS & ENV VARS ═══════════════════════ -->
+<div class="section" id="s2">
+    <div class="section-header red">
+        <div class="section-number red">2</div>
+        <div>
+            <div class="section-title">Secrets &amp; Variables d'Environnement <span class="lic lic-aws-pay">Payant</span></div>
+            <div class="section-desc">Gestion s&eacute;curis&eacute;e des credentials, secrets et configuration &mdash; Secrets Manager, KMS CMK, rotation</div>
+        </div>
+    </div>
+
+    <!-- 1. ALERTE CONTEXTE -->
+    <div class="alert alert-error">
+        <span class="alert-icon">&#x1F6A8;</span>
+        <div>
+            <strong>Sc&eacute;nario d'attaque :</strong> Un d&eacute;veloppeur injecte une cl&eacute; API de base de donn&eacute;es dans une variable d'environnement Lambda
+            (pratique "rapide" tr&egrave;s courante). Un attaquant qui obtient un acc&egrave;s en lecture aux configurations Lambda
+            (via <code>lambda:GetFunctionConfiguration</code>) r&eacute;cup&egrave;re instantan&eacute;ment tous les secrets en clair.
+            Les variables d'environnement Lambda sont chiffr&eacute;es <em>at rest</em> par AWS par d&eacute;faut,
+            mais visibles en clair dans la console et via l'API &mdash; comme des <strong>notes sous le clavier du bureau</strong>.<br>
+            <strong>Statistique :</strong> Les credentials expos&eacute;s repr&eacute;sentent le vecteur #1 des incidents cloud (Verizon DBIR 2024, 80% des breaches cloud).
+        </div>
+    </div>
+
+    <!-- 2. TABLEAU COMPARATIF -->
+    <h3>2.1 &mdash; Tableau des 10 erreurs fr&eacute;quentes &amp; configuration</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr>
+            <th>Erreur / Param&egrave;tre</th>
+            <th>D&eacute;faut / Mauvaise pratique</th>
+            <th>&#x26A1; Quick Win</th>
+            <th>&#x1F3AF; Optimal</th>
+            <th>Risque</th>
+        </tr></thead>
+        <tbody>
+            <tr class="row-ko">
+                <td><strong>1. Credentials en variables d'env</strong><br><small>DB passwords, API keys, tokens</small></td>
+                <td><code class="hl-red">DB_PASSWORD=s3cr3t</code> en env var</td>
+                <td><span class="hl-green">Secrets Manager runtime fetch</span></td>
+                <td>Secrets Manager + rotation auto</td>
+                <td><span class="badge-sm badge-critical">Critique</span></td>
+            </tr>
+            <tr class="row-ko">
+                <td><strong>2. Env vars sans KMS CMK</strong><br><small>Chiffrement AWS managed key</small></td>
+                <td>Chiffrement AWS managed key (partag&eacute;)</td>
+                <td><span class="hl-green">KMS CMK d&eacute;di&eacute;</span></td>
+                <td>KMS CMK + rotation annuelle</td>
+                <td><span class="badge-sm badge-high">&Eacute;lev&eacute;</span></td>
+            </tr>
+            <tr class="row-ko">
+                <td><strong>3. Pas de rotation des secrets</strong></td>
+                <td>Secret statique (ne tourne jamais)</td>
+                <td><span class="hl-green">Rotation Secrets Manager activ&eacute;e</span></td>
+                <td>Rotation + Lambda rotator custom</td>
+                <td><span class="badge-sm badge-critical">Critique</span></td>
+            </tr>
+            <tr class="row-ko">
+                <td><strong>4. Wildcard IAM pour Secrets Manager</strong></td>
+                <td><code>secretsmanager:GetSecretValue *</code></td>
+                <td>ARN sp&eacute;cifique du secret</td>
+                <td>ARN + condition <code>secretsmanager:VersionStage</code></td>
+                <td><span class="badge-sm badge-high">&Eacute;lev&eacute;</span></td>
+            </tr>
+            <tr class="row-ko">
+                <td><strong>5. Secrets hardcod&eacute;s dans le code source</strong></td>
+                <td>Cl&eacute;s API dans <code>handler.py</code></td>
+                <td>Scan SAST (Semgrep, Bandit)</td>
+                <td>Pre-commit hook + CI/CD scan</td>
+                <td><span class="badge-sm badge-critical">Critique</span></td>
+            </tr>
+            <tr class="row-warn">
+                <td><strong>6. Pas de caching des secrets</strong><br><small>Appels Secrets Manager &agrave; chaque invocation</small></td>
+                <td>0 caching &rarr; co&ucirc;t et latence &eacute;lev&eacute;s</td>
+                <td>Lambda Powertools SecretsManager helper</td>
+                <td>TTL cache 300s + refresh si rotation</td>
+                <td><span class="badge-sm badge-medium">Co&ucirc;t</span></td>
+            </tr>
+            <tr class="row-warn">
+                <td><strong>7. Env vars en clair dans les logs</strong><br><small>print(os.environ) par inadvertance</small></td>
+                <td>Dump env vars dans CloudWatch Logs</td>
+                <td>Logger structur&eacute; sans dump env</td>
+                <td>CloudWatch Logs Insights + alertes</td>
+                <td><span class="badge-sm badge-high">&Eacute;lev&eacute;</span></td>
+            </tr>
+            <tr class="row-warn">
+                <td><strong>8. SSM Parameter Store vs Secrets Manager</strong><br><small>Mauvais outil selon le type de donn&eacute;e</small></td>
+                <td>SSM pour tous les secrets (pas de rotation native)</td>
+                <td>Secrets Manager pour credentials critiques</td>
+                <td>Secrets Manager = passwords/tokens &bull; SSM = configs</td>
+                <td><span class="badge-sm badge-medium">Moyen</span></td>
+            </tr>
+            <tr class="row-warn">
+                <td><strong>9. Pas d'audit CloudTrail sur GetSecretValue</strong></td>
+                <td>Appels Secrets Manager non journalis&eacute;s</td>
+                <td>CloudTrail Management Events activ&eacute;</td>
+                <td>CloudTrail + alarme CloudWatch sur acc&egrave;s anormal</td>
+                <td><span class="badge-sm badge-high">&Eacute;lev&eacute;</span></td>
+            </tr>
+            <tr class="row-warn">
+                <td><strong>10. Secret unique pour plusieurs fonctions</strong></td>
+                <td>Un secret DynamoDB partag&eacute; entre 5 fonctions</td>
+                <td>1 secret = 1 fonction (isolation)</td>
+                <td>1 secret = 1 fonction + permission boundaries</td>
+                <td><span class="badge-sm badge-high">&Eacute;lev&eacute;</span></td>
+            </tr>
+        </tbody>
+    </table>
+    </div>
+
+    <!-- 3. POURQUOI CHAQUE PARAMÈTRE -->
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x1F4A1;</span>
+        <div>
+            <strong>Pourquoi chaque param&egrave;tre compte :</strong><br>
+            <strong>Secrets Manager vs env vars :</strong> Une variable d'environnement est visible par quiconque peut appeler <code>GetFunctionConfiguration</code> ou voir la console Lambda. Secrets Manager impose une policy IAM d&eacute;di&eacute;e, audit&eacute;e, et supporte la rotation sans red&eacute;ploiement.<br>
+            <strong>KMS CMK :</strong> La cl&eacute; AWS managed (alias <code>aws/lambda</code>) est partag&eacute;e entre tous les clients AWS de la r&eacute;gion. Une CMK d&eacute;di&eacute;e permet un contr&ocirc;le total : audit, r&eacute;vocation, rotation. Source : <a href="https://docs.aws.amazon.com/kms/latest/developerguide/services-lambda.html" target="_blank">AWS KMS + Lambda docs</a>.<br>
+            <strong>Rotation :</strong> Un secret statique qui ne tourne jamais devient une bombe &agrave; retardement. Si un ancien employ&eacute; ou une d&eacute;pendance compromise l'a vu, le secret est compromis pour toujours sans rotation.<br>
+            <strong>Caching (Powertools) :</strong> Sans cache, 1M d'invocations Lambda = 1M d'appels &agrave; Secrets Manager (0,05 $/10 000 API calls = 5 $ suppl&eacute;mentaires/M invocations). Avec cache 300s, le co&ucirc;t devient n&eacute;gligeable.
+        </div>
+    </div>
+
+    <!-- 4. PIÈGE -->
+    <div class="alert alert-warn">
+        <span class="alert-icon">&#x26A0;&#xFE0F;</span>
+        <div>
+            <strong>Pi&egrave;ge :</strong> AWS Parameter Store avec <code>SecureString</code> n'est <strong>pas</strong> &eacute;quivalent &agrave; Secrets Manager.
+            SecureString chiffre la valeur mais <strong>ne supporte pas la rotation native automatique</strong> ni les versions (AWSCURRENT / AWSPREVIOUS).
+            Pour des credentials de base de donn&eacute;es ou des API keys, toujours utiliser AWS Secrets Manager.
+            Pour la configuration applicative non-sensible (URLs, feature flags), SSM Parameter Store Standard est suffisant et gratuit.
+        </div>
+    </div>
+
+    <!-- 5. CODE CONFIG -->
+    <h3>2.2 &mdash; Configuration &mdash; Secrets Manager + KMS CMK</h3>
+    <div class="code-block">
+        <div class="code-header"><span>AWS CLI &mdash; Cr&eacute;er un secret + activer la rotation</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div>
+<pre><span class="comment"># 1. Cr&eacute;er une cl&eacute; KMS CMK d&eacute;di&eacute;e &agrave; la fonction</span>
+KMS_KEY_ID=$(aws kms create-key \
+  --description <span class="string">"CMK Lambda my-function secrets"</span> \
+  --key-usage ENCRYPT_DECRYPT \
+  --profile <span class="param">audit</span> --region <span class="param">eu-west-1</span> \
+  --query <span class="string">'KeyMetadata.KeyId'</span> --output text)
+
+<span class="comment"># 2. Cr&eacute;er le secret dans Secrets Manager</span>
+aws secretsmanager create-secret \
+  --name <span class="string">"lambda/my-function/db-credentials"</span> \
+  --description <span class="string">"DB credentials for my-function"</span> \
+  --secret-string <span class="string">'{"username":"app_user","password":"CHANGE_ME"}'</span> \
+  --kms-key-id <span class="var">$KMS_KEY_ID</span> \
+  --profile <span class="param">audit</span> --region <span class="param">eu-west-1</span>
+
+<span class="comment"># 3. Activer la rotation automatique (rotation tous les 30 jours)</span>
+aws secretsmanager rotate-secret \
+  --secret-id <span class="string">"lambda/my-function/db-credentials"</span> \
+  --rotation-rules <span class="string">'AutomaticallyAfterDays=30'</span> \
+  --profile <span class="param">audit</span> --region <span class="param">eu-west-1</span>
+
+<span class="comment"># 4. Chiffrer les env vars Lambda avec la CMK (pour la config non-sensible)</span>
+aws lambda update-function-configuration \
+  --function-name <span class="string">"my-function"</span> \
+  --kms-key-arn <span class="string">"arn:aws:kms:eu-west-1:&lt;ACCOUNT&gt;:key/$KMS_KEY_ID"</span> \
+  --profile <span class="param">audit</span> --region <span class="param">eu-west-1</span></pre>
+    </div>
+
+    <div class="code-block">
+        <div class="code-header"><span>Python &mdash; Fetch runtime avec Lambda Powertools (caching)</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div>
+<pre><span class="comment"># requirements.txt : aws-lambda-powertools[all]</span>
+<span class="keyword">from</span> aws_lambda_powertools.utilities <span class="keyword">import</span> parameters
+
+<span class="comment"># Cache 300 secondes (5 min) &mdash; &eacute;vite 1 appel API par invocation</span>
+DB_SECRET = parameters.get_secret(<span class="string">"lambda/my-function/db-credentials"</span>, max_age=<span class="var">300</span>)
+db_config = json.loads(DB_SECRET)
+
+<span class="comment"># Alternative : boto3 direct (sans cache)</span>
+<span class="keyword">import</span> boto3, json
+client = boto3.client(<span class="string">'secretsmanager'</span>, region_name=<span class="string">'eu-west-1'</span>)
+response = client.get_secret_value(SecretId=<span class="string">'lambda/my-function/db-credentials'</span>)
+db_config = json.loads(response[<span class="string">'SecretString'</span>])</pre>
+    </div>
+
+    <div class="code-block">
+        <div class="code-header"><span>Terraform &mdash; Secrets Manager + KMS CMK + rotation</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div>
+<pre><span class="comment"># terraform/secrets.tf</span>
+resource <span class="string">"aws_kms_key"</span> <span class="string">"lambda_secrets"</span> {
+  description             = <span class="string">"CMK Lambda my-function secrets"</span>
+  deletion_window_in_days = 30
+  enable_key_rotation     = true
+  tags = { Function = <span class="string">"my-function"</span>, Purpose = <span class="string">"secrets"</span> }
+}
+
+resource <span class="string">"aws_secretsmanager_secret"</span> <span class="string">"db_credentials"</span> {
+  name       = <span class="string">"lambda/my-function/db-credentials"</span>
+  kms_key_id = aws_kms_key.lambda_secrets.key_id
+}
+
+resource <span class="string">"aws_secretsmanager_secret_rotation"</span> <span class="string">"db_rotation"</span> {
+  secret_id           = aws_secretsmanager_secret.db_credentials.id
+  rotation_lambda_arn = aws_lambda_function.rotation_lambda.arn
+  rotation_rules {
+    automatically_after_days = 30
+  }
+}</pre>
+    </div>
+
+    <!-- 6. CODE VÉRIFICATION -->
+    <h3>2.3 &mdash; V&eacute;rification</h3>
+    <div class="code-block">
+        <div class="code-header"><span>AWS CLI &mdash; Audit secrets et chiffrement</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div>
+<pre><span class="comment"># V&eacute;rifier que la rotation est active sur les secrets Lambda</span>
+aws secretsmanager list-secrets \
+  --filter <span class="string">'Key=name,Values=lambda/'</span> \
+  --query <span class="string">'SecretList[*].{Name:Name,RotationEnabled:RotationEnabled,KMSKey:KmsKeyId}'</span> \
+  --output table \
+  --profile <span class="param">audit</span> --region <span class="param">eu-west-1</span>
+
+<span class="comment"># V&eacute;rifier le KMS key ID des env vars Lambda (CMK vs AWS managed)</span>
+aws lambda get-function-configuration \
+  --function-name <span class="string">"my-function"</span> \
+  --query <span class="string">'KMSKeyArn'</span> \
+  --output text \
+  --profile <span class="param">audit</span> --region <span class="param">eu-west-1</span>
+
+<span class="comment"># D&eacute;tecter les env vars qui contiennent des mots-cl&eacute;s suspects (secrets en clair)</span>
+aws lambda list-functions \
+  --query <span class="string">'Functions[*].{Name:FunctionName,Vars:Environment.Variables}'</span> \
+  --output json \
+  --profile <span class="param">audit</span> --region <span class="param">eu-west-1</span> | \
+  python3 -c "import sys,json; funcs=json.load(sys.stdin); \
+  [print(f'ATTENTION {f[chr(78)ame]}: {list(f[chr(86)ars].keys())}') \
+  for f in funcs if f.get('Vars') and \
+  any(k.upper() for k in f['Vars'] if any(s in k.upper() for s in ['SECRET','PASSWORD','TOKEN','KEY','CRED']))]"
+
+<span class="comment"># V&eacute;rifier la rotation Secrets Manager (prochaine date)</span>
+aws secretsmanager describe-secret \
+  --secret-id <span class="string">"lambda/my-function/db-credentials"</span> \
+  --query <span class="string">'{Rotation:RotationEnabled,NextRotation:NextRotationDate,KMS:KmsKeyId}'</span> \
+  --profile <span class="param">audit</span> --region <span class="param">eu-west-1</span></pre>
+    </div>
+
+    <!-- 7. CHECKLIST ÉTAT DES LIEUX -->
+    <h3>2.4 &mdash; Checklist &eacute;tat des lieux</h3>
+    <div class="checklist-item"><input type="checkbox"><span>Aucun credentials/API key/password dans les variables d'environnement Lambda (toujours Secrets Manager)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Chiffrement des env vars avec une KMS CMK d&eacute;di&eacute;e (pas la cl&eacute; AWS managed partag&eacute;e)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Rotation automatique activ&eacute;e sur tous les secrets Secrets Manager (&le; 30 jours pour credentials critiques)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Le code source ne contient aucun secret hardcod&eacute; (scan SAST/Semgrep dans le pipeline CI)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Lambda Powertools (ou cache maison) utilis&eacute; pour &eacute;viter 1 appel Secrets Manager par invocation</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>CloudTrail journalise les appels <code>GetSecretValue</code> (Management Events activ&eacute;)</span></div>
+</div>
+
+<!-- ═══════════════════════ S3 — VPC INTEGRATION ═══════════════════════ -->
+<div class="section" id="s3">
+    <div class="section-header red">
+        <div class="section-number red">3</div>
+        <div>
+            <div class="section-title">R&eacute;seau &amp; VPC Integration <span class="lic lic-aws-free">VPC gratuit</span> <span class="lic lic-aws-pay">NAT 32$/mois</span></div>
+            <div class="section-desc">Lambda dans VPC priv&eacute;, security groups restrictifs, VPC endpoints pour &eacute;viter le NAT coûteux &mdash; voir <a href="aws-vpc.html" class="cross-ref">aws-vpc.html</a></div>
+        </div>
+    </div>
+
+    <div class="alert alert-error">
+        <span class="alert-icon">&#x1F6A8;</span>
+        <div>
+            <strong>Sc&eacute;nario d'attaque :</strong> Une fonction Lambda hors VPC ex&eacute;cute un appel HTTP vers un endpoint externe
+            (API tierce). Un attaquant qui r&eacute;ussit une injection de code (SSRF, injection de d&eacute;pendance) peut faire
+            appeler n'importe quelle URL depuis la fonction &mdash; <em>sans restriction r&eacute;seau</em>, pas de firewall,
+            pas de DNS priv&eacute;. Avec un VPC + Security Group restrictif, seuls les endpoints n&eacute;cessaires sont joignables.
+            Lambda hors VPC = <strong>employe int&eacute;rimaire qui travaille depuis n'importe quel caf&eacute; du monde</strong>.
+        </div>
+    </div>
+
+    <h3>3.1 &mdash; Tableau de configuration &mdash; VPC Lambda</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr>
+            <th>Param&egrave;tre</th>
+            <th>D&eacute;faut AWS</th>
+            <th>&#x26A1; Quick Win</th>
+            <th>&#x1F512; Avanc&eacute;</th>
+            <th>&#x1F3AF; Optimal</th>
+        </tr></thead>
+        <tbody>
+            <tr class="row-ko">
+                <td><strong>Lambda dans VPC</strong></td>
+                <td><span class="hl-red">Hors VPC (acc&egrave;s Internet direct)</span></td>
+                <td><span class="hl-green">VPC priv&eacute; assign&eacute;</span></td>
+                <td>VPC + subnets priv&eacute;s multi-AZ</td>
+                <td>VPC + subnets isol&eacute;s (pas de route table publique)</td>
+            </tr>
+            <tr class="row-ko">
+                <td><strong>Security Group</strong></td>
+                <td><span class="hl-red">Default SG (trop permissif)</span></td>
+                <td><span class="hl-green">SG d&eacute;di&eacute; (outbound restreint)</span></td>
+                <td>SG d&eacute;di&eacute; + inbound 0.0.0.0/0 bloqu&eacute;</td>
+                <td>SG + outbound only vers endpoints sp&eacute;cifiques</td>
+            </tr>
+            <tr class="row-warn">
+                <td><strong>VPC Endpoint &mdash; Secrets Manager</strong></td>
+                <td><span class="hl-red">Via Internet ou NAT Gateway</span></td>
+                <td>&mdash;</td>
+                <td><span class="hl-green">VPC Endpoint Interface</span></td>
+                <td>VPC Endpoint + policy restrictive</td>
+            </tr>
+            <tr class="row-warn">
+                <td><strong>VPC Endpoint &mdash; AWS KMS</strong></td>
+                <td><span class="hl-red">Via Internet ou NAT Gateway</span></td>
+                <td>&mdash;</td>
+                <td><span class="hl-green">VPC Endpoint Interface</span></td>
+                <td>VPC Endpoint + key policy allow VPC only</td>
+            </tr>
+            <tr class="row-warn">
+                <td><strong>VPC Endpoint &mdash; Amazon S3</strong></td>
+                <td>Via Internet ou NAT Gateway</td>
+                <td><span class="hl-green">Gateway Endpoint (gratuit)</span></td>
+                <td>Gateway Endpoint + bucket policy allow VPC</td>
+                <td>Gateway Endpoint + interface endpoint + S3 policy</td>
+            </tr>
+            <tr class="row-warn">
+                <td><strong>NAT Gateway</strong></td>
+                <td>&mdash;</td>
+                <td>Evit&eacute; si possible (co&ucirc;teux)</td>
+                <td>NAT uniquement si Internet requis</td>
+                <td>NAT r&eacute;serv&eacute; aux appels tiers ; VPC endpoints pour AWS services</td>
+            </tr>
+            <tr class="row-warn">
+                <td><strong>VPC Flow Logs</strong></td>
+                <td><span class="hl-red">D&eacute;sactiv&eacute;</span></td>
+                <td>&mdash;</td>
+                <td><span class="hl-green">Activ&eacute; (REJECT + ACCEPT)</span></td>
+                <td>Flow Logs vers CloudWatch Logs + alarmes</td>
+            </tr>
+        </tbody>
+    </table>
+    </div>
+
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x1F4A1;</span>
+        <div>
+            <strong>Pourquoi les VPC Endpoints sont essentiels :</strong><br>
+            Sans VPC Endpoint, une Lambda dans un VPC priv&eacute; doit passer par un <strong>NAT Gateway</strong> (~32 $/mois + 0,045 $/Go de trafic)
+            pour atteindre les services AWS (Secrets Manager, KMS, S3, SSM). Un VPC Interface Endpoint co&ucirc;te <strong>0,01 $/heure = ~7 $/mois</strong>
+            et &eacute;limine le besoin de NAT pour ces services.<br>
+            <strong>Services prioritaires &agrave; mettre en endpoint :</strong>
+            <code>com.amazonaws.&lt;region&gt;.secretsmanager</code>,
+            <code>com.amazonaws.&lt;region&gt;.kms</code>,
+            <code>com.amazonaws.&lt;region&gt;.ssm</code>,
+            <code>com.amazonaws.&lt;region&gt;.dynamodb</code> (Gateway, gratuit),
+            <code>com.amazonaws.&lt;region&gt;.s3</code> (Gateway, gratuit).
+        </div>
+    </div>
+
+    <div class="alert alert-warn">
+        <span class="alert-icon">&#x26A0;&#xFE0F;</span>
+        <div>
+            <strong>Pi&egrave;ge : Lambda VPC + cold start latency.</strong>
+            Avant 2019, les fonctions Lambda dans un VPC avaient un cold start de plusieurs secondes (cr&eacute;ation ENI).
+            Depuis 2019, AWS a r&eacute;solu ce probl&egrave;me avec Hyperplane ENI. Les cold starts VPC sont d&eacute;sormais &eacute;quivalents
+            aux fonctions hors VPC. <strong>Il n'y a plus de raison de ne pas utiliser VPC.</strong>
+        </div>
+    </div>
+
+    <h3>3.2 &mdash; Configuration</h3>
+    <div class="code-block">
+        <div class="code-header"><span>AWS CLI &mdash; Attacher Lambda &agrave; un VPC + VPC Endpoint Secrets Manager</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div>
+<pre><span class="comment"># 1. Mettre la fonction dans le VPC (subnets priv&eacute;s, SG d&eacute;di&eacute;)</span>
+aws lambda update-function-configuration \
+  --function-name <span class="string">"my-function"</span> \
+  --vpc-config <span class="string">"SubnetIds=subnet-aaa111,subnet-bbb222,SecurityGroupIds=sg-lambda-dedicated"</span> \
+  --profile <span class="param">audit</span> --region <span class="param">eu-west-1</span>
+
+<span class="comment"># 2. Cr&eacute;er le VPC Interface Endpoint pour Secrets Manager</span>
+aws ec2 create-vpc-endpoint \
+  --vpc-id <span class="string">"vpc-xxxxxxxx"</span> \
+  --vpc-endpoint-type <span class="string">Interface</span> \
+  --service-name <span class="string">"com.amazonaws.eu-west-1.secretsmanager"</span> \
+  --subnet-ids <span class="string">subnet-aaa111</span> <span class="string">subnet-bbb222</span> \
+  --security-group-ids <span class="string">sg-endpoints</span> \
+  --private-dns-enabled \
+  --profile <span class="param">audit</span> --region <span class="param">eu-west-1</span>
+
+<span class="comment"># 3. Cr&eacute;er le Gateway Endpoint S3 (gratuit)</span>
+aws ec2 create-vpc-endpoint \
+  --vpc-id <span class="string">"vpc-xxxxxxxx"</span> \
+  --vpc-endpoint-type <span class="string">Gateway</span> \
+  --service-name <span class="string">"com.amazonaws.eu-west-1.s3"</span> \
+  --route-table-ids <span class="string">rtb-private-1</span> <span class="string">rtb-private-2</span> \
+  --profile <span class="param">audit</span> --region <span class="param">eu-west-1</span></pre>
+    </div>
+
+    <div class="code-block">
+        <div class="code-header"><span>Terraform &mdash; Lambda VPC + Security Group + VPC Endpoints</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div>
+<pre>resource <span class="string">"aws_security_group"</span> <span class="string">"lambda_sg"</span> {
+  name        = <span class="string">"sg-lambda-my-function"</span>
+  description = <span class="string">"Security group Lambda my-function &mdash; egress restreint"</span>
+  vpc_id      = var.vpc_id
+  <span class="comment"># Pas d'ingress (Lambda r&eacute;pond via event source, pas de connexions entrantes)</span>
+  egress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = <span class="string">"tcp"</span>
+    cidr_blocks = [<span class="string">"0.0.0.0/0"</span>] <span class="comment"># Restrict&eacute; &agrave; HTTPS uniquement</span>
+  }
+}
+
+resource <span class="string">"aws_vpc_endpoint"</span> <span class="string">"secretsmanager"</span> {
+  vpc_id              = var.vpc_id
+  service_name        = <span class="string">"com.amazonaws.${var.region}.secretsmanager"</span>
+  vpc_endpoint_type   = <span class="string">"Interface"</span>
+  subnet_ids          = var.private_subnet_ids
+  security_group_ids  = [aws_security_group.lambda_sg.id]
+  private_dns_enabled = true
+}
+
+resource <span class="string">"aws_vpc_endpoint"</span> <span class="string">"s3"</span> {
+  vpc_id            = var.vpc_id
+  service_name      = <span class="string">"com.amazonaws.${var.region}.s3"</span>
+  vpc_endpoint_type = <span class="string">"Gateway"</span>
+  route_table_ids   = var.private_route_table_ids
+}</pre>
+    </div>
+
+    <h3>3.3 &mdash; V&eacute;rification</h3>
+    <div class="code-block">
+        <div class="code-header"><span>AWS CLI &mdash; Audit r&eacute;seau Lambda</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div>
+<pre><span class="comment"># V&eacute;rifier la configuration VPC de la fonction</span>
+aws lambda get-function-configuration \
+  --function-name <span class="string">"my-function"</span> \
+  --query <span class="string">'{VPC:VpcConfig.VpcId,Subnets:VpcConfig.SubnetIds,SGs:VpcConfig.SecurityGroupIds}'</span> \
+  --profile <span class="param">audit</span> --region <span class="param">eu-west-1</span>
+
+<span class="comment"># Lister les fonctions Lambda hors VPC (0 sous-r&eacute;seau = hors VPC)</span>
+aws lambda list-functions \
+  --query <span class="string">'Functions[?VpcConfig.SubnetIds==`[]`].FunctionName'</span> \
+  --output table \
+  --profile <span class="param">audit</span> --region <span class="param">eu-west-1</span>
+
+<span class="comment"># Lister les VPC Endpoints actifs</span>
+aws ec2 describe-vpc-endpoints \
+  --filters <span class="string">"Name=state,Values=available"</span> \
+  --query <span class="string">'VpcEndpoints[*].{Service:ServiceName,Type:VpcEndpointType,State:State}'</span> \
+  --output table \
+  --profile <span class="param">audit</span> --region <span class="param">eu-west-1</span></pre>
+    </div>
+
+    <h3>3.4 &mdash; Checklist</h3>
+    <div class="checklist-item"><input type="checkbox"><span>Toutes les fonctions Lambda en production sont dans un VPC priv&eacute; (aucune hors VPC)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Security Group d&eacute;di&eacute; par fonction (pas le default SG)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>VPC Gateway Endpoints S3 + DynamoDB cr&eacute;&eacute;s (gratuits, &eacute;vitent le NAT)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>VPC Interface Endpoints pour Secrets Manager et KMS (&eacute;vitent le NAT Gateway)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>VPC Flow Logs activ&eacute;s sur le VPC Lambda (d&eacute;tection REJECT/trafic anormal)</span></div>
+</div>
+
+<!-- ═══════════════════════ S4 — FUNCTION URL & API GW ═══════════════════════ -->
+<div class="section" id="s4">
+    <div class="section-header orange">
+        <div class="section-number orange">4</div>
+        <div>
+            <div class="section-title">Function URL &amp; API Gateway Security <span class="lic lic-aws-free">Function URL gratuit</span> <span class="lic lic-aws-prem">WAF 30-100$/mois</span></div>
+            <div class="section-desc">Contr&ocirc;le d'acc&egrave;s aux points d'entr&eacute;e HTTP &mdash; auth IAM, throttling, WAF &mdash; voir <a href="aws-api-gateway.html" class="cross-ref">aws-api-gateway.html</a></div>
+        </div>
+    </div>
+
+    <div class="alert alert-error">
+        <span class="alert-icon">&#x1F6A8;</span>
+        <div>
+            <strong>Sc&eacute;nario d'attaque :</strong> Une Function URL cr&eacute;&eacute;e avec <code>AuthType: NONE</code> est accessible
+            par n'importe qui sur Internet sans authentification &mdash; c'est un <strong>interphone sans code</strong>.
+            Un script de scan automatis&eacute; peut d&eacute;couvrir cette URL et d&eacute;clencher des milliers d'invocations
+            en quelques minutes. Impact : co&ucirc;t Lambda &eacute;lev&eacute; (DoS financier), consommation de concurrency,
+            et ex&eacute;cution de code non autoris&eacute;e.<br>
+            <strong>Protection :</strong> <code>AuthType: AWS_IAM</code> + throttling API Gateway + WAF.      
+        </div>
+    </div>
+
+    <h3>4.1 &mdash; Tableau de configuration &mdash; Exposition HTTP</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr>
+            <th>Param&egrave;tre</th>
+            <th>D&eacute;faut AWS</th>
+            <th>&#x26A1; Quick Win</th>
+            <th>&#x1F512; Avanc&eacute;</th>
+            <th>&#x1F3AF; Optimal</th>
+        </tr></thead>
+        <tbody>
+            <tr class="row-ko">
+                <td><strong>Function URL AuthType</strong></td>
+                <td><span class="hl-red">NONE ou AWS_IAM (selon cr&eacute;ation)</span></td>
+                <td><span class="hl-green">Toujours AWS_IAM (jamais NONE en prod)</span></td>
+                <td>AWS_IAM + CORS restreint</td>
+                <td>AWS_IAM + SigV4 client + CORS strict</td>
+            </tr>
+            <tr class="row-ko">
+                <td><strong>API Gateway Throttling</strong></td>
+                <td><span class="hl-red">D&eacute;faut compte : 10 000 req/sec</span></td>
+                <td><span class="hl-green">Rate 100/sec &bull; Burst 200</span></td>
+                <td>Rate + burst par stage/m&eacute;thode</td>
+                <td>Rate + burst + usage plans par client</td>
+            </tr>
+            <tr class="row-ko">
+                <td><strong>WAF devant API Gateway</strong></td>
+                <td><span class="hl-red">Absent</span></td>
+                <td>&mdash;</td>
+                <td><span class="hl-green">WAF Web ACL associ&eacute;</span></td>
+                <td>WAF + r&egrave;gles OWASP Top 10 + rate-based rules</td>
+            </tr>
+            <tr class="row-warn">
+                <td><strong>API Gateway Auth</strong><br><small>Cognito, Lambda Authorizer, IAM</small></td>
+                <td>Aucune auth ou API Key basique</td>
+                <td><span class="hl-green">IAM Authorization ou Lambda Authorizer JWT</span></td>
+                <td>Amazon Cognito User Pools</td>
+                <td>Cognito + Lambda Authorizer custom claims</td>
+            </tr>
+            <tr class="row-warn">
+                <td><strong>Resource Policy Lambda (invoke)</strong></td>
+                <td>Permettre l'invocation de tout service</td>
+                <td><span class="hl-green">Restreindre &agrave; l'ARN du stage API GW</span></td>
+                <td>ARN + condition <code>aws:SourceAccount</code></td>
+                <td>ARN + <code>aws:SourceArn</code> + <code>aws:SourceAccount</code></td>
+            </tr>
+            <tr class="row-warn">
+                <td><strong>Validation des requ&ecirc;tes (API GW)</strong></td>
+                <td><span class="hl-red">Aucune validation native</span></td>
+                <td>&mdash;</td>
+                <td><span class="hl-green">Mod&egrave;les de requ&ecirc;tes JSON Schema</span></td>
+                <td>Validation + transformation + rejet 400 avant Lambda</td>
+            </tr>
+        </tbody>
+    </table>
+    </div>
+
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x1F4A1;</span>
+        <div>
+            <strong>Function URL vs API Gateway &mdash; Quand utiliser quoi ?</strong><br>
+            <strong>Function URL :</strong> Acc&egrave;s HTTP simple, authentification IAM/SigV4, id&eacute;al pour webhooks internes, microservices B2B. Co&ucirc;t : gratuit (pas de frais suppl&eacute;mentaires).<br>
+            <strong>Amazon API Gateway HTTP API :</strong> Quand vous avez besoin de routage, transformation, stages (dev/prod), Cognito auth, CORS centralis&eacute;. Co&ucirc;t : 1 $/million de requ&ecirc;tes.<br>
+            <strong>Amazon API Gateway REST API :</strong> Quand vous avez besoin de validation de requ&ecirc;tes, d'int&eacute;grations avanc&eacute;es, d'Usage Plans. Co&ucirc;t : 3,5 $/million.<br>
+            <strong>R&egrave;gle :</strong> Quel que soit le choix, ne jamais utiliser <code>AuthType: NONE</code> sur une Function URL expos&eacute;e &agrave; Internet.
+        </div>
+    </div>
+
+    <div class="alert alert-warn">
+        <span class="alert-icon">&#x26A0;&#xFE0F;</span>
+        <div>
+            <strong>Pi&egrave;ge : CORS trop permissif.</strong> Configurer <code>AllowOrigins: ["*"]</code> sur une Function URL ou API Gateway
+            permet &agrave; n'importe quel site web d'appeler votre endpoint depuis un navigateur (attaques CSRF).
+            Toujours restreindre &agrave; vos origines connues : <code>["https://app.example.com"]</code>.
+            Les requ&ecirc;tes server-to-server ne sont pas affect&eacute;es par CORS (uniquement les navigateurs).
+        </div>
+    </div>
+
+    <h3>4.2 &mdash; Configuration</h3>
+    <div class="code-block">
+        <div class="code-header"><span>AWS CLI &mdash; Function URL avec AuthType AWS_IAM + CORS restreint</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div>
+<pre><span class="comment"># Cr&eacute;er une Function URL avec authentification IAM obligatoire</span>
+aws lambda create-function-url-config \
+  --function-name <span class="string">"my-function"</span> \
+  --auth-type <span class="string">AWS_IAM</span> \
+  --cors <span class="string">'{"AllowOrigins":["https://app.example.com"],"AllowMethods":["POST"],"AllowHeaders":["content-type"],"MaxAge":300}'</span> \
+  --profile <span class="param">audit</span> --region <span class="param">eu-west-1</span>
+
+<span class="comment"># Configurer le throttling API Gateway (HTTP API)</span>
+aws apigatewayv2 update-stage \
+  --api-id <span class="string">"xxxx"</span> \
+  --stage-name <span class="string">'$default'</span> \
+  --default-route-settings <span class="string">'{"ThrottlingRateLimit":100,"ThrottlingBurstLimit":200}'</span> \
+  --profile <span class="param">audit</span> --region <span class="param">eu-west-1</span>
+
+<span class="comment"># V&eacute;rifier la resource policy Lambda (doit restreindre l'invocateur)</span>
+aws lambda get-policy \
+  --function-name <span class="string">"my-function"</span> \
+  --profile <span class="param">audit</span> --region <span class="param">eu-west-1</span> | \
+  python3 -c <span class="string">"import sys,json; p=json.load(sys.stdin); print(json.dumps(json.loads(p['Policy']), indent=2))"</span></pre>
+    </div>
+
+    <div class="code-block">
+        <div class="code-header"><span>AWS SAM &mdash; API Gateway HTTP avec Cognito Auth + WAF</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div>
+<pre>Resources:
+  MyApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      Auth:
+        DefaultAuthorizer: CognitoAuthorizer
+        Authorizers:
+          CognitoAuthorizer:
+            IdentitySource: $request.header.Authorization
+            JwtConfiguration:
+              issuer: !Sub <span class="string">'https://cognito-idp.${AWS::Region}.amazonaws.com/${UserPoolId}'</span>
+              audience: [!Ref UserPoolClientId]
+      DefaultRouteSettings:
+        ThrottlingRateLimit: 100
+        ThrottlingBurstLimit: 200
+
+  MyFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Events:
+        ApiEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref MyApi
+            Method: POST
+            Path: /process</pre>
+    </div>
+
+    <h3>4.3 &mdash; V&eacute;rification</h3>
+    <div class="code-block">
+        <div class="code-header"><span>AWS CLI &mdash; Audit des Function URLs (d&eacute;tection NONE)</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div>
+<pre><span class="comment"># D&eacute;tecter les Function URLs avec AuthType=NONE (risque critique)</span>
+aws lambda list-functions \
+  --query <span class="string">'Functions[*].FunctionName'</span> \
+  --output text \
+  --profile <span class="param">audit</span> --region <span class="param">eu-west-1</span> | \
+  tr '\t' '\n' | \
+  xargs -I{} bash -c <span class="string">'aws lambda get-function-url-config --function-name {} --profile audit --region eu-west-1 2>/dev/null | python3 -c "import sys,json; d=json.load(sys.stdin); print(f\"CRITIQUE {} : AuthType={d[chr(65)+chr(117)+chr(116)+chr(104)+chr(84)+chr(121)+chr(112)+chr(101)]}\" if d.get(chr(65)+chr(117)+chr(116)+chr(104)+chr(84)+chr(121)+chr(112)+chr(101))==chr(78)+chr(79)+chr(78)+chr(69) else None" 2>/dev/null'</span>
+
+<span class="comment"># V&eacute;rifier le throttling API Gateway</span>
+aws apigatewayv2 get-stages \
+  --api-id <span class="string">"xxxx"</span> \
+  --query <span class="string">'Items[*].{Stage:StageName,Rate:DefaultRouteSettings.ThrottlingRateLimit,Burst:DefaultRouteSettings.ThrottlingBurstLimit}'</span> \
+  --profile <span class="param">audit</span> --region <span class="param">eu-west-1</span></pre>
+    </div>
+
+    <h3>4.4 &mdash; Checklist</h3>
+    <div class="checklist-item"><input type="checkbox"><span>Aucune Function URL avec <code>AuthType: NONE</code> expos&eacute;e &agrave; Internet</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Throttling activ&eacute; sur API Gateway (rate &le; 100/sec, burst &le; 200 pour les API publiques)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>WAF Web ACL associ&eacute; aux API Gateway expos&eacute;es &agrave; Internet (OWASP Top 10 + rate-based rules)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>CORS restreint aux origines connues (pas de <code>"*"</code> en production)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Resource policy Lambda restreint l'invocation &agrave; l'ARN API Gateway sp&eacute;cifique</span></div>
+</div>
+
+<!-- ═══════════════════════ S5 — CODE SECURITY ═══════════════════════ -->
+<div class="section" id="s5">
+    <div class="section-header orange">
+        <div class="section-number orange">5</div>
+        <div>
+            <div class="section-title">Code Security &amp; Supply Chain <span class="lic lic-aws-pay">Add-on</span></div>
+            <div class="section-desc">SAST, scan de d&eacute;pendances, code signing, pipeline CI/CD s&eacute;curis&eacute; &mdash; voir <a href="aws-devsecops.html" class="cross-ref">aws-devsecops.html</a></div>
+        </div>
+    </div>
+
+    <div class="alert alert-error">
+        <span class="alert-icon">&#x1F6A8;</span>
+        <div>
+            <strong>Sc&eacute;nario d'attaque (Supply Chain) :</strong> Un attaquant prend le contr&ocirc;le d'une d&eacute;pendance npm/PyPI populaire
+            (ex : <code>event-stream</code>, <code>colors</code>). La prochaine fois que votre pipeline d&eacute;ploie la fonction Lambda,
+            le code malveillant est inject&eacute; directement dans votre environnement cloud avec les droits de l'execution role.
+            <strong>Protection :</strong> Code Signing (v&eacute;rification que seul le code sign&eacute; par votre cl&eacute; est deploy&eacute;) +
+            scan des d&eacute;pendances dans le pipeline CI/CD + lock des versions (<code>requirements.txt</code> pinned).
+        </div>
+    </div>
+
+    <h3>5.1 &mdash; Tableau de configuration &mdash; Code Security</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr>
+            <th>Param&egrave;tre</th>
+            <th>D&eacute;faut AWS</th>
+            <th>&#x26A1; Quick Win</th>
+            <th>&#x1F512; Avanc&eacute;</th>
+            <th>&#x1F3AF; Optimal</th>
+        </tr></thead>
+        <tbody>
+            <tr class="row-ko">
+                <td><strong>SAST (Static Analysis)</strong></td>
+                <td><span class="hl-red">Absent</span></td>
+                <td><span class="hl-green">Bandit (Python) / ESLint security (JS)</span></td>
+                <td>Semgrep + r&egrave;gles AWS/OWASP</td>
+                <td>Semgrep + Checkov (IaC) + r&egrave;gles custom</td>
+            </tr>
+            <tr class="row-ko">
+                <td><strong>Scan d&eacute;pendances</strong></td>
+                <td><span class="hl-red">Absent</span></td>
+                <td><span class="hl-green">pip-audit (Python) / npm audit (Node)</span></td>
+                <td>pip-audit + SBOM g&eacute;n&eacute;ration</td>
+                <td>Amazon Inspector (conteneur) + Snyk/Dependabot</td>
+            </tr>
+            <tr class="row-ko">
+                <td><strong>AWS Code Signing</strong><br><small>V&eacute;rifie que seul le code sign&eacute; est d&eacute;ploy&eacute;</small></td>
+                <td><span class="hl-red">D&eacute;sactiv&eacute;</span></td>
+                <td>&mdash;</td>
+                <td><span class="hl-green">Code Signing activ&eacute;</span></td>
+                <td>Code Signing + enforcement Warn puis Enforce</td>
+            </tr>
+            <tr class="row-warn">
+                <td><strong>Lambda container &mdash; ECR scanning</strong></td>
+                <td><span class="hl-red">Scan basique d&eacute;sactiv&eacute;</span></td>
+                <td><span class="hl-green">ECR enhanced scanning (Inspector)</span></td>
+                <td>Scanner &agrave; chaque push + blocage si CRITICAL</td>
+                <td>Inspector + notifications SNS auto-remediation</td>
+            </tr>
+            <tr class="row-warn">
+                <td><strong>D&eacute;pendances pinned (versions exactes)</strong></td>
+                <td>D&eacute;pendances <code>&gt;=x.y</code> (risque typosquatting)</td>
+                <td><span class="hl-green">Versions pinned + hash check</span></td>
+                <td>requirements.txt hash + Dependabot updates</td>
+                <td>Pinned + SBOM + VEX advisory</td>
+            </tr>
+            <tr class="row-warn">
+                <td><strong>Secrets dans le code source</strong></td>
+                <td><span class="hl-red">Aucun scan</span></td>
+                <td><span class="hl-green">Pre-commit hook detect-secrets / Semgrep</span></td>
+                <td>CI scan + AWS Trusted Advisor check</td>
+                <td>Pre-commit + CI + Amazon CodeGuru Reviewer</td>
+            </tr>
+        </tbody>
+    </table>
+    </div>
+
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x1F4A1;</span>
+        <div>
+            <strong>AWS Code Signing &mdash; Comment &ccedil;a marche :</strong><br>
+            1. Vous cr&eacute;ez un <strong>Signing Profile</strong> AWS Signer avec une cl&eacute; de signature.<br>
+            2. Votre pipeline CI signe le package ZIP Lambda avec AWS Signer avant le d&eacute;ploiement.<br>
+            3. Vous configurez la fonction Lambda avec un <strong>Code Signing Config</strong> qui r&eacute;f&eacute;rence votre Signing Profile.<br>
+            4. AWS Lambda <strong>v&eacute;rifie la signature &agrave; chaque d&eacute;ploiement</strong>. Si le code n'est pas sign&eacute; par votre profil, le d&eacute;ploiement est rejet&eacute; (mode <code>Enforce</code>) ou un avertissement est &eacute;mis (mode <code>Warn</code>).<br>
+            <strong>Protection :</strong> M&ecirc;me si un attaquant compromet votre bucket S3 de d&eacute;ploiement, il ne peut pas d&eacute;ployer du code non sign&eacute;.
+        </div>
+    </div>
+
+    <h3>5.2 &mdash; Pipeline CI/CD S&eacute;curis&eacute; complet</h3>
+    <div class="code-block">
+        <div class="code-header"><span>GitHub Actions &mdash; Pipeline SAST + Scan + Sign + Deploy</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div>
+<pre><span class="comment"># .github/workflows/lambda-secure-deploy.yml</span>
+<span class="keyword">name</span>: Lambda Secure CI/CD
+
+<span class="keyword">on</span>:
+  push:
+    branches: [main]
+
+<span class="keyword">jobs</span>:
+  <span class="param">security-scan</span>:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      <span class="comment"># &Eacute;tape 1 : SAST &mdash; Bandit (Python)</span>
+      - name: <span class="string">SAST Bandit</span>
+        run: |
+          pip install bandit
+          bandit -r src/ -ll -f json -o bandit-report.json
+          cat bandit-report.json
+
+      <span class="comment"># &Eacute;tape 2 : SAST IaC &mdash; Checkov</span>
+      - name: <span class="string">IaC Scan Checkov</span>
+        uses: bridgecrewio/checkov-action@v12
+        with:
+          directory: terraform/
+          framework: terraform
+          soft_fail: false
+
+      <span class="comment"># &Eacute;tape 3 : Scan d&eacute;pendances</span>
+      - name: <span class="string">Dependency Scan pip-audit</span>
+        run: |
+          pip install pip-audit
+          pip-audit -r requirements.txt --format json -o pip-audit.json
+          pip-audit -r requirements.txt <span class="comment"># Bloque si vuln CRITICAL</span>
+
+      <span class="comment"># &Eacute;tape 4 : D&eacute;tection secrets dans le code</span>
+      - name: <span class="string">Secrets detection</span>
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: ${{ github.event.repository.default_branch }}
+
+  <span class="param">sign-and-deploy</span>:
+    needs: security-scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      <span class="comment"># &Eacute;tape 5 : Package Lambda</span>
+      - name: <span class="string">Package Lambda ZIP</span>
+        run: |
+          pip install -r requirements.txt -t package/
+          cp -r src/ package/
+          cd package && zip -r ../lambda.zip .
+
+      <span class="comment"># &Eacute;tape 6 : Upload vers S3 staging</span>
+      - name: <span class="string">Upload to S3</span>
+        run: |
+          aws s3 cp lambda.zip s3://my-deploy-bucket/lambda.zip \
+            --profile <span class="param">deploy</span> --region <span class="param">eu-west-1</span>
+
+      <span class="comment"># &Eacute;tape 7 : Signer avec AWS Signer</span>
+      - name: <span class="string">Sign with AWS Signer</span>
+        run: |
+          aws signer start-signing-job \
+            --source <span class="string">'s3={bucketName=my-deploy-bucket,key=lambda.zip,version=LATEST}'</span> \
+            --destination <span class="string">'s3={bucketName=my-deploy-bucket,prefix=signed/}'</span> \
+            --profile-name <span class="string">"LambdaSigningProfile"</span> \
+            --profile <span class="param">deploy</span> --region <span class="param">eu-west-1</span>
+
+      <span class="comment"># &Eacute;tape 8 : D&eacute;ployer le code sign&eacute;</span>
+      - name: <span class="string">Deploy signed Lambda</span>
+        run: |
+          aws lambda update-function-code \
+            --function-name <span class="string">"my-function"</span> \
+            --s3-bucket <span class="string">my-deploy-bucket</span> \
+            --s3-key <span class="string">signed/lambda.zip</span> \
+            --profile <span class="param">deploy</span> --region <span class="param">eu-west-1</span></pre>
+    </div>
+
+    <div class="code-block">
+        <div class="code-header"><span>AWS CLI &mdash; Configurer Code Signing sur une fonction</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div>
+<pre><span class="comment"># 1. Cr&eacute;er un Signing Profile AWS Signer</span>
+aws signer put-signing-profile \
+  --profile-name <span class="string">"LambdaSigningProfile"</span> \
+  --platform-id <span class="string">"AWSLambda-SHA384-ECDSA"</span> \
+  --signature-validity-period <span class="string">'{"value":12,"type":"MONTHS"}'</span> \
+  --profile <span class="param">audit</span> --region <span class="param">eu-west-1</span>
+
+<span class="comment"># 2. Cr&eacute;er une Code Signing Configuration</span>
+CSC_ARN=$(aws lambda create-code-signing-config \
+  --description <span class="string">"CSC my-function &mdash; enforce signed code only"</span> \
+  --allowed-publishers <span class="string">'signingProfileVersionArns=["arn:aws:signer:eu-west-1:ACCOUNT:signing-profiles/LambdaSigningProfile/XXXXXXXX"]'</span> \
+  --code-signing-policies <span class="string">'{"untrustedArtifactOnDeployment":"Enforce"}'</span> \
+  --profile <span class="param">audit</span> --region <span class="param">eu-west-1</span> \
+  --query <span class="string">'CodeSigningConfig.CodeSigningConfigArn'</span> --output text)
+
+<span class="comment"># 3. Attacher la CSC &agrave; la fonction</span>
+aws lambda put-function-code-signing-config \
+  --function-name <span class="string">"my-function"</span> \
+  --code-signing-config-arn <span class="var">$CSC_ARN</span> \
+  --profile <span class="param">audit</span> --region <span class="param">eu-west-1</span></pre>
+    </div>
+
+    <h3>5.3 &mdash; V&eacute;rification</h3>
+    <div class="code-block">
+        <div class="code-header"><span>AWS CLI &mdash; Audit Code Signing et scan Inspector</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div>
+<pre><span class="comment"># V&eacute;rifier si la fonction a une Code Signing Config</span>
+aws lambda get-function-code-signing-config \
+  --function-name <span class="string">"my-function"</span> \
+  --profile <span class="param">audit</span> --region <span class="param">eu-west-1</span>
+
+<span class="comment"># Lister les fonctions sans Code Signing Config</span>
+aws lambda list-functions \
+  --query <span class="string">'Functions[*].FunctionName'</span> \
+  --output text \
+  --profile <span class="param">audit</span> --region <span class="param">eu-west-1</span> | \
+  tr '\t' '\n' | \
+  xargs -I{} bash -c <span class="string">'result=$(aws lambda get-function-code-signing-config --function-name {} --profile audit --region eu-west-1 2>&1); [ -z "$result" ] || echo "Sans CSC: {}"'</span>
+
+<span class="comment"># Amazon Inspector &mdash; Findings Lambda (vuln&eacute;rabilit&eacute;s dans les d&eacute;pendances)</span>
+aws inspector2 list-findings \
+  --filter-criteria <span class="string">'{"resourceType":[{"comparison":"EQUALS","value":"AWS_LAMBDA_FUNCTION"}],"severity":[{"comparison":"EQUALS","value":"CRITICAL"}]}'</span> \
+  --profile <span class="param">audit</span> --region <span class="param">eu-west-1</span> \
+  --output table</pre>
+    </div>
+
+    <h3>5.4 &mdash; Checklist</h3>
+    <div class="checklist-item"><input type="checkbox"><span>SAST int&eacute;gr&eacute; dans le pipeline CI (Bandit, Semgrep) &mdash; bloque le merge si issue CRITICAL</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Scan des d&eacute;pendances &agrave; chaque build (pip-audit, npm audit) avec blocking sur CVE CRITICAL</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Code Signing activ&eacute; en mode Enforce sur les fonctions de production</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Amazon Inspector activ&eacute; avec scan continu des fonctions Lambda</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Aucun secret d&eacute;tect&eacute; dans le code source (TruffleHog / detect-secrets en pre-commit + CI)</span></div>
+</div>
+
+<!-- ═══════════════════════ S6 — LOGGING & OBSERVABILITY ═══════════════════════ -->
+<div class="section" id="s6">
+    <div class="section-header orange">
+        <div class="section-number orange">6</div>
+        <div>
+            <div class="section-title">Logging, Tracing &amp; Observabilit&eacute; <span class="lic lic-aws-pay">CloudWatch ~5-30$/mois</span> <span class="lic lic-aws-pay">X-Ray ~0-10$/mois</span></div>
+            <div class="section-desc">R&eacute;tention des logs, X-Ray end-to-end, Lambda Powertools, CloudTrail data events &mdash; voir <a href="aws-cloudwatch.html" class="cross-ref">aws-cloudwatch.html</a></div>
+        </div>
+    </div>
+
+    <div class="alert alert-error">
+        <span class="alert-icon">&#x1F6A8;</span>
+        <div>
+            <strong>Sc&eacute;nario d'incident :</strong> Une fonction Lambda est compromise et ex&eacute;cute des appels anormaux vers
+            un service externe. Sans r&eacute;tention de logs configur&eacute;e, les logs CloudWatch sont
+            <strong>conserv&eacute;s ind&eacute;finiment par d&eacute;faut</strong> &mdash; mais si le log group a &eacute;t&eacute; supprim&eacute; ou si la r&eacute;tention
+            est &agrave; 1 jour (par erreur), les preuves forensiques disparaissent avant l'investigation.
+            Sans X-Ray, impossible de tracer quels services ont &eacute;t&eacute; appel&eacute;s et quand.
+        </div>
+    </div>
+
+    <h3>6.1 &mdash; Tableau de configuration &mdash; Logging &amp; Tracing</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr>
+            <th>Param&egrave;tre</th>
+            <th>D&eacute;faut AWS</th>
+            <th>&#x26A1; Quick Win</th>
+            <th>&#x1F512; Avanc&eacute;</th>
+            <th>&#x1F3AF; Optimal</th>
+        </tr></thead>
+        <tbody>
+            <tr class="row-ko">
+                <td><strong>R&eacute;tention CloudWatch Logs</strong></td>
+                <td><span class="hl-red">Never expire (ind&eacute;fini)</span></td>
+                <td><span class="hl-green">90 jours (minimum s&eacute;curit&eacute;)</span></td>
+                <td>365 jours pour les fonctions critiques</td>
+                <td>365 jours + export S3 Glacier Deep Archive</td>
+            </tr>
+            <tr class="row-ko">
+                <td><strong>Logs structur&eacute;s JSON</strong><br><small>Facilite la d&eacute;tection d'anomalies</small></td>
+                <td><span class="hl-red">Logs texte brut (non structur&eacute;s)</span></td>
+                <td><span class="hl-green">JSON structur&eacute; (Lambda Powertools Logger)</span></td>
+                <td>JSON + correlation ID + cold_start flag</td>
+                <td>Lambda Powertools + CloudWatch Log Insights</td>
+            </tr>
+            <tr class="row-ko">
+                <td><strong>AWS X-Ray Tracing</strong></td>
+                <td><span class="hl-red">Passthrough (d&eacute;sactiv&eacute;)</span></td>
+                <td><span class="hl-green">Active tracing activ&eacute;</span></td>
+                <td>Active + annotations + m&eacute;tadonn&eacute;es</td>
+                <td>Active + service map + groupes de traces</td>
+            </tr>
+            <tr class="row-warn">
+                <td><strong>CloudTrail Data Events (invocations)</strong></td>
+                <td><span class="hl-red">Non journalis&eacute;</span></td>
+                <td>&mdash;</td>
+                <td><span class="hl-green">CloudTrail Data Events Lambda activ&eacute;</span></td>
+                <td>CloudTrail + alarme CloudWatch sur invocations suspectes</td>
+            </tr>
+            <tr class="row-warn">
+                <td><strong>Chiffrement des logs (KMS)</strong></td>
+                <td>Chiffrement AWS managed (partag&eacute;)</td>
+                <td>&mdash;</td>
+                <td><span class="hl-green">KMS CMK d&eacute;di&eacute; pour les log groups</span></td>
+                <td>CMK + rotation + alertes acc&egrave;s non autoris&eacute;s</td>
+            </tr>
+            <tr class="row-warn">
+                <td><strong>Alarmes CloudWatch (errors, throttles)</strong></td>
+                <td><span class="hl-red">Aucune alarme</span></td>
+                <td><span class="hl-green">Alarme errors &gt; 0 + duration p99</span></td>
+                <td>Alarmes errors + throttles + concurrent executions</td>
+                <td>Alarmes + SNS + auto-remediation Lambda</td>
+            </tr>
+        </tbody>
+    </table>
+    </div>
+
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x1F4A1;</span>
+        <div>
+            <strong>Lambda Powertools Logger &mdash; Pourquoi c'est essentiel :</strong><br>
+            Lambda Powertools injecte automatiquement dans chaque log : <code>function_name</code>, <code>function_version</code>,
+            <code>cold_start</code>, <code>aws_request_id</code>, <code>correlation_id</code>. Ces m&eacute;tadonn&eacute;es
+            permettent de corr&eacute;ler les logs d'une requ&ecirc;te end-to-end &agrave; travers plusieurs fonctions Lambda.
+            Avec CloudWatch Logs Insights, vous pouvez requ&ecirc;ter <code>fields @message | filter level = "ERROR"</code>
+            pour identifier les incidents en quelques secondes.<br>
+            <strong>Installation :</strong> <code>pip install aws-lambda-powertools</code> ou layer ARN
+            <a href="https://docs.powertools.aws.dev/lambda/python/latest/" target="_blank">Lambda Powertools Python</a>.
+        </div>
+    </div>
+
+    <div class="alert alert-warn">
+        <span class="alert-icon">&#x26A0;&#xFE0F;</span>
+        <div>
+            <strong>Pi&egrave;ge : Logs sans r&eacute;tention = co&ucirc;t croissant &agrave; l'infini.</strong>
+            Par d&eacute;faut, AWS Lambda cr&eacute;e un log group CloudWatch avec <strong>r&eacute;tention &quot;Never expire&quot;</strong>.
+            Pour des fonctions tr&egrave;s actives, cela peut g&eacute;n&eacute;rer des Go de logs qui s'accumulent et sont factur&eacute;s
+            (0,03 $/Go/mois pour le stockage). Configurer toujours une r&eacute;tention d&egrave;s la cr&eacute;ation de la fonction.
+            AWS SAM <code>Globals.Function.LoggingConfig</code> permet d'appliquer la r&eacute;tention &agrave; toutes les fonctions
+            du template en une seule configuration.
+        </div>
+    </div>
+
+    <h3>6.2 &mdash; Configuration</h3>
+    <div class="code-block">
+        <div class="code-header"><span>AWS CLI &mdash; R&eacute;tention logs + X-Ray + CloudTrail Data Events</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div>
+<pre><span class="comment"># 1. Configurer la r&eacute;tention sur le log group Lambda</span>
+aws logs put-retention-policy \
+  --log-group-name <span class="string">"/aws/lambda/my-function"</span> \
+  --retention-in-days <span class="var">90</span> \
+  --profile <span class="param">audit</span> --region <span class="param">eu-west-1</span>
+
+<span class="comment"># 2. Activer AWS X-Ray Active Tracing</span>
+aws lambda update-function-configuration \
+  --function-name <span class="string">"my-function"</span> \
+  --tracing-config <span class="string">Mode=Active</span> \
+  --profile <span class="param">audit</span> --region <span class="param">eu-west-1</span>
+
+<span class="comment"># 3. Activer CloudTrail Data Events pour toutes les invocations Lambda</span>
+aws cloudtrail put-event-selectors \
+  --trail-name <span class="string">"my-trail"</span> \
+  --event-selectors <span class="string">'[{"ReadWriteType":"All","IncludeManagementEvents":true,"DataResources":[{"Type":"AWS::Lambda::Function","Values":["arn:aws:lambda"]}]}]'</span> \
+  --profile <span class="param">audit</span> --region <span class="param">eu-west-1</span>
+
+<span class="comment"># 4. Cr&eacute;er une alarme CloudWatch sur les erreurs Lambda</span>
+aws cloudwatch put-metric-alarm \
+  --alarm-name <span class="string">"lambda-my-function-errors"</span> \
+  --metric-name <span class="string">Errors</span> \
+  --namespace <span class="string">AWS/Lambda</span> \
+  --dimensions <span class="string">'Name=FunctionName,Value=my-function'</span> \
+  --statistic <span class="string">Sum</span> \
+  --period <span class="var">300</span> \
+  --threshold <span class="var">0</span> \
+  --comparison-operator <span class="string">GreaterThanThreshold</span> \
+  --evaluation-periods <span class="var">1</span> \
+  --alarm-actions <span class="string">"arn:aws:sns:eu-west-1:&lt;ACCOUNT&gt;:alerts"</span> \
+  --profile <span class="param">audit</span> --region <span class="param">eu-west-1</span></pre>
+    </div>
+
+    <div class="code-block">
+        <div class="code-header"><span>Python &mdash; Lambda Powertools Logger + Tracer (structured logging)</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div>
+<pre><span class="keyword">from</span> aws_lambda_powertools <span class="keyword">import</span> Logger, Tracer
+<span class="keyword">from</span> aws_lambda_powertools.utilities.typing <span class="keyword">import</span> LambdaContext
+
+logger = Logger(service=<span class="string">"my-function"</span>)
+tracer = Tracer(service=<span class="string">"my-function"</span>)
+
+@logger.inject_lambda_context(log_event=False)  <span class="comment"># Ne jamais log l'event complet (risque secrets)</span>
+@tracer.capture_lambda_handler
+def handler(event: dict, context: LambdaContext) -> dict:
+    logger.info(<span class="string">"Processing request"</span>, extra={<span class="string">"request_id"</span>: event.get(<span class="string">"requestId"</span>)})
+    
+    <span class="keyword">try</span>:
+        result = process(event)
+        logger.info(<span class="string">"Success"</span>, extra={<span class="string">"status"</span>: <span class="string">"ok"</span>})
+        <span class="keyword">return</span> result
+    <span class="keyword">except</span> Exception <span class="keyword">as</span> e:
+        logger.exception(<span class="string">"Processing failed"</span>)  <span class="comment"># Log sans exposer les secrets</span>
+        <span class="keyword">raise</span></pre>
+    </div>
+
+    <h3>6.3 &mdash; V&eacute;rification</h3>
+    <div class="code-block">
+        <div class="code-header"><span>AWS CLI &mdash; Audit logging et tracing</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div>
+<pre><span class="comment"># D&eacute;tecter les log groups sans r&eacute;tention (Never Expire)</span>
+aws logs describe-log-groups \
+  --log-group-name-prefix <span class="string">"/aws/lambda/"</span> \
+  --query <span class="string">'logGroups[?!retentionInDays].logGroupName'</span> \
+  --output table \
+  --profile <span class="param">audit</span> --region <span class="param">eu-west-1</span>
+
+<span class="comment"># V&eacute;rifier le mode X-Ray de toutes les fonctions</span>
+aws lambda list-functions \
+  --query <span class="string">'Functions[*].{Name:FunctionName,Tracing:TracingConfig.Mode}'</span> \
+  --output table \
+  --profile <span class="param">audit</span> --region <span class="param">eu-west-1</span>
+
+<span class="comment"># Fonctions avec X-Ray Passthrough (pas d'Active tracing)</span>
+aws lambda list-functions \
+  --query <span class="string">'Functions[?TracingConfig.Mode==`PassThrough`].FunctionName'</span> \
+  --output table \
+  --profile <span class="param">audit</span> --region <span class="param">eu-west-1</span></pre>
+    </div>
+
+    <h3>6.4 &mdash; Checklist</h3>
+    <div class="checklist-item"><input type="checkbox"><span>R&eacute;tention CloudWatch Logs configur&eacute;e sur tous les log groups Lambda (&ge; 90 jours)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>X-Ray Active Tracing activ&eacute; sur toutes les fonctions de production</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Logs structur&eacute;s JSON avec Lambda Powertools (pas de <code>print()</code> non structur&eacute;)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Aucune variable d'environnement ni credential logg&eacute;(e) dans CloudWatch</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Alarme CloudWatch configur&eacute;e sur les m&eacute;triques Errors et Throttles</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>CloudTrail Data Events activ&eacute; pour les invocations Lambda des fonctions critiques</span></div>
+</div>
+
+<!-- ═══════════════════════ S7 — EVENT SOURCE SECURITY ═══════════════════════ -->
+<div class="section" id="s7">
+    <div class="section-header green">
+        <div class="section-number green">7</div>
+        <div>
+            <div class="section-title">Event Source Security <span class="lic lic-aws-free">Gratuit</span></div>
+            <div class="section-desc">S&eacute;curit&eacute; des sources d&rsquo;&eacute;v&eacute;nements &mdash; SQS DLQ, SNS cross-account, S3 triggers, Kinesis</div>
+        </div>
+    </div>
+
+    <div class="alert alert-error">
+        <span class="alert-icon">&#x1F6A8;</span>
+        <div>
+            <strong>Sc&eacute;nario d'attaque :</strong> Une file SQS configur&eacute;e comme event source Lambda n'a pas de
+            Dead Letter Queue (DLQ). Un message malveillant (payload malform&eacute; ou exploit&eacute;) d&eacute;clenche une exception
+            dans Lambda. Sans DLQ, le message entre en boucle de retry infinie &mdash; le lambda est invoqu&eacute;
+            des centaines de fois, consommant toute la concurrence disponible et bloquant les autres fonctions.
+            Avec DLQ : le message empoisonn&eacute; est isol&eacute; apr&egrave;s N tentatives, la file principale reste disponible.
+        </div>
+    </div>
+
+    <h3>7.1 &mdash; Tableau de configuration &mdash; Event Sources</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr>
+            <th>Source</th>
+            <th>Risque principal</th>
+            <th>Configuration s&eacute;curis&eacute;e</th>
+            <th>V&eacute;rification</th>
+        </tr></thead>
+        <tbody>
+            <tr class="row-ko">
+                <td><strong>Amazon SQS</strong></td>
+                <td>Messages empoisonn&eacute;s (poison pill), DLQ absente</td>
+                <td>DLQ configur&eacute;e + <code>maxReceiveCount</code> = 3-5 + chiffrement SSE-KMS</td>
+                <td><code>aws sqs get-queue-attributes --attribute-names RedrivePolicy</code></td>
+            </tr>
+            <tr class="row-ko">
+                <td><strong>Amazon S3 (notifications)</strong></td>
+                <td>Boucle infinie (Lambda &eacute;crit dans le m&ecirc;me bucket qu'elle surveille)</td>
+                <td>Surveiller un bucket d&rsquo;entr&eacute;e diff&eacute;rent du bucket de sortie + filtre pr&eacute;fixe/suffixe</td>
+                <td>V&eacute;rifier que notification bucket IN &ne; bucket OUT</td>
+            </tr>
+            <tr class="row-warn">
+                <td><strong>Amazon SNS (cross-account)</strong></td>
+                <td>Invocation Lambda depuis un compte non autoris&eacute;</td>
+                <td>Resource policy Lambda avec condition <code>aws:SourceAccount</code></td>
+                <td><code>aws lambda get-policy --function-name</code></td>
+            </tr>
+            <tr class="row-warn">
+                <td><strong>Amazon Kinesis</strong></td>
+                <td>Starting position TRIM_HORIZON = retraitement de tout l'historique</td>
+                <td>Starting position LATEST + bisect-on-batch-item-failure activ&eacute;</td>
+                <td><code>aws lambda list-event-source-mappings</code></td>
+            </tr>
+            <tr class="row-warn">
+                <td><strong>Amazon DynamoDB Streams</strong></td>
+                <td>R&eacute;essais infinis sur les erreurs, streams non chiffr&eacute;s</td>
+                <td>DLQ configur&eacute;e + streams chiffr&eacute;s KMS + maximum retry = 3</td>
+                <td>Inspecter event source mapping <code>DestinationConfig</code></td>
+            </tr>
+        </tbody>
+    </table>
+    </div>
+
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x1F4A1;</span>
+        <div>
+            <strong>DLQ vs On-Failure Destination &mdash; Quelle diff&eacute;rence ?</strong><br>
+            <strong>DLQ (SQS/SNS)</strong> : Configur&eacute;e sur la <em>fonction</em> pour les invocations asynchrones
+            (S3, SNS, EventBridge). Le message en &eacute;chec est envoy&eacute; &agrave; la DLQ apr&egrave;s 2 tentatives par d&eacute;faut.<br>
+            <strong>On-Failure Destination</strong> : Plus puissant &mdash; vous pouvez envoyer vers SQS, SNS, EventBridge,
+            ou une autre Lambda. Inclut le payload complet de la requ&ecirc;te + la r&eacute;ponse d'erreur.<br>
+            <strong>Pour les event source mappings (SQS, Kinesis, DynamoDB)</strong> : La DLQ est configur&eacute;e sur le
+            mapping lui-m&ecirc;me (<code>DestinationConfig.OnFailure</code>), pas sur la fonction.
+        </div>
+    </div>
+
+    <h3>7.2 &mdash; Configuration</h3>
+    <div class="code-block">
+        <div class="code-header"><span>AWS CLI &mdash; SQS + DLQ + On-Failure Destination</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div>
+<pre><span class="comment"># 1. Configurer la DLQ sur la fonction Lambda (invocations asynchrones)</span>
+aws lambda put-function-event-invoke-config \
+  --function-name <span class="string">"my-function"</span> \
+  --maximum-retry-attempts <span class="var">2</span> \
+  --maximum-event-age-in-seconds <span class="var">3600</span> \
+  --destination-config <span class="string">'{"OnFailure":{"Destination":"arn:aws:sqs:eu-west-1:ACCOUNT:lambda-dlq"}}'</span> \
+  --profile <span class="param">audit</span> --region <span class="param">eu-west-1</span>
+
+<span class="comment"># 2. Configurer l'ESM SQS avec DLQ et bisect-on-batch-item-failure</span>
+aws lambda create-event-source-mapping \
+  --function-name <span class="string">"my-function"</span> \
+  --event-source-arn <span class="string">"arn:aws:sqs:eu-west-1:ACCOUNT:my-queue"</span> \
+  --batch-size <span class="var">10</span> \
+  --maximum-batching-window-in-seconds <span class="var">5</span> \
+  --bisect-batch-on-function-error \
+  --destination-config <span class="string">'{"OnFailure":{"Destination":"arn:aws:sqs:eu-west-1:ACCOUNT:lambda-dlq"}}'</span> \
+  --profile <span class="param">audit</span> --region <span class="param">eu-west-1</span></pre>
+    </div>
+
+    <h3>7.3 &mdash; V&eacute;rification</h3>
+    <div class="code-block">
+        <div class="code-header"><span>AWS CLI &mdash; Audit des event source mappings</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div>
+<pre><span class="comment"># Lister tous les ESM et v&eacute;rifier la pr&eacute;sence d'une DLQ</span>
+aws lambda list-event-source-mappings \
+  --function-name <span class="string">"my-function"</span> \
+  --query <span class="string">'EventSourceMappings[*].{Source:EventSourceArn,State:State,DLQ:DestinationConfig}'</span> \
+  --output table \
+  --profile <span class="param">audit</span> --region <span class="param">eu-west-1</span>
+
+<span class="comment"># V&eacute;rifier la config d'invocation asynchrone (DLQ + retry)</span>
+aws lambda get-function-event-invoke-config \
+  --function-name <span class="string">"my-function"</span> \
+  --profile <span class="param">audit</span> --region <span class="param">eu-west-1</span></pre>
+    </div>
+
+    <h3>7.4 &mdash; Checklist</h3>
+    <div class="checklist-item"><input type="checkbox"><span>DLQ ou On-Failure Destination configur&eacute;(e) pour toutes les fonctions &agrave; invocations asynchrones</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Aucune Lambda ne surveille un bucket S3 dans lequel elle &eacute;crit (risque de boucle infinie)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Resource policy Lambda restreint les invocations SNS cross-account &agrave; des comptes autoris&eacute;s</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>bisect-batch-on-function-error activ&eacute; sur les ESM Kinesis/DynamoDB (isole les messages poison)</span></div>
+</div>
+
+<!-- ═══════════════════════ S8 — RUNTIME MANAGEMENT ═══════════════════════ -->
+<div class="section" id="s8">
+    <div class="section-header green">
+        <div class="section-number green">8</div>
+        <div>
+            <div class="section-title">Runtime &amp; Dependency Management <span class="lic lic-aws-free">Gratuit</span> <span class="lic lic-aws-pay">Inspector payant</span></div>
+            <div class="section-desc">Runtimes support&eacute;s, Amazon Inspector, stockage &eacute;ph&eacute;m&egrave;re /tmp, gestion du cycle de vie</div>
+        </div>
+    </div>
+
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x1F4A1;</span>
+        <div>
+            <strong>Pourquoi les runtimes sont un vecteur d'attaque :</strong><br>
+            Un runtime Lambda d&eacute;pr&eacute;ci&eacute; continue de fonctionner mais ne re&ccedil;oit plus de correctifs de s&eacute;curit&eacute; d'AWS.
+            Les CVE connues du runtime (interpr&eacute;teur Python, Node.js, JVM) restent exploitables ind&eacute;finiment.
+            De m&ecirc;me, les d&eacute;pendances packag&eacute;es dans le ZIP de d&eacute;ploiement ne sont pas automatiquement mises &agrave; jour :
+            un <code>requirements.txt</code> fig&eacute; depuis 18 mois peut contenir des packages avec des CVE critiques.
+            Amazon Inspector surveille en continu les CVE dans les d&eacute;pendances de chaque fonction d&eacute;ploy&eacute;e.
+        </div>
+    </div>
+
+    <div class="alert alert-warn">
+        <span class="alert-icon">&#x26A0;&#xFE0F;</span>
+        <div>
+            <strong>Contexte :</strong> AWS met r&eacute;guli&egrave;rement en fin de vie (<em>deprecated</em>) les runtimes Lambda.
+            Un runtime <code>python3.8</code> ou <code>nodejs14.x</code> qui n'est plus support&eacute; ne re&ccedil;oit plus
+            de correctifs de s&eacute;curit&eacute;. AWS peut forcer la mise &agrave; niveau ou bloquer les d&eacute;ploiements.
+            Security Hub Lambda.2 d&eacute;tecte automatiquement les fonctions utilisant des runtimes d&eacute;pr&eacute;ci&eacute;s.
+        </div>
+    </div>
+
+    <h3>8.1 &mdash; Tableau de configuration &mdash; Runtime &amp; /tmp</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr>
+            <th>Param&egrave;tre</th>
+            <th>D&eacute;faut AWS</th>
+            <th>&#x26A1; Quick Win</th>
+            <th>&#x1F3AF; Optimal</th>
+        </tr></thead>
+        <tbody>
+            <tr class="row-ok">
+                <td><strong>Runtime support&eacute;</strong></td>
+                <td>Selon la version choisie &agrave; la cr&eacute;ation</td>
+                <td><span class="hl-green">Python 3.12 / Node 22 / Java 21 (LTS actifs)</span></td>
+                <td>Runtime le plus r&eacute;cent + Amazon Inspector</td>
+            </tr>
+            <tr class="row-warn">
+                <td><strong>Stockage /tmp</strong><br><small>512 Mo par d&eacute;faut, max 10 Go</small></td>
+                <td>512 Mo, non chiffr&eacute; par CMK</td>
+                <td>&mdash;</td>
+                <td>Augmenter si n&eacute;cessaire + ne jamais stocker de secrets dans /tmp</td>
+            </tr>
+            <tr class="row-ok">
+                <td><strong>Amazon Inspector (scan runtime)</strong></td>
+                <td><span class="hl-red">D&eacute;sactiv&eacute;</span></td>
+                <td><span class="hl-green">Activ&eacute; (scan continu)</span></td>
+                <td>Inspector + notifications SNS sur CRITICAL CVE</td>
+            </tr>
+            <tr class="row-warn">
+                <td><strong>Lambda Layers (d&eacute;pendances partag&eacute;es)</strong></td>
+                <td>Layers sans version pinning</td>
+                <td>Versions pinned sur les layers</td>
+                <td>Layers priv&eacute;s + cross-account restrict&eacute;</td>
+            </tr>
+        </tbody>
+    </table>
+    </div>
+
+    <h3>8.2 &mdash; Runtimes actuellement support&eacute;s (Avril 2026)</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr><th>Runtime</th><th>Version</th><th>Statut</th><th>Fin de support AWS</th></tr></thead>
+        <tbody>
+            <tr class="row-ok"><td>Python</td><td>3.12, 3.13</td><td><span class="badge-sm badge-ok">Actif</span></td><td>~2027</td></tr>
+            <tr class="row-ok"><td>Node.js</td><td>22.x, 20.x</td><td><span class="badge-sm badge-ok">Actif</span></td><td>~2027</td></tr>
+            <tr class="row-ok"><td>Java</td><td>21, 17</td><td><span class="badge-sm badge-ok">Actif</span></td><td>~2027</td></tr>
+            <tr class="row-ok"><td>.NET</td><td>8</td><td><span class="badge-sm badge-ok">Actif</span></td><td>~2026</td></tr>
+            <tr class="row-warn"><td>Python</td><td>3.10, 3.11</td><td><span class="badge-sm badge-medium">Actif (fin proche)</span></td><td>Mi-2026 / Fin 2026</td></tr>
+            <tr class="row-ko"><td>Python</td><td>3.8, 3.9</td><td><span class="badge-sm badge-critical">D&eacute;pr&eacute;ci&eacute;</span></td><td>&Eacute;chu</td></tr>
+            <tr class="row-ko"><td>Node.js</td><td>14.x, 16.x, 18.x</td><td><span class="badge-sm badge-critical">D&eacute;pr&eacute;ci&eacute;</span></td><td>&Eacute;chu</td></tr>
+        </tbody>
+    </table>
+    </div>
+
+    <div class="code-block">
+        <div class="code-header"><span>AWS CLI &mdash; D&eacute;tecter les runtimes d&eacute;pr&eacute;ci&eacute;s</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div>
+<pre><span class="comment"># Lister tous les runtimes des fonctions Lambda</span>
+aws lambda list-functions \
+  --query <span class="string">'Functions[*].{Name:FunctionName,Runtime:Runtime,Modified:LastModified}'</span> \
+  --output table \
+  --profile <span class="param">audit</span> --region <span class="param">eu-west-1</span>
+
+<span class="comment"># Filtrer uniquement les runtimes d&eacute;pr&eacute;ci&eacute;s (python3.8, nodejs14.x, etc.)</span>
+DEPRECATED="python3.8 python3.9 nodejs14.x nodejs16.x nodejs18.x"
+for runtime in $DEPRECATED; do
+  echo "=== $runtime ==="
+  aws lambda list-functions \
+    --query <span class="string">"Functions[?Runtime=='$runtime'].FunctionName"</span> \
+    --output table \
+    --profile <span class="param">audit</span> --region <span class="param">eu-west-1</span>
+done</pre>
+    </div>
+
+    <h3>8.3 &mdash; Checklist</h3>
+    <div class="checklist-item"><input type="checkbox"><span>Toutes les fonctions utilisent un runtime actif (Python 3.12+, Node 20+, Java 21+)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Amazon Inspector activ&eacute; pour la d&eacute;tection continue de CVE dans les d&eacute;pendances Lambda</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Lambda Layers utilis&eacute;s avec des versions pinned (pas de &quot;latest&quot; non contr&ocirc;l&eacute;)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Aucun secret ni credential stock&eacute; dans /tmp (stockage &eacute;ph&eacute;m&egrave;re non chiffr&eacute; par CMK)</span></div>
+</div>
+
+<!-- ═══════════════════════ S9 — CONCURRENCE & RÉSILIENCE ═══════════════════════ -->
+<div class="section" id="s9">
+    <div class="section-header green">
+        <div class="section-number green">9</div>
+        <div>
+            <div class="section-title">Concurrence, Timeout &amp; R&eacute;silience <span class="lic lic-aws-free">Gratuit</span></div>
+            <div class="section-desc">Reserved &amp; provisioned concurrency, timeout, idempotency, protection contre le DoS financier</div>
+        </div>
+    </div>
+
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x1F4A1;</span>
+        <div>
+            <strong>Pourquoi la concurrence est un sujet de s&eacute;curit&eacute; :</strong><br>
+            Lambda facture &agrave; l'invocation et &agrave; la dur&eacute;e d'ex&eacute;cution. Sans limite de concurrence, une attaque de type
+            <em>flood</em> ou une boucle infinie peut consommer des millions d'invocations en quelques minutes.
+            AWS ne coupe pas automatiquement une fonction surcharg&eacute;e : la facture monte, et les autres fonctions
+            du compte sont throttl&eacute;es. D&eacute;finir une <code>ReservedConcurrency</code> constitue un contr&ocirc;le
+            de s&eacute;curit&eacute; financi&egrave;re autant qu'une protection de disponibilit&eacute;.
+        </div>
+    </div>
+
+    <div class="alert alert-warn">
+        <span class="alert-icon">&#x26A0;&#xFE0F;</span>
+        <div>
+            <strong>Sc&eacute;nario DoS financier :</strong> Par d&eacute;faut, chaque compte AWS a une limite de
+            <strong>1&nbsp;000 ex&eacute;cutions concurrentes</strong> pour toutes les fonctions Lambda r&eacute;unies.
+            Si une seule fonction re&ccedil;oit un pic de trafic (ou une attaque de type flood), elle peut consommer
+            toute la concurrence disponible et provoquer l'&eacute;chec throttling de <em>toutes les autres fonctions</em>
+            du compte. R&eacute;server une concurrence limit&eacute;e isole les fonctions critiques.
+        </div>
+    </div>
+
+    <h3>9.1 &mdash; Tableau de configuration &mdash; Concurrence &amp; Timeout</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr>
+            <th>Param&egrave;tre</th>
+            <th>D&eacute;faut AWS</th>
+            <th>&#x26A1; Quick Win</th>
+            <th>&#x1F3AF; Optimal</th>
+        </tr></thead>
+        <tbody>
+            <tr class="row-ko">
+                <td><strong>Reserved Concurrency</strong></td>
+                <td><span class="hl-red">Illimit&eacute;e (utilise tout le quota compte)</span></td>
+                <td><span class="hl-green">Limit&eacute;e selon le trafic pr&eacute;vu (+20% marge)</span></td>
+                <td>Reserved + alarme CloudWatch sur throttles</td>
+            </tr>
+            <tr class="row-warn">
+                <td><strong>Timeout</strong></td>
+                <td>3 secondes (trop court pour certaines ops)</td>
+                <td>Adapter au cas d'usage (max 15 min)</td>
+                <td>Timeout = p99 + 20% + alarme duration p99</td>
+            </tr>
+            <tr class="row-warn">
+                <td><strong>Idempotency</strong></td>
+                <td>Aucun m&eacute;canisme natif</td>
+                <td>&mdash;</td>
+                <td>Lambda Powertools Idempotency (DynamoDB TTL)</td>
+            </tr>
+            <tr class="row-warn">
+                <td><strong>DLQ pour invocations async</strong></td>
+                <td><span class="hl-red">Pas de filet de s&eacute;curit&eacute;</span></td>
+                <td><span class="hl-green">DLQ SQS ou On-Failure Destination</span></td>
+                <td>DLQ + alarme sur taille DLQ &gt; 0</td>
+            </tr>
+            <tr class="row-warn">
+                <td><strong>Provisioned Concurrency</strong><br><small>Optionnel, payant</small></td>
+                <td><span class="hl-red">D&eacute;sactiv&eacute;e (cold starts possibles)</span></td>
+                <td>&mdash;</td>
+                <td>Activer pour les fonctions latency-sensitive expos&eacute;es en production critique</td>
+            </tr>
+        </tbody>
+    </table>
+    </div>
+
+    <div class="code-block">
+        <div class="code-header"><span>AWS CLI + Terraform &mdash; Reserved Concurrency + Timeout</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div>
+<pre><span class="comment"># Configurer la concurrence r&eacute;serv&eacute;e (CLI)</span>
+aws lambda put-function-concurrency \
+  --function-name <span class="string">"my-function"</span> \
+  --reserved-concurrent-executions <span class="var">100</span> \
+  --profile <span class="param">audit</span> --region <span class="param">eu-west-1</span>
+
+<span class="comment"># V&eacute;rifier la concurrence r&eacute;serv&eacute;e</span>
+aws lambda get-function-concurrency \
+  --function-name <span class="string">"my-function"</span> \
+  --profile <span class="param">audit</span> --region <span class="param">eu-west-1</span>
+
+<span class="comment"># Terraform &mdash; Concurrence + timeout</span>
+resource <span class="string">"aws_lambda_function"</span> <span class="string">"my_function"</span> {
+  reserved_concurrent_executions = <span class="var">100</span>  <span class="comment"># -1 = unreserved (d&eacute;faut)</span>
+  timeout                        = <span class="var">30</span>   <span class="comment"># Adapter au cas d'usage</span>
+  ...
+}</pre>
+    </div>
+
+    <h3>9.2 &mdash; Checklist</h3>
+    <div class="checklist-item"><input type="checkbox"><span>Reserved Concurrency d&eacute;finie pour les fonctions expos&eacute;es publiquement (protection DoS financier)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Timeout configur&eacute; &agrave; la valeur adapt&eacute;e (ni trop court, ni 15 min par d&eacute;faut)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Idempotency activ&eacute;e (Lambda Powertools) pour les fonctions critiques traitant des paiements ou &eacute;critures</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Alarme CloudWatch sur Throttles &gt; 0 pour les fonctions critiques</span></div>
+</div>
+
+<!-- ═══════════════════════ S10 — CONFORMITÉ & AUDIT ═══════════════════════ -->
+<div class="section" id="s10">
+    <div class="section-header green">
+        <div class="section-number green">10</div>
+        <div>
+            <div class="section-title">Conformit&eacute;, Security Hub &amp; Audit <span class="lic lic-aws-prem">Security Hub ~30$/mois</span></div>
+            <div class="section-desc">Security Hub Lambda Controls, GuardDuty Lambda Protection, AWS Config rules &mdash; voir <a href="aws-security-hub.html" class="cross-ref">aws-security-hub.html</a> &bull; <a href="aws-guardduty.html" class="cross-ref">aws-guardduty.html</a></div>
+        </div>
+    </div>
+
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x1F4A1;</span>
+        <div>
+            <strong>Pourquoi la conformit&eacute; continue est essentielle :</strong><br>
+            AWS Security Hub, GuardDuty et Config surveillent votre posture de s&eacute;curit&eacute; Lambda en temps r&eacute;el.
+            Sans ces services, les mauvaises configurations (Function URL publique, runtime d&eacute;pr&eacute;ci&eacute;, acc&egrave;s public
+            non intentionnel) passent inaper&ccedil;ues. Lambda.1 (acc&egrave;s public) est class&eacute; CRITICAL car une seule
+            resource policy mal configur&eacute;e suffit &agrave; exposer toute la logique applicative sur Internet.
+        </div>
+    </div>
+
+    <div class="alert alert-warn">
+        <span class="alert-icon">&#x26A0;&#xFE0F;</span>
+        <div>
+            <strong>Pi&egrave;ge fr&eacute;quent :</strong> Security Hub d&eacute;tecte <em>l'&eacute;tat actuel</em> mais pas les modifications
+            en temps r&eacute;el. Un finding peut mettre jusqu'&agrave; 12 heures &agrave; appara&icirc;tre apr&egrave;s une mauvaise configuration.
+            Ne pas utiliser Security Hub comme unique m&eacute;canisme de d&eacute;tection &mdash; combiner avec GuardDuty (runtime)
+            et AWS Config (d&eacute;rive de configuration en quasi-temps r&eacute;el).
+        </div>
+    </div>
+
+    <h3>10.1 &mdash; AWS Security Hub &mdash; Contr&ocirc;les Lambda</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr>
+            <th>Contr&ocirc;le Security Hub</th>
+            <th>Description</th>
+            <th>Gravit&eacute;</th>
+            <th>Correction</th>
+        </tr></thead>
+        <tbody>
+            <tr class="row-ko">
+                <td><strong>Lambda.1</strong></td>
+                <td>Function policies should prohibit public access</td>
+                <td><span class="badge-sm badge-critical">CRITICAL</span></td>
+                <td>Supprimer les resource policy <code>Principal: *</code> non prot&eacute;g&eacute;es</td>
+            </tr>
+            <tr class="row-ko">
+                <td><strong>Lambda.2</strong></td>
+                <td>Lambda functions should use supported runtimes</td>
+                <td><span class="badge-sm badge-critical">HIGH</span></td>
+                <td>Mettre &agrave; jour le runtime vers Python 3.12+, Node 22+, Java 21+</td>
+            </tr>
+            <tr class="row-warn">
+                <td><strong>Lambda.3</strong></td>
+                <td>Lambda functions should be in a VPC</td>
+                <td><span class="badge-sm badge-medium">MEDIUM</span></td>
+                <td>Attacher la fonction &agrave; un VPC priv&eacute; (voir S3)</td>
+            </tr>
+            <tr class="row-warn">
+                <td><strong>Lambda.5</strong></td>
+                <td>VPC Lambda functions should operate in multiple AZs</td>
+                <td><span class="badge-sm badge-medium">MEDIUM</span></td>
+                <td>Attacher &ge; 2 subnets dans des AZ diff&eacute;rentes</td>
+            </tr>
+        </tbody>
+    </table>
+    </div>
+
+    <h3>10.2 &mdash; Amazon GuardDuty Lambda Protection</h3>
+    <p>GuardDuty Lambda Protection d&eacute;tecte les comportements anormaux au <em>runtime</em> des fonctions Lambda :
+    appels DNS suspects, connections &agrave; des IPs malveillantes, ex&eacute;cution de binaires inhabituels.  
+    <strong>Activer dans chaque r&eacute;gion o&ugrave; des Lambda sont d&eacute;ploy&eacute;es.</strong></p>
+
+    <h3>10.3 &mdash; AWS Config Rules</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr><th>R&egrave;gle Config</th><th>Description</th><th>Type</th></tr></thead>
+        <tbody>
+            <tr><td><code>lambda-function-public-access-prohibited</code></td><td>D&eacute;tecte les fonctions accessibles publiquement</td><td>Managed</td></tr>
+            <tr><td><code>lambda-function-settings-check</code></td><td>V&eacute;rifie runtime, timeout, memory selon vos crit&egrave;res</td><td>Managed</td></tr>
+            <tr><td><code>lambda-concurrency-check</code></td><td>V&eacute;rifie que les fonctions ont une concurrence r&eacute;serv&eacute;e</td><td>Managed</td></tr>
+        </tbody>
+    </table>
+    </div>
+
+    <div class="code-block">
+        <div class="code-header"><span>AWS CLI &mdash; Audit Security Hub + GuardDuty + Config</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div>
+<pre><span class="comment"># Security Hub &mdash; Findings Lambda (CRITICAL)</span>
+aws securityhub get-findings \
+  --filters <span class="string">'{"ResourceType":[{"Value":"AwsLambdaFunction","Comparison":"EQUALS"}],"SeverityLabel":[{"Value":"CRITICAL","Comparison":"EQUALS"},{"Value":"HIGH","Comparison":"EQUALS"}],"RecordState":[{"Value":"ACTIVE","Comparison":"EQUALS"}]}'</span> \
+  --query <span class="string">'Findings[*].{Title:Title,Severity:Severity.Label,Resource:Resources[0].Id}'</span> \
+  --output table \
+  --profile <span class="param">audit</span> --region <span class="param">eu-west-1</span>
+
+<span class="comment"># V&eacute;rifier si GuardDuty Lambda Protection est activ&eacute;</span>
+aws guardduty list-detectors \
+  --query <span class="string">'DetectorIds'</span> \
+  --output text \
+  --profile <span class="param">audit</span> --region <span class="param">eu-west-1</span> | \
+  xargs -I{} aws guardduty get-detector \
+    --detector-id {} \
+    --query <span class="string">'Features[?Name==`LAMBDA_NETWORK_LOGS`]'</span> \
+    --profile <span class="param">audit</span> --region <span class="param">eu-west-1</span>
+
+<span class="comment"># AWS Config &mdash; V&eacute;rifier la conformit&eacute; de la r&egrave;gle lambda-function-public-access-prohibited</span>
+aws configservice describe-compliance-by-config-rule \
+  --config-rule-names <span class="string">"lambda-function-public-access-prohibited"</span> \
+  --query <span class="string">'ComplianceByConfigRules[*].{Rule:ConfigRuleName,Compliance:Compliance.ComplianceType}'</span> \
+  --profile <span class="param">audit</span> --region <span class="param">eu-west-1</span></pre>
+    </div>
+
+    <h3>10.4 &mdash; Checklist</h3>
+    <div class="checklist-item"><input type="checkbox"><span>AWS Security Hub activ&eacute; avec le standard AWS Foundational Best Practices (FSBP)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Aucun finding Lambda.1 ou Lambda.2 CRITICAL non r&eacute;solu</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Amazon GuardDuty Lambda Protection activ&eacute; dans toutes les r&eacute;gions utilis&eacute;es</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>AWS Config rules Lambda activ&eacute;es et en conformit&eacute;</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>Revue trimestrielle des findings Security Hub Lambda</span></div>
+</div>
+
+<!-- ═══════════════════════ MATRICE D'INTERACTIONS ═══════════════════════ -->
+<div class="section" id="matrice">
+    <div class="section-header blue">
+        <div class="section-number">&#x1F310;</div>
+        <div>
+            <div class="section-title">Matrice d'Interactions entre Sections</div>
+            <div class="section-desc">D&eacute;pendances, synergies et interactions entre les composants de s&eacute;curit&eacute; Lambda</div>
+        </div>
+    </div>
+
+    <div class="table-container">
+    <table>
+        <thead><tr><th>Guide Lambda</th><th>D&eacute;pend de</th><th>Alimente</th><th>Interagit avec</th></tr></thead>
+        <tbody>
+            <tr><td><strong>S1 &mdash; IAM Execution Role</strong></td><td>&mdash;</td><td>Toutes les sections (IAM est transversal)</td><td><a href="aws-iam.html" class="cross-ref">aws-iam.html</a></td></tr>
+            <tr><td><strong>S2 &mdash; Secrets</strong></td><td>S1 (IAM pour acc&egrave;s Secrets Manager)</td><td>S3 (secrets utilis&eacute;s dans VPC)</td><td><a href="aws-kms-secrets.html" class="cross-ref">aws-kms-secrets.html</a></td></tr>
+            <tr><td><strong>S3 &mdash; VPC</strong></td><td>S1 (IAM pour VPC endpoints)</td><td>S2 (acc&egrave;s Secrets Manager via endpoint)</td><td><a href="aws-vpc.html" class="cross-ref">aws-vpc.html</a></td></tr>
+            <tr><td><strong>S4 &mdash; Function URL / API GW</strong></td><td>S1 (IAM auth), S3 (VPC pour API GW priv&eacute;)</td><td>S7 (event sources via API GW)</td><td><a href="aws-api-gateway.html" class="cross-ref">aws-api-gateway.html</a> &bull; <a href="aws-waf.html" class="cross-ref">aws-waf.html</a></td></tr>
+            <tr><td><strong>S5 &mdash; Code Security</strong></td><td>S1 (IAM pour ECR/CodePipeline)</td><td>S8 (runtime choice)</td><td><a href="aws-devsecops.html" class="cross-ref">aws-devsecops.html</a></td></tr>
+            <tr><td><strong>S6 &mdash; Logs / Tracing</strong></td><td>S1 (IAM CloudWatch Logs), S3 (VPC Flow Logs)</td><td>S10 (conformit&eacute; via CloudTrail)</td><td><a href="aws-cloudwatch.html" class="cross-ref">aws-cloudwatch.html</a></td></tr>
+            <tr><td><strong>S7 &mdash; Event Sources</strong></td><td>S1 (IAM pour SQS/SNS/S3)</td><td>S6 (DLQ logging)</td><td>SQS, SNS, S3, Kinesis, EventBridge</td></tr>
+            <tr><td><strong>S8 &mdash; Runtime</strong></td><td>&mdash;</td><td>S5 (choix runtime impacte supply chain)</td><td>Amazon Inspector</td></tr>
+            <tr><td><strong>S9 &mdash; Concurrence</strong></td><td>S1 (IAM pour Provisioned Concurrency)</td><td>S7 (throttling impacte event sources)</td><td>API Gateway throttling</td></tr>
+            <tr><td><strong>S10 &mdash; Conformit&eacute;</strong></td><td>S1-S9 (toutes sections)</td><td>&mdash;</td><td><a href="aws-security-hub.html" class="cross-ref">aws-security-hub.html</a> &bull; <a href="aws-guardduty.html" class="cross-ref">aws-guardduty.html</a></td></tr>
+        </tbody>
+    </table>
+    </div>
+
+    <h3>Diagramme de flux s&eacute;curit&eacute; Lambda</h3>
+    <div class="diagram-block">
+<span class="d-label">Internet / Client</span>
+       |
+       v
+<span class="d-ok">[WAF]</span> ──── Filtre OWASP, rate limiting, r&egrave;gles custom
+       |
+       v
+<span class="d-ok">[API Gateway / Function URL]</span> ──── <span class="d-warn">IAM Auth / Cognito / Lambda Authorizer</span>
+       |
+       v
+<span class="d-ok">[AWS Lambda Function]</span>
+   ├── <span class="d-ok">Execution Role</span> ──── Least privilege, pas de * resource
+   ├── <span class="d-ok">VPC priv&eacute;</span> ──── Subnets priv&eacute;s, Security Groups restrictifs
+   ├── <span class="d-ok">Env Vars chiffr&eacute;es</span> ──── KMS CMK (pas de secrets en clair !)
+   ├── <span class="d-ok">X-Ray Tracing</span> ──── Distribu&eacute;, end-to-end
+   └── <span class="d-ok">CloudWatch Logs</span> ──── R&eacute;tention 90j, logs structur&eacute;s JSON
+       |
+       v
+<span class="d-ok">[AWS Services cibles]</span>
+   ├── <span class="d-ok">Secrets Manager</span> ──── R&eacute;cup&eacute;ration runtime (pas d'env vars secrets)
+   ├── <span class="d-ok">DynamoDB / S3 / SQS</span> ──── Via VPC Endpoints (pas de NAT)
+   └── <span class="d-ok">AWS KMS</span> ──── Via VPC Endpoint kms.&lt;region&gt;.amazonaws.com
+       |
+       v
+<span class="d-ok">[Security Hub + GuardDuty Lambda]</span> ──── D&eacute;tection anomalies runtime
+<span class="d-ok">[CloudTrail Data Events]</span> ──── Audit de chaque invocation critique
+    </div>
+</div>
+
+<!-- ═══════════════════════ SCORES ═══════════════════════ -->
+<div class="section" id="scores">
+    <div class="section-header blue">
+        <div class="section-number">&#x1F4CA;</div>
+        <div>
+            <div class="section-title">R&eacute;cap des scores par niveau de protection</div>
+            <div class="section-desc">Score /100 &mdash; estimation par niveau de maturit&eacute; de s&eacute;curit&eacute; Lambda</div>
+        </div>
+    </div>
+
+    <div class="level-comparison">
+        <div class="level-card default">
+            <h4>&#x1F6E1; D&eacute;faut AWS</h4>
+            <div class="level-score" style="color: var(--danger-red);">25</div>
+            <div class="level-desc">Configuration out-of-the-box &mdash; execution role basique, env vars, hors VPC</div>
+        </div>
+        <div class="level-card standard">
+            <h4>&#x26A1; Quick Win</h4>
+            <div class="level-score" style="color: var(--azure-blue);">50</div>
+            <div class="level-desc">~15 min &mdash; role d&eacute;di&eacute; + Secrets Manager + log retention</div>
+        </div>
+        <div class="level-card strict">
+            <h4>&#x1F512; Avanc&eacute;</h4>
+            <div class="level-score" style="color: var(--warning-orange);">76</div>
+            <div class="level-desc">+ VPC + KMS CMK + X-Ray + Code Signing</div>
+        </div>
+        <div class="level-card custom">
+            <h4>&#x1F3AF; Optimal</h4>
+            <div class="level-score" style="color: var(--success-green);">100</div>
+            <div class="level-desc">+ Security Hub + GuardDuty Lambda + Config rules</div>
+        </div>
+    </div>
+
+    <h3>D&eacute;tail par section</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr>
+            <th>Section</th><th>Max</th>
+            <th>D&eacute;faut AWS</th><th>&#x26A1; Quick Win</th>
+            <th>&#x1F512; Avanc&eacute;</th><th>&#x1F3AF; Optimal</th>
+        </tr></thead>
+        <tbody>
+            <tr>
+                <td>S1 &mdash; IAM Execution Role</td><td>20</td>
+                <td><span class="hl-red">4</span></td>
+                <td><span class="hl-green">10</span></td>
+                <td>16</td>
+                <td><span class="hl-green">20</span></td>
+            </tr>
+            <tr>
+                <td>S2 &mdash; Secrets &amp; Env Vars</td><td>20</td>
+                <td><span class="hl-red">2</span></td>
+                <td><span class="hl-green">12</span></td>
+                <td>15</td>
+                <td><span class="hl-green">20</span></td>
+            </tr>
+            <tr>
+                <td>S3 &mdash; VPC Integration</td><td>15</td>
+                <td><span class="hl-red">3</span></td>
+                <td><span class="hl-green">7</span></td>
+                <td>11</td>
+                <td><span class="hl-green">15</span></td>
+            </tr>
+            <tr>
+                <td>S4 &mdash; Function URL &amp; API GW</td><td>10</td>
+                <td><span class="hl-red">5</span></td>
+                <td><span class="hl-green">7</span></td>
+                <td>9</td>
+                <td><span class="hl-green">10</span></td>
+            </tr>
+            <tr>
+                <td>S5 &mdash; Code Security</td><td>10</td>
+                <td><span class="hl-red">5</span></td>
+                <td>6</td>
+                <td>8</td>
+                <td><span class="hl-green">10</span></td>
+            </tr>
+            <tr>
+                <td>S6 &mdash; Logging &amp; Tracing</td><td>10</td>
+                <td><span class="hl-red">3</span></td>
+                <td><span class="hl-green">7</span></td>
+                <td>9</td>
+                <td><span class="hl-green">10</span></td>
+            </tr>
+            <tr>
+                <td>S7 &mdash; Event Source Security</td><td>7</td>
+                <td><span class="hl-red">2</span></td>
+                <td>4</td>
+                <td>6</td>
+                <td><span class="hl-green">7</span></td>
+            </tr>
+            <tr>
+                <td>S8 &mdash; Runtime Management</td><td>4</td>
+                <td>3</td>
+                <td>3</td>
+                <td>4</td>
+                <td><span class="hl-green">4</span></td>
+            </tr>
+            <tr>
+                <td>S9 &mdash; Concurrence &amp; R&eacute;silience</td><td>2</td>
+                <td><span class="hl-red">0</span></td>
+                <td>0</td>
+                <td>1</td>
+                <td><span class="hl-green">2</span></td>
+            </tr>
+            <tr>
+                <td>S10 &mdash; Conformit&eacute; &amp; Audit</td><td>2</td>
+                <td><span class="hl-red">0</span></td>
+                <td>0</td>
+                <td>1</td>
+                <td><span class="hl-green">2</span></td>
+            </tr>
+            <tr style="font-weight:700; background: #e6f2ff;">
+                <td>TOTAL</td><td>100</td>
+                <td><span class="hl-red">27</span></td>
+                <td><span class="hl-blue">56</span></td>
+                <td>80</td>
+                <td><span class="hl-green">100</span></td>
+            </tr>
+        </tbody>
+    </table>
+    </div>
+
+    <h3>Progression visuelle</h3>
+    <div class="progress-bar"><div class="progress-fill red" style="width:27%;">D&eacute;faut AWS : 27/100</div></div>
+    <div class="progress-bar"><div class="progress-fill blue" style="width:56%;">Apr&egrave;s Quick Win : 56/100 (+29 pts en ~15 min)</div></div>
+    <div class="progress-bar"><div class="progress-fill orange" style="width:80%;">Apr&egrave;s Avanc&eacute; : 80/100</div></div>
+    <div class="progress-bar"><div class="progress-fill green" style="width:100%;">Optimal : 100/100</div></div>
+</div>
+
+<!-- ═══════════════════════ SCRIPT ALL-IN-ONE ═══════════════════════ -->
+<div class="section" id="script">
+    <div class="section-header" style="background: linear-gradient(135deg,#232f3e,#37475a);">
+        <div class="section-number" style="background:#232f3e;">&#x1F4BB;</div>
+        <div>
+            <div class="section-title">Script d'Audit Lambda &mdash; Bash / AWS CLI</div>
+            <div class="section-desc">Script complet pour auditer une fonction Lambda ou toutes les fonctions d'un compte AWS</div>
+        </div>
+    </div>
+    <div class="code-block">
+        <div class="code-header"><span>audit-lambda.sh &mdash; Script d'audit complet</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div>
+<pre><span class="comment">#!/usr/bin/env bash</span>
+<span class="comment"># =============================================================================</span>
+<span class="comment"># audit-lambda.sh &mdash; Audit s&eacute;curit&eacute; AWS Lambda</span>
+<span class="comment"># Usage : ./audit-lambda.sh [function-name] (sans argument = toutes les fonctions)</span>
+<span class="comment"># =============================================================================</span>
+set -euo pipefail
+
+<span class="param">AWS_PROFILE</span>=<span class="string">"audit"</span>
+<span class="param">AWS_REGION</span>=<span class="string">"eu-west-1"</span>
+FUNCTION_FILTER=<span class="string">"${1:-ALL}"</span>  <span class="comment"># Nom d'une fonction ou ALL</span>
+SCORE=0; MAX_SCORE=0
+REPORT=<span class="string">"lambda-audit-$(date +%Y%m%d-%H%M).txt"</span>
+
+aws_cmd() { aws "$@" --profile <span class="var">$AWS_PROFILE</span> --region <span class="var">$AWS_REGION</span>; }
+
+check() {
+  local pts=<span class="var">$1</span> label=<span class="string">"$2"</span> result=<span class="string">"$3"</span>
+  MAX_SCORE=$((MAX_SCORE + pts))
+  if [ <span class="string">"$result"</span> = <span class="string">"OK"</span> ]; then
+    SCORE=$((SCORE + pts)); echo <span class="string">"  [✅ +${pts}pts] $label"</span> | tee -a <span class="var">$REPORT</span>
+  else
+    echo <span class="string">"  [❌  0pts] $label &mdash; $result"</span> | tee -a <span class="var">$REPORT</span>
+  fi
+}
+
+audit_function() {
+  local fn=<span class="string">"$1"</span>
+  echo <span class="string">"\n=== Audit : $fn ==="</span> | tee -a <span class="var">$REPORT</span>
+  local conf
+  conf=$(aws_cmd lambda get-function-configuration --function-name <span class="string">"$fn"</span> 2>/dev/null) || { echo <span class="string">"ERR: Fonction introuvable"</span>; return; }
+
+  <span class="comment"># Phase 1 &mdash; IAM Execution Role</span>
+  local role; role=$(echo <span class="string">"$conf"</span> | python3 -c <span class="string">"import sys,json; print(json.load(sys.stdin)['Role'])"</span>)
+  local policy; policy=$(aws_cmd iam list-role-policies --role-name <span class="string">"$(basename $role)"</span> 2>/dev/null)
+  local inline_count; inline_count=$(echo <span class="string">"$policy"</span> | python3 -c <span class="string">"import sys,json; print(len(json.load(sys.stdin).get('PolicyNames',[])))"</span>)
+  [ <span class="string">"$inline_count"</span> -eq 0 ] && check 20 <span class="string">"IAM : Pas de politique inline"</span> <span class="string">"OK"</span> || check 20 <span class="string">"IAM : Pas de politique inline"</span> <span class="string">"$inline_count politique(s) inline d&eacute;tect&eacute;e(s)"</span>
+
+  <span class="comment"># Phase 2 &mdash; Variables d'environnement (secrets)</span>
+  local envvars; envvars=$(echo <span class="string">"$conf"</span> | python3 -c <span class="string">"import sys,json; e=json.load(sys.stdin).get('Environment',{}).get('Variables',{}); bad=[k for k in e if any(s in k.upper() for s in ['SECRET','PASSWORD','TOKEN','KEY','PASSWD'])]; print('\n'.join(bad))"</span>)
+  [ -z <span class="string">"$envvars"</span> ] && check 20 <span class="string">"Secrets : Aucun secret en env var"</span> <span class="string">"OK"</span> || check 20 <span class="string">"Secrets : Aucun secret en env var"</span> <span class="string">"Suspectes: $envvars"</span>
+
+  <span class="comment"># Phase 3 &mdash; VPC</span>
+  local vpc; vpc=$(echo <span class="string">"$conf"</span> | python3 -c <span class="string">"import sys,json; print(json.load(sys.stdin).get('VpcConfig',{}).get('VpcId',''))"</span>)
+  [ -n <span class="string">"$vpc"</span> ] && check 15 <span class="string">"VPC : Fonction dans un VPC"</span> <span class="string">"OK"</span> || check 15 <span class="string">"VPC : Fonction dans un VPC"</span> <span class="string">"ALERTE &mdash; Fonction hors VPC"</span>
+
+  <span class="comment"># Phase 4 &mdash; Function URL auth</span>
+  local furl; furl=$(aws_cmd lambda get-function-url-config --function-name <span class="string">"$fn"</span> 2>/dev/null || echo <span class="string">"none"</span>)
+  if [ <span class="string">"$furl"</span> != <span class="string">"none"</span> ]; then
+    local auth; auth=$(echo <span class="string">"$furl"</span> | python3 -c <span class="string">"import sys,json; print(json.load(sys.stdin).get('AuthType',''))"</span>)
+    [ <span class="string">"$auth"</span> = <span class="string">"AWS_IAM"</span> ] && check 10 <span class="string">"Function URL : AuthType=AWS_IAM"</span> <span class="string">"OK"</span> || check 10 <span class="string">"Function URL : AuthType=AWS_IAM"</span> <span class="string">"CRITIQUE &mdash; AuthType=$auth"</span>
+  else
+    check 10 <span class="string">"Function URL : Pas de Function URL (OK)"</span> <span class="string">"OK"</span>
+  fi
+
+  <span class="comment"># Phase 5 &mdash; Code Signing</span>
+  local csc; csc=$(aws_cmd lambda get-function-code-signing-config --function-name <span class="string">"$fn"</span> 2>/dev/null || echo <span class="string">"none"</span>)
+  [ <span class="string">"$csc"</span> != <span class="string">"none"</span> ] && check 10 <span class="string">"Code Signing : Code Signing Config d&eacute;finie"</span> <span class="string">"OK"</span> || check 10 <span class="string">"Code Signing : Code Signing Config d&eacute;finie"</span> <span class="string">"ABSENT"</span>
+
+  <span class="comment"># Phase 6 &mdash; R&eacute;tention logs</span>
+  local lg; lg=$(aws_cmd logs describe-log-groups --log-group-name-prefix <span class="string">"/aws/lambda/$fn"</span> --query <span class="string">'logGroups[0].retentionInDays'</span> --output text 2>/dev/null)
+  [ <span class="string">"$lg"</span> != <span class="string">"None"</span> ] && [ -n <span class="string">"$lg"</span> ] && check 10 <span class="string">"Logs : R&eacute;tention d&eacute;finie ($lg jours)"</span> <span class="string">"OK"</span> || check 10 <span class="string">"Logs : R&eacute;tention d&eacute;finie"</span> <span class="string">"ABSENT &mdash; Never Expire"</span>
+
+  <span class="comment"># Phase 7 &mdash; Runtime</span>
+  local rt; rt=$(echo <span class="string">"$conf"</span> | python3 -c <span class="string">"import sys,json; print(json.load(sys.stdin).get('Runtime',''))"</span>)
+  local deprecated=(python3.8 python3.9 nodejs14.x nodejs16.x nodejs18.x)
+  local is_deprecated=0
+  for d in "${deprecated[@]}"; do [ <span class="string">"$rt"</span> = <span class="string">"$d"</span> ] && is_deprecated=1; done
+  [ <span class="string">"$is_deprecated"</span> -eq 0 ] && check 4 <span class="string">"Runtime : Actif ($rt)"</span> <span class="string">"OK"</span> || check 4 <span class="string">"Runtime : Actif"</span> <span class="string">"D&Eacute;PR&Eacute;CI&Eacute; &mdash; $rt"</span>
+
+  <span class="comment"># Phase 8 &mdash; X-Ray</span>
+  local xray; xray=$(echo <span class="string">"$conf"</span> | python3 -c <span class="string">"import sys,json; print(json.load(sys.stdin).get('TracingConfig',{}).get('Mode',''))"</span>)
+  [ <span class="string">"$xray"</span> = <span class="string">"Active"</span> ] && check 3 <span class="string">"Tracing : X-Ray Active"</span> <span class="string">"OK"</span> || check 3 <span class="string">"Tracing : X-Ray Active"</span> <span class="string">"PassThrough"</span>
+}
+
+<span class="comment"># Main</span>
+echo <span class="string">"Lambda Security Audit &mdash; $(date)"</span> | tee <span class="var">$REPORT</span>
+if [ <span class="string">"$FUNCTION_FILTER"</span> = <span class="string">"ALL"</span> ]; then
+  fns=$(aws_cmd lambda list-functions --query <span class="string">'Functions[*].FunctionName'</span> --output text)
+  for fn in $fns; do audit_function <span class="string">"$fn"</span>; done
+else
+  audit_function <span class="string">"$FUNCTION_FILTER"</span>
+fi
+echo <span class="string">"\n===== SCORE FINAL : $SCORE / $MAX_SCORE ====="</span> | tee -a <span class="var">$REPORT</span>
+echo <span class="string">"Rapport &eacute;crit dans : $REPORT"</span></pre>
+    </div>
+</div>
+
+<!-- ═══════════════════════ CHECKLIST ═══════════════════════ -->
+<div class="section" id="checklist">
+    <div class="section-header" style="background: linear-gradient(135deg,#232f3e,#37475a);">
+        <div class="section-number" style="background:#232f3e;">&#x2705;</div>
+        <div>
+            <div class="section-title">Checklist de d&eacute;ploiement &mdash; Lambda Security</div>
+            <div class="section-desc">Cocher avant chaque mise en production d'une fonction Lambda</div>
+        </div>
+    </div>
+
+    <h3 style="color:#d13438;">&#x1F534; Critique (Bloquant mise en production)</h3>
+    <div class="checklist-item"><input type="checkbox"><span>[S1] Role d'ex&eacute;cution cr&eacute;&eacute; d&eacute;di&eacute; &agrave; la fonction (pas de PowerUserAccess / AdministratorAccess)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>[S1] Principe du moindre privil&egrave;ge appliqu&eacute; &mdash; politiques test&eacute;es avec IAM Access Analyzer</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>[S2] Aucune credential hardcod&eacute;e dans le code source ou en variable d'environnement plaintext</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>[S2] Secrets stock&eacute;s dans AWS Secrets Manager ou Parameter Store (SecureString KMS)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>[S4] Aucune Function URL avec <code>AuthType: NONE</code> expos&eacute;e &agrave; Internet</span></div>
+
+    <h3 style="color:#ff8c00;">&#x1F7E0; &Eacute;lev&eacute; (&agrave; corriger avant J+7)</h3>
+    <div class="checklist-item"><input type="checkbox"><span>[S3] Fonction Lambda dans un VPC priv&eacute; (pas hors VPC pour les fonctions de production)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>[S3] Security Group d&eacute;di&eacute; (egress HTTPS 443 uniquement vers les endpoints n&eacute;cessaires)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>[S3] VPC Gateway Endpoints S3 + DynamoDB cr&eacute;&eacute;s (gratuits)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>[S5] SAST int&eacute;gr&eacute; dans le pipeline CI (Bandit / Semgrep) &mdash; bloque si CRITICAL</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>[S5] Scan de d&eacute;pendances activ&eacute; (pip-audit / npm audit) &mdash; bloque si CVE CRITICAL</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>[S6] R&eacute;tention CloudWatch Logs &ge; 90 jours configur&eacute;e sur le log group Lambda</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>[S6] X-Ray Active Tracing activ&eacute;</span></div>
+
+    <h3 style="color:#006b3c;">&#x1F7E1; Moyen (&agrave; corriger avant J+30)</h3>
+    <div class="checklist-item"><input type="checkbox"><span>[S1] Rotation IAM non applicable (Lambda utilise des r&ocirc;les IAM, pas de cl&eacute;s d'acc&egrave;s)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>[S4] Throttling API Gateway activ&eacute; (rate &le; 100/sec pour les API publiques)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>[S4] CORS restreint aux origines connues (pas de <code>"*"</code>)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>[S5] Code Signing activ&eacute; en mode Enforce</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>[S6] Logs structur&eacute;s JSON (Lambda Powertools Logger)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>[S7] DLQ ou On-Failure Destination configur&eacute;e pour les invocations asynchrones</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>[S8] Runtime actif (Python 3.12+, Node 22+, Java 21+)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>[S9] Reserved Concurrency d&eacute;finie pour les fonctions expos&eacute;es publiquement</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>[S10] Security Hub FSBP activ&eacute; &mdash; aucun finding Lambda CRITICAL non r&eacute;solu</span></div>
+
+    <h3 style="color:#0078d4;">&#x1F535; Faible (bonnes pratiques)</h3>
+    <div class="checklist-item"><input type="checkbox"><span>[S3] VPC Interface Endpoints pour Secrets Manager + KMS (r&eacute;duit co&ucirc;ts NAT)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>[S6] CloudTrail Data Events activ&eacute; pour les fonctions critiques</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>[S7] bisect-batch-on-function-error activ&eacute; pour les ESM Kinesis/DynamoDB</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>[S8] Amazon Inspector activ&eacute; (scan continu des d&eacute;pendances Lambda)</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>[S9] Idempotency activ&eacute;e (Powertools) pour les fonctions de paiement/&eacute;criture</span></div>
+    <div class="checklist-item"><input type="checkbox"><span>[S10] GuardDuty Lambda Protection activ&eacute; dans toutes les r&eacute;gions</span></div>
+</div>
+
+<!-- ═══════════════════════ GLOSSAIRE ═══════════════════════ -->
+<div class="section" id="glossaire">
+    <div class="section-header" style="background: linear-gradient(135deg,#232f3e,#37475a);">
+        <div class="section-number" style="background:#232f3e;">&#x1F4DA;</div>
+        <div>
+            <div class="section-title">Glossaire</div>
+            <div class="section-desc">Acronymes et termes techniques utilis&eacute;s dans ce guide</div>
+        </div>
+    </div>
+
+    <div class="table-container">
+    <table>
+        <thead><tr><th>Terme</th><th>D&eacute;finition</th></tr></thead>
+        <tbody>
+            <tr><td><strong>ARN</strong></td><td>Amazon Resource Name &mdash; identifiant unique universel de toute ressource AWS (ex : <code>arn:aws:lambda:eu-west-1:123456789012:function:my-function</code>)</td></tr>
+            <tr><td><strong>CMK</strong></td><td>Customer Managed Key &mdash; cl&eacute; KMS g&eacute;r&eacute;e par le client (rotation annuelle, audit CloudTrail, politique de cl&eacute; personnalisable)</td></tr>
+            <tr><td><strong>CORS</strong></td><td>Cross-Origin Resource Sharing &mdash; m&eacute;canisme navigateur autorisant ou bloquant les requ&ecirc;tes HTTP cross-domain</td></tr>
+            <tr><td><strong>CSC</strong></td><td>Code Signing Configuration &mdash; configuration Lambda qui exige que le code d&eacute;ploy&eacute; soit sign&eacute; par un profil AWS Signer autoris&eacute;</td></tr>
+            <tr><td><strong>DLQ</strong></td><td>Dead Letter Queue &mdash; file SQS ou topic SNS recevant les messages/invocations &eacute;chou&eacute;s apr&egrave;s N tentatives</td></tr>
+            <tr><td><strong>ENI</strong></td><td>Elastic Network Interface &mdash; interface r&eacute;seau virtuelle cr&eacute;&eacute;e par Lambda dans votre VPC pour l'acc&egrave;s aux ressources priv&eacute;es</td></tr>
+            <tr><td><strong>ESM</strong></td><td>Event Source Mapping &mdash; configuration reliant une source d'&eacute;v&eacute;nements (SQS, Kinesis, DynamoDB) &agrave; une fonction Lambda</td></tr>
+            <tr><td><strong>IAM</strong></td><td>Identity and Access Management &mdash; service AWS de contr&ocirc;le d'acc&egrave;s (r&ocirc;les, politiques, utilisateurs)</td></tr>
+            <tr><td><strong>KMS</strong></td><td>Key Management Service &mdash; service AWS de gestion des cl&eacute;s de chiffrement (CMK et AWS managed keys)</td></tr>
+            <tr><td><strong>OWASP</strong></td><td>Open Web Application Security Project &mdash; organisation &eacute;dite le Top 10 des vuln&eacute;rabilit&eacute;s web les plus critiques</td></tr>
+            <tr><td><strong>SAST</strong></td><td>Static Application Security Testing &mdash; analyse du code source pour d&eacute;tecter des vuln&eacute;rabilit&eacute;s sans ex&eacute;cuter le programme (ex : Bandit, Semgrep)</td></tr>
+            <tr><td><strong>SBOM</strong></td><td>Software Bill of Materials &mdash; inventaire complet des d&eacute;pendances d'un logiciel avec leurs versions et licences</td></tr>
+            <tr><td><strong>SCP</strong></td><td>Service Control Policy &mdash; politique AWS Organizations qui s'applique &agrave; tous les comptes d'une OU ou de l'organisation</td></tr>
+            <tr><td><strong>SigV4</strong></td><td>AWS Signature Version 4 &mdash; protocole de signature des requ&ecirc;tes HTTP vers les services AWS (authentification des appels API)</td></tr>
+            <tr><td><strong>SSM</strong></td><td>AWS Systems Manager &mdash; service incluant Parameter Store (stockage de configurations et secrets) et Session Manager</td></tr>
+            <tr><td><strong>VPC</strong></td><td>Virtual Private Cloud &mdash; r&eacute;seau isol&eacute; dans AWS avec sous-r&eacute;seaux priv&eacute;s/publics, tables de routage et Security Groups</td></tr>
+            <tr><td><strong>WAF</strong></td><td>Web Application Firewall &mdash; pare-feu applicatif AWS prot&eacute;geant contre les attaques OWASP Top 10, SQL injection, XSS</td></tr>
+            <tr><td><strong>X-Ray</strong></td><td>AWS X-Ray &mdash; service de trac&eacute; distribu&eacute; permettant de visualiser les flux de requ&ecirc;tes end-to-end &agrave; travers les services AWS</td></tr>
+        </tbody>
+    </table>
+    </div>
+</div>
+
+</div><!-- /container -->
+
+<!-- ═══════════════════════ FOOTER ═══════════════════════ -->
+<footer>
+    <p>AWS Lambda Security &mdash; Serverless, Permissions &amp; Protection des Fonctions &bull; Version 1.0 &bull; Avril 2026</p>
+    <p>R&eacute;f&eacute;rences : <a href="https://docs.aws.amazon.com/lambda/latest/dg/security.html" target="_blank">AWS Lambda Security</a> &bull;
+    <a href="https://docs.aws.amazon.com/wellarchitected/latest/security-pillar/" target="_blank">AWS Well-Architected Security Pillar</a> &bull;
+    <a href="https://www.cisecurity.org/benchmark/amazon_web_services" target="_blank">CIS AWS Benchmark v7.0.0</a></p>
+</footer>
+
+<script>
+function copyCode(btn) {
+    const pre = btn.closest('.code-block').querySelector('pre');
+    const tmp = document.createElement('div');
+    tmp.innerHTML = pre.innerHTML;
+    tmp.querySelectorAll('br').forEach(b => b.replaceWith('\n'));
+    const text = tmp.textContent || tmp.innerText;
+    navigator.clipboard.writeText(text).then(() => {
+        btn.textContent = 'Copi\u00e9 !';
+        btn.style.background = '#107C10';
+        setTimeout(() => { btn.textContent = 'Copier'; btn.style.background = ''; }, 1500);
+    }).catch(() => {
+        const ta = document.createElement('textarea');
+        ta.value = text; ta.style.position = 'fixed'; ta.style.left = '-9999px';
+        document.body.appendChild(ta); ta.select();
+        try { document.execCommand('copy'); btn.textContent = 'Copi\u00e9 !'; } catch(e) { btn.textContent = 'Erreur'; }
+        setTimeout(() => { btn.textContent = 'Copier'; }, 1500);
+        document.body.removeChild(ta);
+    });
+}
+document.querySelectorAll('.nav-container a').forEach(link => {
+    link.addEventListener('click', function(e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+});
+window.addEventListener('scroll', function() {
+    const sections = document.querySelectorAll('div.section[id]');
+    const navLinks = document.querySelectorAll('.nav-container nav a');
+    let current = '';
+    sections.forEach(section => {
+        if (window.scrollY >= section.offsetTop - 120) current = section.getAttribute('id');
+    });
+    navLinks.forEach(link => {
+        link.style.borderBottomColor = 'transparent';
+        link.style.color = '';
+        if (link.getAttribute('href') === '#' + current) {
+            link.style.borderBottomColor = 'var(--aws-orange)';
+            link.style.color = 'var(--aws-orange)';
+        }
+    });
+});
+</script>
+<script id="v1a-script">
+(function(){
+  const sidebar = document.querySelector('.v1a-sidebar');
+  if(!sidebar) return;
+  const accs = [...sidebar.querySelectorAll('details.acc')];
+  accs.forEach(a => a.addEventListener('toggle', () => {
+    if(a.open) accs.forEach(o => { if(o!==a) o.open = false; });
+  }));
+  const links = [...sidebar.querySelectorAll('.acc-body a[href^="#"]')];
+  const map = new Map(links.map(a => [a.getAttribute('href').slice(1), a]));
+  const sections = [...document.querySelectorAll('.section[id], section[id]')];
+  function onScroll(){
+    const y = window.scrollY + 120;
+    let cur = null;
+    for(const s of sections){ if(s.offsetTop <= y) cur = s; else break; }
+    links.forEach(a => a.classList.remove('active'));
+    if(cur){
+      const a = map.get(cur.id);
+      if(a){
+        a.classList.add('active');
+        const det = a.closest('details.acc');
+        if(det && !det.open){ accs.forEach(o=>o.open=false); det.open = true; }
+      }
+    }
+  }
+  document.addEventListener('scroll', onScroll, {passive:true});
+  onScroll();
+})();
+</script>
+</main>
+</div>
+</body>
+</html>

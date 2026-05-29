@@ -1,0 +1,1166 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Azure Arc &mdash; Gestion Hybride &amp; S&eacute;curit&eacute; Serveurs On-Premises</title>
+<style>
+:root{--azure-blue:#0078d4;--azure-dark:#004578;--azure-light:#deecf9;--success-green:#107c10;--warning-orange:#ff8c00;--danger-red:#d13438;--neutral-bg:#f3f2f1;--neutral-dark:#323130;--neutral-medium:#605e5c;--white:#ffffff;--shadow:0 2px 8px rgba(0,0,0,0.12);--shadow-hover:0 4px 16px rgba(0,0,0,0.18);--radius:8px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:var(--neutral-bg);color:var(--neutral-dark);line-height:1.6}
+a{color:var(--azure-blue);text-decoration:none}a:hover{text-decoration:underline}
+code{font-family:'Cascadia Code',Consolas,'Courier New',monospace;font-size:.88em;background:#e8e6e4;padding:1px 6px;border-radius:3px}
+.hero{background:var(--white);border-bottom:3px solid var(--azure-blue);padding:40px 40px 32px;text-align:center;max-width:1400px;margin:0 auto}
+.hero h1{font-size:1.7em;font-weight:700;color:var(--azure-dark);margin-bottom:6px;letter-spacing:-.3px}
+.hero .subtitle{font-size:.95em;color:var(--neutral-medium);max-width:800px;margin:0 auto}
+.hero .badge-row{margin-top:16px;display:flex;justify-content:center;gap:8px;flex-wrap:wrap}
+.hero .badge{background:var(--neutral-bg);border:1px solid #e1dfdd;color:var(--neutral-dark);padding:4px 12px;border-radius:4px;font-size:.78em}
+.hero .meta-row{margin-top:14px;display:flex;justify-content:center;gap:20px;flex-wrap:wrap;font-size:.8em;color:var(--neutral-medium)}
+.nav-container{max-width:1400px;margin:0 auto;border-bottom:1px solid #e1dfdd;position:sticky;top:0;z-index:100;background:var(--neutral-bg)}
+.nav-container nav{display:flex;justify-content:flex-start;gap:0;overflow-x:auto;padding:0 16px;-webkit-overflow-scrolling:touch}
+.nav-container nav a{text-decoration:none;color:var(--neutral-medium);padding:10px 14px;font-size:.78em;font-weight:500;white-space:nowrap;border-bottom:2px solid transparent;transition:all .2s}
+.nav-container nav a:hover{color:var(--azure-blue);border-bottom-color:var(--azure-blue);text-decoration:none}
+.container{max-width:1400px;margin:0 auto;padding:30px 40px}
+.section{background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);padding:28px 32px;margin-bottom:28px;transition:box-shadow .2s}
+.section:hover{box-shadow:var(--shadow-hover)}
+.section-header{display:flex;align-items:center;gap:15px;margin-bottom:20px;padding-bottom:15px;border-bottom:2px solid var(--neutral-bg)}
+.section-header.blue{border-bottom-color:var(--azure-blue)}.section-header.red{border-bottom-color:var(--danger-red)}
+.section-header.orange{border-bottom-color:var(--warning-orange)}.section-header.green{border-bottom-color:var(--success-green)}
+.section-number{background:var(--azure-blue);color:#fff;width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1.1em;flex-shrink:0}
+.section-number.red{background:var(--danger-red)}.section-number.orange{background:var(--warning-orange)}.section-number.green{background:var(--success-green)}
+.section-title{font-size:1.4em;color:var(--azure-dark);font-weight:700}
+.section-desc{font-size:.92em;color:var(--neutral-medium);margin-top:2px}
+h3{font-size:1.05em;font-weight:600;margin:24px 0 10px;padding-left:12px;border-left:3px solid var(--azure-blue)}
+.lic{display:inline-block;padding:2px 8px;border-radius:3px;font-size:.72em;font-weight:600;vertical-align:middle;margin-left:4px}
+.lic-free{background:#e8e6e4;color:#605e5c}.lic-std{background:var(--azure-light);color:var(--azure-blue)}
+.lic-prem{background:#e8d4f0;color:#6b2fa0}.lic-addon{background:#fff3cd;color:#6d4c00}
+.alert{border-radius:var(--radius);padding:16px 20px;margin:15px 0;font-size:.93em;line-height:1.6}
+.alert:has(.alert-icon){display:flex;gap:12px;align-items:flex-start}
+.alert-icon{font-size:1.2em;flex-shrink:0;margin-top:2px}
+.alert-info{background:#e6f2ff;border:1px solid #b3d7ff;color:#004578}
+.alert-warn{background:#fff8e1;border:1px solid #ffe082;color:#6d4c00}
+.alert-error{background:#fde7e9;border:1px solid #f5c6cb;color:#721c24}
+.alert-ok{background:#e8f5e9;border:1px solid #a5d6a7;color:#1b5e20}
+.table-container{overflow-x:auto;border-radius:var(--radius);box-shadow:0 1px 4px rgba(0,0,0,.08);margin:12px 0 18px}
+table{width:100%;border-collapse:collapse;background:var(--white);font-size:.9em}
+thead th{background:var(--azure-dark);color:#fff;padding:12px 14px;text-align:left;font-weight:600;font-size:.85em;text-transform:uppercase;letter-spacing:.3px}
+tbody td{padding:10px 14px;border-bottom:1px solid #edebe9;vertical-align:top}
+tbody tr:hover{background:#f8f7f6}tbody tr:last-child td{border-bottom:none}
+tr.row-ok{background:#f0fff0}tr.row-ko{background:#fff5f5}tr.row-warn{background:#fffdf0}
+.code-block{background:#1e1e1e;border-radius:var(--radius);overflow:hidden;margin:12px 0 18px}
+.code-header{display:flex;justify-content:space-between;align-items:center;padding:8px 14px;background:#2d2d2d;font-size:.78em;color:#a0a0a0}
+.copy-btn{background:var(--azure-blue);color:#fff;border:none;padding:4px 12px;border-radius:4px;cursor:pointer;font-size:.85em;transition:background .2s}
+.copy-btn:hover{background:#106EBE}
+.code-block pre{padding:16px 18px;color:#d4d4d4;font-family:'Cascadia Code',Consolas,monospace;font-size:.85em;overflow-x:auto;white-space:pre;line-height:1.55}
+.code-block pre .comment{color:#6a9955}.code-block pre .keyword{color:#569cd6}
+.code-block pre .string{color:#ce9178}.code-block pre .param{color:#9cdcfe}.code-block pre .var{color:#4ec9b0}
+.step{display:flex;gap:12px;margin-bottom:10px;padding:14px 16px;background:#faf9f8;border-radius:var(--radius);border-left:3px solid var(--azure-blue);font-size:.93em}
+.step.step-green{border-left-color:var(--success-green)}.step.step-orange{border-left-color:var(--warning-orange)}
+.step-n{min-width:28px;height:28px;border-radius:50%;background:var(--azure-blue);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.8em;font-weight:700;flex-shrink:0}
+.step-n.green{background:var(--success-green)}.step-n.orange{background:var(--warning-orange)}
+.step-c{flex:1}.step-c ul,.step-c ol{margin-top:6px;padding-left:20px}
+.hl{background:#fff3cd;padding:1px 6px;border-radius:3px;font-weight:600}
+.hl-blue{background:var(--azure-light);padding:1px 6px;border-radius:3px;font-weight:600;color:var(--azure-dark)}
+.hl-green{background:#dff6dd;padding:1px 6px;border-radius:3px;font-weight:600;color:var(--success-green)}
+.hl-red{background:#fde7e9;padding:1px 6px;border-radius:3px;font-weight:600;color:var(--danger-red)}
+.progress-bar{background:#e1dfdd;border-radius:10px;height:24px;overflow:hidden;margin:12px 0;position:relative}
+.progress-fill{height:100%;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:.78em;font-weight:700;color:#fff;transition:width .3s}
+.progress-fill.red{background:linear-gradient(90deg,#a01020,#d13438)}.progress-fill.orange{background:linear-gradient(90deg,#d83b01,#ff8c00)}
+.progress-fill.green{background:linear-gradient(90deg,#107c10,#2ea72e)}.progress-fill.blue{background:linear-gradient(90deg,#004578,#0078d4)}
+.checklist-item{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid #f3f2f1}
+.checklist-item:last-child{border-bottom:none}
+.checklist-item input[type="checkbox"]{width:16px;height:16px;accent-color:var(--azure-blue);flex-shrink:0;margin-top:3px}
+.level-comparison{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:16px 0}
+.level-card{border-radius:var(--radius);padding:16px;text-align:center}
+.level-card.default{background:#f3f2f1;border:2px solid #e1dfdd}.level-card.standard{background:#e6f2ff;border:2px solid #b3d7ff}
+.level-card.strict{background:#e8f5e9;border:2px solid #a5d6a7}.level-card.custom{background:#fff8e1;border:2px solid #ffe082}
+.level-card h4{font-size:1em;margin-bottom:4px}.level-card .level-score{font-size:2em;font-weight:700}
+.level-card .level-desc{font-size:.8em;color:var(--neutral-medium);margin-top:4px}
+footer{background:#faf9f8;color:var(--neutral-medium);text-align:center;padding:24px;margin-top:40px;font-size:.8em;border-top:1px solid #e1dfdd}
+@media print{body{background:#fff;font-size:11px}.nav-container{display:none}.container{max-width:100%;padding:0 16px}.section{box-shadow:none;border:1px solid #ccc;break-inside:avoid}}
+@media(max-width:768px){.hero{padding:24px 16px 20px}.hero h1{font-size:1.3em}.container{padding:16px}.section{padding:20px}.level-comparison{grid-template-columns:repeat(2,1fr)}}
+</style>
+<style id="v1a-overlay">
+:root{--c:#0078d4;--azure-dark:#004578;--light:#deecf9;--bg:#f8f9fb;--surface:#fff;--border:#e3e6ec;--muted:#5b6478;--radius:14px}
+.nav-container,.back-to-index{display:none!important}
+body{background:var(--bg)}
+.v1a-layout{display:grid;grid-template-columns:280px 1fr;gap:0;align-items:start}
+.v1a-sidebar{position:sticky;top:0;height:100vh;overflow-y:auto;padding:18px 14px 24px;background:#fff;border-right:1px solid var(--border)}
+.v1a-main{min-width:0}
+.v1a-main .hero{max-width:none;margin:0;border-radius:0}
+.v1a-main .container{max-width:1200px}
+.back-index{display:inline-flex;align-items:center;gap:6px;margin:0 0 16px;padding:6px 10px;background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--muted);font-size:.78em;font-weight:500;text-decoration:none;transition:all .15s}
+.back-index:hover{background:transparent;border-color:var(--c);color:var(--azure-dark);text-decoration:none}
+.back-index .arr{font-size:1em;line-height:1;opacity:.85}
+.side-head{display:flex;align-items:center;gap:10px;padding:6px 6px 14px;border-bottom:1px solid var(--border);margin-bottom:12px}
+.side-head .ico{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--c),#50a4f0);display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.1em;flex-shrink:0}
+.side-head .t{font-weight:700;color:var(--azure-dark);font-size:.95em;line-height:1.15}
+.side-head .s{font-size:.72em;color:var(--muted);margin-top:2px;line-height:1.3}
+.acc{margin-bottom:6px;border-radius:10px;overflow:hidden}
+.acc>summary{list-style:none;cursor:pointer;padding:8px 10px;display:flex;align-items:center;gap:8px;color:var(--azure-dark);font-weight:600;font-size:.82em;border-radius:8px;user-select:none}
+.acc>summary::-webkit-details-marker{display:none}
+.acc>summary:hover{background:var(--bg)}
+.acc>summary .chev{margin-left:auto;font-size:.7em;transition:transform .15s;color:var(--muted)}
+.acc[open]>summary{background:var(--light);color:var(--c)}
+.acc[open]>summary .chev{transform:rotate(90deg)}
+.acc-body{padding:4px 0 6px 6px;display:flex;flex-direction:column;gap:2px}
+.acc-body a{display:flex;align-items:center;gap:8px;padding:6px 10px 6px 18px;border-radius:6px;font-size:.8em;color:var(--muted);text-decoration:none;border-left:2px solid transparent;transition:all .12s}
+.acc-body a:hover{color:var(--c);background:var(--bg);text-decoration:none}
+.acc-body a.active{color:var(--c);background:var(--light);border-left-color:var(--c);font-weight:600}
+.acc-body a .num{font-size:.7em;color:#9aa2b1;font-variant-numeric:tabular-nums;min-width:22px}
+.acc-body a.active .num{color:var(--c)}
+.side-foot{margin-top:14px;padding-top:12px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:4px}
+.side-foot a{display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:6px;font-size:.78em;color:var(--muted);text-decoration:none}
+.side-foot a:hover{color:var(--c);background:var(--bg);text-decoration:none}
+@media (max-width:900px){
+  .v1a-layout{grid-template-columns:1fr}
+  .v1a-sidebar{position:static;height:auto;border-right:none;border-bottom:1px solid var(--border)}
+}
+</style>
+</head>
+<body>
+<div class="v1a-layout">
+<aside class="v1a-sidebar">
+  <a href="../index.html" class="back-index" title="Revenir à l'index"><span class="arr" aria-hidden="true">&#127968;</span> Index</a>
+  <div class="side-head">
+    <div class="ico">&#x1F4D8;</div>
+    <div>
+      <div class="t">Azure Arc</div>
+      <div class="s">Guide de Configuration &amp; Audit &mdash; Onboarding, Policy, Defender, Monitor, SQL, &hellip;</div>
+    </div>
+  </div>
+  <details class="acc" open>
+    <summary>Introduction <span class="chev">&rsaquo;</span></summary>
+    <div class="acc-body">
+      <a href="#guide"><span class="num">&bull;</span> Mode d'emploi</a>
+      <a href="#licences"><span class="num">&bull;</span> Licences</a>
+    </div>
+  </details>
+  <details class="acc">
+    <summary>Sections <span class="chev">&rsaquo;</span></summary>
+    <div class="acc-body">
+      <a href="#s1"><span class="num">S1</span> Onboarding</a>
+      <a href="#s2"><span class="num">S2</span> R&eacute;seau</a>
+      <a href="#s3"><span class="num">S3</span> RBAC</a>
+      <a href="#s4"><span class="num">S4</span> Policy</a>
+      <a href="#s5"><span class="num">S5</span> Defender</a>
+      <a href="#s6"><span class="num">S6</span> Monitor</a>
+      <a href="#s7"><span class="num">S7</span> SQL Arc</a>
+      <a href="#s8"><span class="num">S8</span> Updates</a>
+      <a href="#s9"><span class="num">S9</span> Kubernetes</a>
+      <a href="#s10"><span class="num">S10</span> Conformit&eacute;</a>
+    </div>
+  </details>
+  <details class="acc">
+    <summary>Annexes <span class="chev">&rsaquo;</span></summary>
+    <div class="acc-body">
+      <a href="#scores"><span class="num">&bull;</span> &#x1F4CA; Scores</a>
+      <a href="#script"><span class="num">&bull;</span> &#x1F4DC; Script</a>
+      <a href="#checklist"><span class="num">&bull;</span> &#x2705; Checklist</a>
+      <a href="#glossaire"><span class="num">&bull;</span> Glossaire</a>
+      <a href="#matrice"><span class="num">&bull;</span> Matrice</a>
+    </div>
+  </details>
+  <div class="side-foot">
+    <a href="#top">&uarr; Retour en haut</a>
+    <a href="#" onclick="window.print();return false;">&#x2B07; Imprimer / PDF</a>
+    <a href="#" onclick="navigator.clipboard.writeText(location.href);this.textContent='&#x2713; Lien copié';return false;">&#x2398; Copier le lien</a>
+  </div>
+</aside>
+<main class="v1a-main">
+
+
+
+<!-- ═══════════════════════ BACK TO INDEX ═══════════════════════ -->
+<a href="../index.html" class="back-to-index" style="position:fixed;top:16px;left:16px;z-index:1000;display:inline-flex;align-items:center;gap:6px;padding:8px 14px;background:#0078d4;color:#fff;text-decoration:none;border-radius:8px;font:600 14px/1 'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;box-shadow:0 2px 8px rgba(0,0,0,0.15);transition:background .2s" onmouseover="this.style.background='#004578'" onmouseout="this.style.background='#0078d4'" aria-label="Retour à l'index">&larr;&nbsp;Index</a>
+<header class="hero">
+  <h1>Azure Arc &mdash; Gestion Hybride, S&eacute;curit&eacute; des Serveurs On-Premises &amp; Multicloud</h1>
+  <p class="subtitle">Guide de Configuration &amp; Audit &mdash; Onboarding, Policy, Defender, Monitor, SQL, Kubernetes, Azure Update Manager</p>
+  <div class="badge-row">
+    <span class="badge">Connected Machine Agent</span>
+    <span class="badge">Azure Policy</span>
+    <span class="badge">Defender for Servers</span>
+    <span class="badge">Azure Monitor</span>
+    <span class="badge">Arc-enabled Kubernetes</span>
+    <span class="badge">Azure Update Manager</span>
+  </div>
+  <div class="meta-row">
+    <span>Version : <strong>1.1</strong></span>
+    <span>Derni&egrave;re MAJ : <strong>Mai 2026</strong></span>
+    <span>Portail : <a href="https://portal.azure.com/#blade/Microsoft_Azure_HybridCompute/AzureArcCenterBlade" target="_blank">portal.azure.com &gt; Azure Arc</a></span>
+    <span>R&eacute;f. : <a href="https://learn.microsoft.com/fr-fr/azure/azure-arc/" target="_blank">Microsoft Learn &mdash; Azure Arc</a></span>
+  </div>
+</header>
+
+<div class="nav-container">
+  <nav>
+    <a href="#guide">Mode d'emploi</a>
+    <a href="#licences">Licences</a>
+    <a href="#s1">S1 Onboarding</a>
+    <a href="#s2">S2 R&eacute;seau</a>
+    <a href="#s3">S3 RBAC</a>
+    <a href="#s4">S4 Policy</a>
+    <a href="#s5">S5 Defender</a>
+    <a href="#s6">S6 Monitor</a>
+    <a href="#s7">S7 SQL Arc</a>
+    <a href="#s8">S8 Updates</a>
+    <a href="#s9">S9 Kubernetes</a>
+    <a href="#s10">S10 Conformit&eacute;</a>
+    <a href="#scores">&#x1F4CA; Scores</a>
+    <a href="#script">&#x1F4DC; Script</a>
+    <a href="#checklist">&#x2705; Checklist</a>
+    <a href="#glossaire">Glossaire</a>
+    <a href="#matrice">Matrice</a>
+  </nav>
+</div>
+
+<div class="container">
+
+<!-- ═══ MODE D'EMPLOI ═══ -->
+<div class="section" id="guide">
+  <div class="section-header blue">
+    <div class="section-number">&#x1F4D6;</div>
+    <div>
+      <div class="section-title">Mode d'emploi de ce guide</div>
+      <div class="section-desc">P&eacute;rim&egrave;tre, conventions et strat&eacute;gie de d&eacute;ploiement</div>
+    </div>
+  </div>
+  <div class="alert alert-info">
+    <span class="alert-icon">&#x1F4CB;</span>
+    <div>Ce guide couvre l'int&eacute;gralit&eacute; de la cha&icirc;ne <strong>Azure Arc</strong> : onboarding des machines physiques/VMs non-Azure, s&eacute;curisation r&eacute;seau, RBAC, Policy, protection Defender, observabilit&eacute; Monitor, SQL Arc, Azure Update Manager et Kubernetes. Chaque section est autonome — un admin peut appliquer uniquement les sections pertinentes &agrave; son p&eacute;rim&egrave;tre.</div>
+  </div>
+  <h3>P&eacute;rim&egrave;tre couvert / hors p&eacute;rim&egrave;tre</h3>
+  <div class="table-container"><table>
+    <thead><tr><th>Dans le p&eacute;rim&egrave;tre</th><th>Hors p&eacute;rim&egrave;tre</th></tr></thead>
+    <tbody>
+      <tr><td>Serveurs Windows/Linux on-premises connect&eacute;s via Connected Machine Agent</td><td>VMs Azure natives (g&eacute;r&eacute;es nativement)</td></tr>
+      <tr><td>Serveurs dans d'autres clouds (AWS EC2, GCP Compute Engine)</td><td>Azure Stack HCI (guide d&eacute;di&eacute;)</td></tr>
+      <tr><td>Clusters Kubernetes non-Azure (EKS, GKE, on-prem)</td><td>AKS (voir <a href="azure-aks.html">azure-aks.html</a>)</td></tr>
+      <tr><td>SQL Server on-premises et multicloud (Arc-enabled SQL)</td><td>Azure SQL Database / Managed Instance (natifs)</td></tr>
+      <tr><td>Azure Update Manager pour toutes les machines Arc</td><td>WSUS / Configuration Manager (on-prem uniquement)</td></tr>
+    </tbody>
+  </table></div>
+  <h3>Convention des colonnes</h3>
+  <div class="table-container"><table>
+    <thead><tr><th>Colonne</th><th>Signification</th><th>Effort</th></tr></thead>
+    <tbody>
+      <tr><td><strong>D&eacute;faut Arc</strong></td><td>Comportement apr&egrave;s installation de l'agent sans configuration suppl&eacute;mentaire</td><td>0 min</td></tr>
+      <tr><td><strong>&#x26A1; Quick Win</strong></td><td>Gain imm&eacute;diat (&le;15 min) &mdash; <span class="hl-green">recommand&eacute; en priorit&eacute;</span></td><td>~15 min</td></tr>
+      <tr><td><strong>&#x1F512; Durci</strong></td><td>Configuration interm&eacute;diaire pour environnements sensibles</td><td>~1h</td></tr>
+      <tr><td><strong>&#x1F3AF; Optimal</strong></td><td>Couverture compl&egrave;te conforme CIS/ANSSI</td><td>Variable</td></tr>
+    </tbody>
+  </table></div>
+  <h3>Convention des badges de licence</h3>
+  <p>
+    <span class="lic lic-free">Gratuit</span> Inclus dans tout abonnement Azure (aucun surco&ucirc;t)<br>
+    <span class="lic lic-std">Defender P1</span> Microsoft Defender for Servers Plan 1 (tarification variable selon l'offre, la devise et la r&eacute;gion &mdash; v&eacute;rifier la page pricing live)<br>
+    <span class="lic lic-prem">Defender P2</span> Microsoft Defender for Servers Plan 2 (tarification variable selon l'offre, la devise et la r&eacute;gion &mdash; v&eacute;rifier la page pricing live)<br>
+    <span class="lic lic-addon">Add-on</span> Plan ou service suppl&eacute;mentaire requis (ex: Azure Update Manager, Azure Policy Guest Configuration / Change Tracking, Azure Private Link, Defender for SQL Servers on Machines, Defender for Containers, standards additionnels MDC, Sentinel&hellip;). Certaines fonctions peuvent aussi &ecirc;tre couvertes via Defender P2 ou les b&eacute;n&eacute;fices Windows Server.
+  </p>
+  <h3>Strat&eacute;gie de d&eacute;ploiement recommand&eacute;e</h3>
+  <div class="step step-green"><div class="step-n green">1</div><div class="step-c"><strong>Quick Win</strong> &mdash; Onboarding 1 serveur pilote + activation Defender for Servers P1 (~15 min, +30 pts)</div></div>
+  <div class="step step-green"><div class="step-n green">2</div><div class="step-c"><strong>D&eacute;ploiement masse</strong> &mdash; Script at-scale via Azure Policy ou service principal (~2h)</div></div>
+  <div class="step"><div class="step-n">3</div><div class="step-c"><strong>Gouvernance</strong> &mdash; RBAC, Policy, Guest Configuration, Azure Update Manager (~demi-journ&eacute;e)</div></div>
+  <div class="step"><div class="step-n">4</div><div class="step-c"><strong>Couverture compl&egrave;te</strong> &mdash; SQL Arc, Kubernetes Arc, Sentinel integration, conformit&eacute; CIS (semaine)</div></div>
+  <h3>Solutions &eacute;cart&eacute;es</h3>
+  <div class="table-container"><table>
+    <thead><tr><th>Solution</th><th>Raison du rejet</th></tr></thead>
+    <tbody>
+      <tr><td><strong>SCOM / System Center</strong></td><td>Infrastructure on-premises suppl&eacute;mentaire, co&ucirc;t &eacute;lev&eacute;, pas d'int&eacute;gration native avec Microsoft Defender for Cloud</td></tr>
+      <tr><td><strong>Connexion directe VPN sans Arc</strong></td><td>Pas de gestion centralis&eacute;e, aucune Policy applicable, aucun Defender for Servers sur les machines on-premises</td></tr>
+      <tr><td><strong>Agent legacy MMA (Microsoft Monitoring Agent)</strong></td><td>Retir&eacute; le 31/08/2024 &mdash; migration vers Azure Monitor Agent (AMA) avec Data Collection Rules (DCR) ; sur les serveurs non-Azure, AMA s'appuie sur Azure Arc comme ressource cible</td></tr>
+    </tbody>
+  </table></div>
+</div>
+
+<!-- ═══ LICENCES ═══ -->
+<div class="section" id="licences">
+  <div class="section-header blue">
+    <div class="section-number">&#x1F4B3;</div>
+    <div>
+      <div class="section-title">Matrice des Licences Azure Arc</div>
+      <div class="section-desc">Ce qui est gratuit, ce qui n&eacute;cessite Defender ou des add-ons</div>
+    </div>
+  </div>
+  <div class="table-container"><table>
+    <thead><tr><th>Fonctionnalit&eacute;</th><th>Gratuit</th><th>Defender P1</th><th>Defender P2</th><th>Add-on</th></tr></thead>
+    <tbody>
+      <tr class="row-ok"><td>Connected Machine Agent + inventaire Azure</td><td>&#x2705;</td><td>&#x2705;</td><td>&#x2705;</td><td>&mdash;</td></tr>
+      <tr class="row-warn"><td>Azure Policy / Guest Configuration</td><td>&#x274C;</td><td>&#x274C;</td><td>&#x2705;</td><td>&#x2705; Achat s&eacute;par&eacute; / b&eacute;n&eacute;fices Windows</td></tr>
+      <tr class="row-ok"><td>Azure RBAC sur machines Arc</td><td>&#x2705;</td><td>&#x2705;</td><td>&#x2705;</td><td>&mdash;</td></tr>
+      <tr class="row-warn"><td>Azure Update Manager (basique)</td><td>&#x274C;</td><td>&#x274C;</td><td>&#x2705;</td><td>&#x2705; Achat s&eacute;par&eacute; / b&eacute;n&eacute;fices Windows</td></tr>
+      <tr class="row-warn"><td>Azure Monitor / Log Analytics (collecte logs)</td><td>&#x274C; (ing&eacute;stion pay/Go)</td><td>&#x274C; (pas de b&eacute;n&eacute;fice d'ing&eacute;stion)</td><td>&#x2705; (b&eacute;n&eacute;fice sur types de donn&eacute;es support&eacute;s)</td><td>&mdash;</td></tr>
+      <tr class="row-ko"><td>Microsoft Defender for Servers &mdash; Plan 1</td><td>&#x274C;</td><td>&#x2705;</td><td>&#x2705;</td><td>&mdash;</td></tr>
+      <tr class="row-ko"><td>Microsoft Defender for Servers &mdash; Plan 2 (MDE P2, VA, JIT)</td><td>&#x274C;</td><td>&#x274C;</td><td>&#x2705;</td><td>&mdash;</td></tr>
+      <tr class="row-ko"><td>Defender CSPM (posture management avanc&eacute;)</td><td>&#x274C;</td><td>&#x274C;</td><td>&#x274C;</td><td>&#x2705; CSPM</td></tr>
+      <tr class="row-warn"><td>Arc-enabled SQL Server (inventaire + best practices)</td><td>&#x2705;</td><td>&#x2705;</td><td>&#x2705;</td><td>&mdash;</td></tr>
+      <tr class="row-ko"><td>Defender for SQL (SQL Server Arc — threat detection)</td><td>&#x274C;</td><td>&#x274C;</td><td>&#x274C;</td><td>&#x2705; Defender for Databases / SQL Servers on Machines</td></tr>
+      <tr class="row-warn"><td>Arc-enabled Kubernetes (connect + Policy)</td><td>&#x2705;</td><td>&#x2705;</td><td>&#x2705;</td><td>&mdash;</td></tr>
+      <tr class="row-ko"><td>Defender for Containers (Kubernetes Arc)</td><td>&#x274C;</td><td>&#x274C;</td><td>&#x274C;</td><td>&#x2705; Defender for Containers</td></tr>
+      <tr class="row-warn"><td>Azure Arc Private Link</td><td>&#x274C;</td><td>&#x274C;</td><td>&#x274C;</td><td>&#x2705; Azure Private Link / Private Endpoint</td></tr>
+      <tr class="row-ko"><td>Microsoft Sentinel (SIEM/SOAR)</td><td>&#x274C;</td><td>&#x274C;</td><td>&#x274C;</td><td>&#x2705; <a href="sentinel.html">Sentinel</a> (pay/Go)</td></tr>
+    </tbody>
+  </table></div>
+  <div class="alert alert-info">
+    <span class="alert-icon">&#x1F4A1;</span>
+    <div><strong>Nuance de facturation :</strong> sur les serveurs Arc, <strong>Azure Update Manager</strong> et <strong>Azure Policy Guest Configuration / Change Tracking</strong> sont factur&eacute;s par serveur lorsqu'ils sont activ&eacute;s, sauf inclusion via <strong>Defender for Servers Plan 2</strong> ou activation des b&eacute;n&eacute;fices <em>Windows Server Management enabled by Azure Arc</em> (attestation Software Assurance / subscription ou Windows Server pay-as-you-go). <strong>Azure Arc Private Link</strong> suit la tarification d'Azure Private Link / Private Endpoint.</div>
+  </div>
+  <div class="alert alert-info">
+    <span class="alert-icon">&#x1F4A1;</span>
+    <div><strong>Facturation Arc :</strong> l'agent Connected Machine est <strong>gratuit</strong>. La facturation commence uniquement quand des services Azure (Defender, Monitor, SQL Arc payant) sont activ&eacute;s sur la machine. Une machine Arc <em>non couverte par Defender</em> ne g&eacute;n&egrave;re aucun co&ucirc;t d'infrastructure.</div>
+  </div>
+</div>
+
+<!-- ═══ S1 — ONBOARDING ═══ -->
+<div class="section" id="s1">
+  <div class="section-header red">
+    <div class="section-number red">1</div>
+    <div>
+      <div class="section-title">Onboarding des Serveurs (Connected Machine Agent) <span class="lic lic-free">Gratuit</span></div>
+      <div class="section-desc">Installation et enregistrement de l'agent Arc — condition pr&eacute;alable &agrave; toutes les sections suivantes</div>
+    </div>
+  </div>
+  <div class="alert alert-error">
+    <span class="alert-icon">&#x1F6A8;</span>
+    <div><strong>Sc&eacute;nario :</strong> Un serveur on-premises n'est pas visible dans Azure : aucune politique de conformit&eacute; ne s'applique, aucun Defender ne le prot&egrave;ge, aucun patch ne peut &ecirc;tre orchestr&eacute; depuis le cloud. C'est une <strong>machine aveugle</strong> — comme une cam&eacute;ra de surveillance d&eacute;branch&eacute;e. L'installation de l'agent Connected Machine prend &lt;5 min et change radicalement la visibilit&eacute;.</div>
+  </div>
+  <h3>1.1 — Tableau de configuration agent</h3>
+  <div class="table-container"><table>
+    <thead><tr><th>Param&egrave;tre</th><th>D&eacute;faut</th><th>&#x26A1; Quick Win</th><th>&#x1F512; Durci</th><th>&#x1F3AF; Optimal</th><th>Licence</th></tr></thead>
+    <tbody>
+      <tr class="row-ko"><td><strong>Agent install&eacute;</strong></td><td><span class="hl-red">Non</span></td><td><span class="hl-green">Oui (manuel)</span></td><td><span class="hl-green">Oui (policy/script)</span></td><td><span class="hl-green">Oui (at-scale)</span></td><td><span class="lic lic-free">Gratuit</span></td></tr>
+      <tr class="row-ko"><td><strong>Mode connexion</strong> (<code>--cloud</code>)</td><td><span class="hl-red">Non connect&eacute;</span></td><td>Public endpoint</td><td>Proxy authentifi&eacute;</td><td><span class="hl-green">Private Link</span></td><td><span class="lic lic-addon">Private Link</span></td></tr>
+      <tr class="row-warn"><td><strong>Service principal d&eacute;di&eacute;</strong> (onboarding)</td><td><span class="hl-red">Compte interactif</span></td><td>Compte interactif</td><td><span class="hl-green">SP d&eacute;di&eacute;</span></td><td>SP + cert</td><td><span class="lic lic-free">Gratuit</span></td></tr>
+      <tr class="row-warn"><td><strong>Resource group &amp; tags</strong></td><td><span class="hl-red">Non structur&eacute;s</span></td><td>RG par site</td><td><span class="hl-green">Tags Env/Owner/Site</span></td><td>Policy enforce tags</td><td><span class="lic lic-free">Gratuit</span></td></tr>
+      <tr class="row-ko"><td><strong>Auto-upgrade agent</strong> (<code>--enable-automatic-upgrade</code>, preview)</td><td><span class="hl-red">D&eacute;sactiv&eacute;</span></td><td>D&eacute;sactiv&eacute;</td><td><span class="hl-green">Activ&eacute;</span></td><td>Activ&eacute; + suivi</td><td><span class="lic lic-free">Gratuit</span></td></tr>
+      <tr class="row-warn"><td><strong>Extensions install&eacute;es</strong></td><td>Aucune</td><td>AMA (Azure Monitor)</td><td>AMA + MDE</td><td><span class="hl-green">AMA + MDE + KeyVault</span></td><td><span class="lic lic-std">Defender P1</span></td></tr>
+    </tbody>
+  </table></div>
+  <div class="alert alert-info">
+    <span class="alert-icon">&#x1F4A1;</span>
+    <div><strong>Pourquoi chaque param&egrave;tre compte :</strong><br>
+    &bull; <strong>Service principal d&eacute;di&eacute; :</strong> l'onboarding interactif expose des credentials admin. Un SP limit&eacute; au r&ocirc;le <em>Azure Connected Machine Onboarding</em> respecte le moindre privil&egrave;ge (Microsoft Cloud Security Benchmark IM-1 / PA-7).<br>
+    &bull; <strong>Auto-upgrade :</strong> Microsoft publie des mises &agrave; jour mensuelles et ne supporte officiellement que les versions de l'agent publi&eacute;es dans l'ann&eacute;e glissante ; activer l'upgrade automatique (preview) r&eacute;duit le risque de d&eacute;rive.<br>
+    &bull; <strong>Tags :</strong> sans tags, la facturation Defender est impossible &agrave; ventiler et les Policy d'exclusion deviennent ingouvernables.</div>
+  </div>
+  <div class="alert alert-warn">
+    <span class="alert-icon">&#x26A0;&#xFE0F;</span>
+    <div><strong>Pi&egrave;ge fr&eacute;quent :</strong> le script g&eacute;n&eacute;r&eacute; depuis le portail (<em>Add servers &gt; Generate script</em>) contient un token valide <strong>1 heure</strong>. En d&eacute;ploiement masse, utiliser un <strong>service principal</strong> sans expiration de token.</div>
+  </div>
+  <h3>1.2 — Installation manuelle (Linux/Windows)</h3>
+  <div class="code-block">
+    <div class="code-header"><span>Bash / PowerShell — Onboarding manuel avec Service Principal</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div>
+<pre><span class="comment"># === VARIABLES ===</span>
+<span class="var">$subscriptionId</span> = <span class="string">"&lt;subscription-id&gt;"</span>
+<span class="var">$resourceGroup</span>  = <span class="string">"rg-arc-servers-prod"</span>
+<span class="var">$location</span>        = <span class="string">"westeurope"</span>
+<span class="var">$tenantId</span>        = <span class="string">"&lt;tenant-id&gt;"</span>
+<span class="var">$spClientId</span>      = <span class="string">"&lt;service-principal-client-id&gt;"</span>
+<span class="var">$spClientSecret</span>  = <span class="string">"&lt;service-principal-secret&gt;"</span>
+
+<span class="comment"># === WINDOWS — T&eacute;l&eacute;chargement et installation agent ===</span>
+<span class="keyword">Invoke-WebRequest</span> <span class="param">-Uri</span> <span class="string">"https://aka.ms/AzureConnectedMachineAgent"</span> <span class="param">-OutFile</span> <span class="string">"AzureConnectedMachineAgent.msi"</span>
+<span class="keyword">msiexec.exe</span> <span class="param">/i</span> AzureConnectedMachineAgent.msi <span class="param">/l*v</span> installationlog.txt <span class="param">/qn</span>
+
+<span class="comment"># === Connexion avec Service Principal ===</span>
+<span class="keyword">azcmagent connect</span> <span class="param">--service-principal-id</span> <span class="var">$spClientId</span> `
+  <span class="param">--service-principal-secret</span> <span class="var">$spClientSecret</span> `
+  <span class="param">--tenant-id</span> <span class="var">$tenantId</span> `
+  <span class="param">--subscription-id</span> <span class="var">$subscriptionId</span> `
+  <span class="param">--resource-group</span> <span class="var">$resourceGroup</span> `
+  <span class="param">--location</span> <span class="var">$location</span> `
+  <span class="param">--tags</span> <span class="string">"Env=Prod;Owner=IT;Site=Paris"</span> `
+  <span class="param">--enable-automatic-upgrade</span></pre>
+  </div>
+  <h3>1.3 — V&eacute;rification</h3>
+  <div class="code-block">
+    <div class="code-header"><span>Azure CLI — V&eacute;rification des machines Arc enregistr&eacute;es</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div>
+<pre><span class="comment"># Lister toutes les machines Arc du Resource Group</span>
+<span class="keyword">az connectedmachine list</span> <span class="param">--resource-group</span> <span class="string">rg-arc-servers-prod</span> `
+  <span class="param">--query</span> <span class="string">"[].{Name:name, Status:status, OS:osName, Agent:agentVersion}"</span> <span class="param">--output</span> table
+
+<span class="comment"># V&eacute;rifier la version agent et l'auto-upgrade</span>
+<span class="keyword">azcmagent show</span></pre>
+  </div>
+  <h3>1.4 — D&eacute;ploiement at-scale via Azure Policy</h3>
+  <div class="step"><div class="step-n">1</div><div class="step-c">Portail Azure Arc &gt; <strong>Servers &gt; Add</strong> &gt; <em>Add multiple servers</em> &gt; g&eacute;n&eacute;rer le script de d&eacute;ploiement</div></div>
+  <div class="step"><div class="step-n">2</div><div class="step-c">Cr&eacute;er un <strong>Service Principal</strong> : <code>az ad sp create-for-rbac --name "arc-onboarding-sp" --role "Azure Connected Machine Onboarding" --scopes /subscriptions/&lt;id&gt;</code></div></div>
+  <div class="step"><div class="step-n">3</div><div class="step-c">Distribuer via GPO, Ansible, SCCM ou Intune le script g&eacute;n&eacute;r&eacute; avec les credentials SP</div></div>
+  <div class="step"><div class="step-n">4</div><div class="step-c">Portail <strong>Azure Arc &gt; Servers</strong> : v&eacute;rifier le statut <span class="hl-green">Connected</span> de toutes les machines</div></div>
+  <h3>1.5 — Checklist onboarding</h3>
+  <div class="checklist-item"><input type="checkbox"><span><strong>Version agent support&eacute;e :</strong> v&eacute;rifier via <code>azcmagent show</code> et les release notes que l'agent est dans la fen&ecirc;tre de support Microsoft</span></div>
+  <div class="checklist-item"><input type="checkbox"><span><strong>Statut Connected :</strong> <code>az connectedmachine list --query "[?status!='Connected'].name"</code></span></div>
+  <div class="checklist-item"><input type="checkbox"><span><strong>Tags pr&eacute;sents :</strong> Env, Owner, Site sur chaque machine</span></div>
+  <div class="checklist-item"><input type="checkbox"><span><strong>Auto-upgrade activ&eacute; (preview) :</strong> v&eacute;rifier dans la ressource machine Arc que <code>properties.agentUpgrade.enableAutomaticUpgrade</code> = <code>true</code></span></div>
+  <div class="checklist-item"><input type="checkbox"><span><strong>SP onboarding retir&eacute;</strong> apr&egrave;s d&eacute;ploiement masse (principe moindre privil&egrave;ge)</span></div>
+</div>
+
+<!-- ═══ S2 — RÉSEAU ═══ -->
+<div class="section" id="s2">
+  <div class="section-header red">
+    <div class="section-number red">2</div>
+    <div>
+      <div class="section-title">S&eacute;curit&eacute; R&eacute;seau &mdash; Connectivit&eacute;, Proxy &amp; Private Link <span class="lic lic-free">Gratuit</span> <span class="lic lic-addon">Private Link</span></div>
+      <div class="section-desc">Contr&ocirc;ler les flux sortants de l'agent et &eacute;liminer l'exposition Internet</div>
+    </div>
+  </div>
+  <div class="alert alert-error">
+    <span class="alert-icon">&#x1F6A8;</span>
+    <div><strong>Sc&eacute;nario :</strong> Par d&eacute;faut, l'agent Arc communique avec les endpoints Microsoft via Internet public. Dans un environnement sensible (banque, sant&eacute;, industrie), il faut r&eacute;duire cette exposition au strict n&eacute;cessaire. <strong>Azure Arc Private Link Scope</strong> fait passer les flux Arc compatibles Private Link par un endpoint priv&eacute; ; Microsoft Entra ID, Azure Resource Manager et les autres services associ&eacute;s (ex: Azure Monitor) demandent encore leurs propres autorisations ou private endpoints.</div>
+  </div>
+  <h3>2.1 — Tableau des m&eacute;thodes de connectivit&eacute;</h3>
+  <div class="table-container"><table>
+    <thead><tr><th>Param&egrave;tre</th><th>D&eacute;faut</th><th>&#x26A1; Quick Win</th><th>&#x1F512; Durci</th><th>&#x1F3AF; Optimal</th><th>Licence</th></tr></thead>
+    <tbody>
+      <tr class="row-warn"><td><strong>M&eacute;thode connexion</strong></td><td><span class="hl-red">Internet public</span></td><td>Internet + liste blanche</td><td>Proxy authentifi&eacute;</td><td><span class="hl-green">Private Link</span></td><td><span class="lic lic-addon">Private Link</span></td></tr>
+      <tr class="row-ko"><td><strong>Proxy config</strong> (<code>azcmagent config set proxy.url</code>)</td><td><span class="hl-red">Aucun</span></td><td>Proxy transparent</td><td><span class="hl-green">Proxy authentifi&eacute;</span></td><td>Proxy + inspection TLS</td><td><span class="lic lic-free">Gratuit</span></td></tr>
+      <tr class="row-ko"><td><strong>Private Link Scope</strong></td><td><span class="hl-red">D&eacute;sactiv&eacute;</span></td><td>D&eacute;sactiv&eacute;</td><td>Activ&eacute; (mode Mixed)</td><td><span class="hl-green">Activ&eacute; (publicNetworkAccess d&eacute;sactiv&eacute;)</span></td><td><span class="lic lic-addon">Private Link</span></td></tr>
+      <tr class="row-warn"><td><strong>Ports sortants ouverts</strong></td><td>443 vers *.azure.com</td><td>443 list&eacute; explicitement</td><td><span class="hl-green">443 vers IPs Microsoft uniquement</span></td><td>Private Link + sorties publiques minimales (Entra ID / ARM)</td><td><span class="lic lic-free">Gratuit</span></td></tr>
+      <tr class="row-ok"><td><strong>Chiffrement TLS</strong> agent &#x2194; Azure</td><td><span class="hl-green">TLS 1.2+</span></td><td>TLS 1.2+</td><td>TLS 1.2+</td><td>TLS 1.2+</td><td><span class="lic lic-free">Gratuit</span></td></tr>
+      <tr class="row-warn"><td><strong>Firewall local &mdash; outbound rules</strong></td><td><span class="hl-red">Non configur&eacute;</span></td><td>Ouvert sur 443</td><td><span class="hl-green">Restrict&eacute; aux FQDN Arc</span></td><td>Private Link + exceptions publiques minimales (Entra ID / ARM et services annexes si n&eacute;cessaire)</td><td><span class="lic lic-free">Gratuit</span></td></tr>
+    </tbody>
+  </table></div>
+  <div class="alert alert-info">
+    <span class="alert-icon">&#x1F4A1;</span>
+    <div><strong>FQDN requis (mode Internet public) :</strong> <code>management.azure.com</code>, <code>login.microsoftonline.com</code>, <code>&lt;region&gt;.his.arc.azure.com</code>, <code>&lt;region&gt;.guestconfiguration.azure.com</code>, <code>gbl.his.arc.azure.com</code>. Source : <a href="https://learn.microsoft.com/fr-fr/azure/azure-arc/servers/network-requirements" target="_blank">learn.microsoft.com — Network requirements</a></div>
+  </div>
+  <div class="alert alert-warn">
+    <span class="alert-icon">&#x26A0;&#xFE0F;</span>
+    <div><strong>Pi&egrave;ge Private Link :</strong> d&eacute;sactiver l'acc&egrave;s public du scope ne privatise pas Microsoft Entra ID ni Azure Resource Manager, et les autres services Azure (Azure Monitor, Key Vault, Blob, etc.) exigent chacun leur propre configuration Private Link si vous voulez &eacute;viter Internet pour ces flux-l&agrave;.</div>
+  </div>
+  <h3>2.2 — Configuration proxy</h3>
+  <div class="code-block">
+    <div class="code-header"><span>Bash/PowerShell — Configuration proxy sur l'agent Arc</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div>
+<pre><span class="comment"># Configurer un proxy authentifi&eacute;</span>
+<span class="keyword">azcmagent config set</span> proxy.url <span class="string">"http://proxy.corp.local:8080"</span>  <span class="comment"># &eacute;viter d'inclure des credentials dans la commande &mdash; pr&eacute;f&eacute;rer un proxy d'authentification Kerberos/NTLM transparent</span>
+
+<span class="comment"># Exclure des hosts du proxy (ex: endpoints internes)</span>
+<span class="keyword">azcmagent config set</span> proxy.bypass <span class="string">"169.254.169.254,corp.local"</span>
+
+<span class="comment"># V&eacute;rification</span>
+<span class="keyword">azcmagent config get</span> proxy.url</pre>
+  </div>
+  <h3>2.3 — Configuration Azure Arc Private Link Scope</h3>
+  <div class="code-block">
+    <div class="code-header"><span>Azure CLI — Cr&eacute;ation du Private Link Scope + Private Endpoint</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div>
+<pre><span class="comment"># 1. Cr&eacute;er le Private Link Scope</span>
+<span class="keyword">az resource create</span> <span class="param">--resource-group</span> <span class="string">rg-arc-network</span> `
+  <span class="param">--resource-type</span> <span class="string">"Microsoft.HybridCompute/privateLinkScopes"</span> `
+  <span class="param">--name</span> <span class="string">"arc-pls-prod"</span> `
+  <span class="param">--location</span> <span class="string">westeurope</span> `
+  <span class="param">--properties</span> <span class="string">'{"publicNetworkAccess":"Disabled"}'</span>
+
+<span class="comment"># 2. Associer les serveurs au scope</span>
+<span class="comment"># - Nouveau serveur : g&eacute;n&eacute;rer le script d'onboarding Azure Arc avec le mode de connectivit&eacute; "Private endpoint"</span>
+<span class="comment"># - Serveur existant : associer la machine depuis Azure Arc Private Link Scope &gt; Azure Arc resources &gt; Add</span>
+
+<span class="comment"># 3. Cr&eacute;er le Private Endpoint dans le VNet</span>
+<span class="keyword">az network private-endpoint create</span> `
+  <span class="param">--resource-group</span> <span class="string">rg-arc-network</span> `
+  <span class="param">--name</span> <span class="string">pe-arc-pls</span> `
+  <span class="param">--vnet-name</span> <span class="string">vnet-prod</span> `
+  <span class="param">--subnet</span> <span class="string">snet-endpoints</span> `
+  <span class="param">--private-connection-resource-id</span> <span class="string">/subscriptions/&lt;sub&gt;/resourceGroups/rg-arc-network/providers/Microsoft.HybridCompute/privateLinkScopes/arc-pls-prod</span> `
+  <span class="param">--group-id</span> <span class="string">hybridcompute</span> `
+  <span class="param">--connection-name</span> <span class="string">arc-pls-conn</span></pre>
+  </div>
+  <h3>2.4 — V&eacute;rification</h3>
+  <div class="code-block">
+    <div class="code-header"><span>Azure CLI — V&eacute;rification connectivit&eacute; et mode r&eacute;seau</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div>
+<pre><span class="comment"># Tester la connectivit&eacute; agent</span>
+<span class="keyword">azcmagent check</span>
+
+<span class="comment"># V&eacute;rifier le statut du Private Link Scope</span>
+<span class="keyword">az resource show</span> <span class="param">--resource-group</span> <span class="string">rg-arc-network</span> `
+  <span class="param">--resource-type</span> <span class="string">"Microsoft.HybridCompute/privateLinkScopes"</span> `
+  <span class="param">--name</span> <span class="string">arc-pls-prod</span> `
+  <span class="param">--query</span> <span class="string">"properties.publicNetworkAccess"</span></pre>
+  </div>
+  <div class="checklist-item"><input type="checkbox"><span><strong>&Eacute;tat des lieux :</strong> Proxy ou Azure Arc Private Link Scope (PLS) configur&eacute; et liste FQDN valid&eacute;e</span></div>
+</div>
+<!-- ═══ S3 — RBAC ═══ -->
+<div class="section" id="s3">
+  <div class="section-header orange">
+    <div class="section-number orange">3</div>
+    <div>
+      <div class="section-title">RBAC &amp; Gouvernance des Identit&eacute;s Arc <span class="lic lic-free">Gratuit</span></div>
+      <div class="section-desc">Contr&ocirc;ler qui peut voir, modifier et g&eacute;rer les machines Arc et leurs extensions</div>
+    </div>
+  </div>
+  <div class="alert alert-error">
+    <span class="alert-icon">&#x1F6A8;</span>
+    <div><strong>Sc&eacute;nario :</strong> Sans RBAC granulaire, tout contributeur Azure peut installer des extensions (scripts, agents) sur vos serveurs on-premises &mdash; &eacute;quivalent &agrave; donner les cl&eacute;s de votre datacenter &agrave; n'importe quel administrateur Azure. Le r&ocirc;le <em>Azure Arc ScVmm VM Contributor</em> mal attribu&eacute; permet l'ex&eacute;cution de commandes arbitraires sur les machines.</div>
+  </div>
+  <h3>3.1 — R&ocirc;les RBAC Arc natifs</h3>
+  <div class="table-container"><table>
+    <thead><tr><th>R&ocirc;le</th><th>Permissions cl&eacute;s</th><th>Usage recommand&eacute;</th><th>Risque si sur-attribu&eacute;</th></tr></thead>
+    <tbody>
+      <tr class="row-ok"><td><strong>Azure Connected Machine Onboarding</strong></td><td>Enregistrer des machines (write limit&eacute;)</td><td>SP d'onboarding uniquement</td><td>Faible</td></tr>
+      <tr class="row-ok"><td><strong>Azure Connected Machine Resource Administrator</strong></td><td>Lecture/&eacute;criture machines + extensions</td><td>Admins Arc d&eacute;di&eacute;s</td><td>Moyen (install extensions)</td></tr>
+      <tr class="row-warn"><td><strong>Azure Arc VMware VM Contributor</strong></td><td>Start/Stop/Delete VMs Arc VMware</td><td>Ops niveau 2/3</td><td>&Eacute;lev&eacute; (delete machines)</td></tr>
+      <tr class="row-ko"><td><strong>Contributor</strong> (abonnement)</td><td>Tout &mdash; y compris extensions Run Command</td><td><span class="hl-red">Ne pas utiliser sur le scope Arc</span></td><td>Critique (RCE via extensions)</td></tr>
+      <tr class="row-ok"><td><strong>Reader</strong></td><td>Lecture seule inventaire</td><td>Auditeurs, RSSI</td><td>Aucun</td></tr>
+      <tr class="row-warn"><td><strong>Azure Arc Kubernetes Cluster User</strong></td><td>kubeconfig pour clusters Arc K8s</td><td>D&eacute;veloppeurs (namespace limit&eacute;)</td><td>Moyen</td></tr>
+    </tbody>
+  </table></div>
+  <div class="alert alert-info">
+    <span class="alert-icon">&#x1F4A1;</span>
+    <div><strong>Pourquoi pas Contributor :</strong> le r&ocirc;le Contributor sur une machine Arc permet l'installation d'extensions (dont <code>CustomScriptExtension</code>) qui ex&eacute;cutent des scripts arbitraires sur le serveur on-premises. C'est une escalade de privil&egrave;ges cloud &rarr; on-premises. Utiliser <em>Azure Connected Machine Resource Administrator</em> au scope Resource Group uniquement.</div>
+  </div>
+  <h3>3.2 — Configuration RBAC</h3>
+  <div class="code-block">
+    <div class="code-header"><span>Azure CLI — Attribution RBAC granulaire sur Arc</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div>
+<pre><span class="comment"># R&ocirc;le onboarding pour le SP de d&eacute;ploiement (scope abonnement)</span>
+<span class="keyword">az role assignment create</span> `
+  <span class="param">--assignee</span> <span class="string">"&lt;sp-client-id&gt;"</span> `
+  <span class="param">--role</span> <span class="string">"Azure Connected Machine Onboarding"</span> `
+  <span class="param">--scope</span> <span class="string">"/subscriptions/&lt;subscription-id&gt;"</span>
+
+<span class="comment"># Admins Arc : Resource Administrator au scope RG uniquement</span>
+<span class="keyword">az role assignment create</span> `
+  <span class="param">--assignee</span> <span class="string">"arc-admins@corp.com"</span> `
+  <span class="param">--role</span> <span class="string">"Azure Connected Machine Resource Administrator"</span> `
+  <span class="param">--scope</span> <span class="string">"/subscriptions/&lt;sub&gt;/resourceGroups/rg-arc-servers-prod"</span>
+
+<span class="comment"># Auditeurs : Reader au scope RG</span>
+<span class="keyword">az role assignment create</span> `
+  <span class="param">--assignee</span> <span class="string">"rssi@corp.com"</span> `
+  <span class="param">--role</span> <span class="string">"Reader"</span> `
+  <span class="param">--scope</span> <span class="string">"/subscriptions/&lt;sub&gt;/resourceGroups/rg-arc-servers-prod"</span></pre>
+  </div>
+  <h3>3.3 — V&eacute;rification</h3>
+  <div class="code-block">
+    <div class="code-header"><span>Azure CLI — Audit des attributions RBAC sur le RG Arc</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div>
+<pre><span class="keyword">az role assignment list</span> `
+  <span class="param">--scope</span> <span class="string">"/subscriptions/&lt;sub&gt;/resourceGroups/rg-arc-servers-prod"</span> `
+  <span class="param">--query</span> <span class="string">"[].{Principal:principalName, Role:roleDefinitionName, Scope:scope}"</span> `
+  <span class="param">--output</span> table</pre>
+  </div>
+  <div class="checklist-item"><input type="checkbox"><span><strong>&Eacute;tat des lieux :</strong> R&ocirc;les RBAC Arc granulaires assign&eacute;s (pas de Contributor direct sur les machines)</span></div>
+</div>
+
+<!-- ═══ S4 — POLICY ═══ -->
+<div class="section" id="s4">
+  <div class="section-header orange">
+    <div class="section-number orange">4</div>
+    <div>
+      <div class="section-title">Azure Policy &amp; Guest Configuration <span class="lic lic-free">Policy</span> <span class="lic lic-addon">Guest Config</span></div>
+      <div class="section-desc">Appliquer et auditer automatiquement la conformit&eacute; sur toutes les machines Arc</div>
+    </div>
+  </div>
+  <div class="alert alert-error">
+    <span class="alert-icon">&#x1F6A8;</span>
+    <div><strong>Sc&eacute;nario :</strong> Sans Policy, un serveur on-premises peut d&eacute;river de la configuration de r&eacute;f&eacute;rence en silence &mdash; mot de passe admin local r&eacute;utilis&eacute;, audit Windows d&eacute;sactiv&eacute;, TLS 1.0 encore actif. Azure Policy + Guest Configuration transforme chaque machine Arc en objet <strong>continuellement audit&eacute;</strong>, comme un scanner de conformit&eacute; permanent.</div>
+  </div>
+  <div class="alert alert-info">
+    <span class="alert-icon">&#x1F4A1;</span>
+    <div><strong>Pourquoi c'est critique :</strong> Azure Policy + Guest Configuration est le seul m&eacute;canisme transformant un serveur Arc en ressource <em>continuellement v&eacute;rifi&eacute;e</em>. Sans Policy, l'onboarding cr&eacute;e de la visibilit&eacute; mais aucune conformit&eacute; n'est appliqu&eacute;e &mdash; le serveur peut d&eacute;river silencieusement sans alerte.</div>
+  </div>
+  <h3>4.1 — Initiatives Policy recommand&eacute;es pour Arc</h3>
+  <div class="table-container"><table>
+    <thead><tr><th>Initiative / Policy</th><th>D&eacute;faut</th><th>&#x26A1; Quick Win</th><th>&#x1F3AF; Optimal</th><th>Licence</th></tr></thead>
+    <tbody>
+      <tr class="row-ko"><td><strong>Deploy Linux/Windows AMA via Arc</strong> (built-in)</td><td><span class="hl-red">Non assign&eacute;e</span></td><td><span class="hl-green">Assign&eacute;e (DeployIfNotExists)</span></td><td>Assign&eacute;e + remediation</td><td><span class="lic lic-free">Gratuit</span></td></tr>
+      <tr class="row-ko"><td><strong>Windows machines should meet CIS Benchmark</strong></td><td><span class="hl-red">Non assign&eacute;e</span></td><td>Assign&eacute;e (Audit)</td><td><span class="hl-green">Audit + alertes</span></td><td><span class="lic lic-addon">Add-on / inclus P2</span></td></tr>
+      <tr class="row-ko"><td><strong>Linux machines should meet CIS Benchmark</strong></td><td><span class="hl-red">Non assign&eacute;e</span></td><td>Assign&eacute;e (Audit)</td><td><span class="hl-green">Audit + alertes</span></td><td><span class="lic lic-addon">Add-on / inclus P2</span></td></tr>
+      <tr class="row-ko"><td><strong>Configure Arc-enabled servers with Defender</strong></td><td><span class="hl-red">Non assign&eacute;e</span></td><td><span class="hl-green">Assign&eacute;e</span></td><td>Assign&eacute;e + exclusions</td><td><span class="lic lic-std">Defender P1</span></td></tr>
+      <tr class="row-warn"><td><strong>Audit missing system updates</strong></td><td><span class="hl-red">Non assign&eacute;e</span></td><td>Assign&eacute;e (Audit)</td><td><span class="hl-green">Audit + Azure Update Manager</span></td><td><span class="lic lic-addon">Add-on / inclus P2</span></td></tr>
+      <tr class="row-ko"><td><strong>Enable Change Tracking on Arc machines</strong></td><td><span class="hl-red">Non assign&eacute;e</span></td><td>Non assign&eacute;e</td><td><span class="hl-green">Assign&eacute;e</span></td><td><span class="lic lic-addon">Add-on + LA / b&eacute;n&eacute;fices Windows</span></td></tr>
+    </tbody>
+  </table></div>
+  <div class="alert alert-warn">
+    <span class="alert-icon">&#x26A0;&#xFE0F;</span>
+    <div><strong>Pi&egrave;ge :</strong> les Policy avec effet <code>DeployIfNotExists</code> n&eacute;cessitent une <strong>managed identity</strong> assign&eacute;e &agrave; la Policy Assignment avec le r&ocirc;le <em>Contributor</em>. Sans cela, la r&eacute;m&eacute;diation &eacute;choue silencieusement et le tableau de bord Compliance affiche 0% de conformit&eacute; sans erreur visible.</div>
+  </div>
+  <h3>4.2 — Assignation des initiatives via Azure CLI</h3>
+  <div class="code-block">
+    <div class="code-header"><span>Azure CLI — Assignation Policy CIS Benchmark sur les serveurs Arc</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div>
+<pre><span class="comment"># R&eacute;cup&eacute;rer l'ID de la Policy CIS Windows</span>
+<span class="var">$policyId</span> = <span class="keyword">az policy definition list</span> `
+  <span class="param">--query</span> <span class="string">"[?contains(displayName,'Windows machines should meet CIS')].id | [0]"</span> <span class="param">-o</span> tsv
+
+<span class="comment"># Assigner la Policy au scope RG avec identit&eacute; manag&eacute;e</span>
+<span class="keyword">az policy assignment create</span> `
+  <span class="param">--name</span> <span class="string">"arc-cis-windows"</span> `
+  <span class="param">--display-name</span> <span class="string">"Arc - CIS Windows Benchmark"</span> `
+  <span class="param">--policy</span> <span class="var">$policyId</span> `
+  <span class="param">--scope</span> <span class="string">"/subscriptions/&lt;sub&gt;/resourceGroups/rg-arc-servers-prod"</span> `
+  <span class="param">--mi-user-assigned</span> <span class="string">"/subscriptions/&lt;sub&gt;/resourceGroups/rg-arc-network/providers/Microsoft.ManagedIdentity/userAssignedIdentities/mi-policy-arc"</span> `
+  <span class="param">--location</span> <span class="string">westeurope</span></pre>
+  </div>
+  <h3>4.3 — V&eacute;rification conformit&eacute;</h3>
+  <div class="code-block">
+    <div class="code-header"><span>Azure CLI — &Eacute;tat de conformit&eacute; Policy</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div>
+<pre><span class="keyword">az policy state summarize</span> `
+  <span class="param">--resource-group</span> <span class="string">rg-arc-servers-prod</span> `
+  <span class="param">--query</span> <span class="string">"value[].{Policy:policyDefinitionId, Compliant:results.resourceDetails[?complianceState=='Compliant'].count, NonCompliant:results.resourceDetails[?complianceState=='NonCompliant'].count}"</span> `
+  <span class="param">--output</span> table</pre>
+  </div>
+  <div class="checklist-item"><input type="checkbox"><span><strong>&Eacute;tat des lieux :</strong> Initiative CIS Benchmark assign&eacute;e au scope ressources Arc et r&eacute;m&eacute;diation DeployIfNotExists activ&eacute;e</span></div>
+</div>
+<!-- ═══ S5 — DEFENDER ═══ -->
+<div class="section" id="s5">
+  <div class="section-header red">
+    <div class="section-number red">5</div>
+    <div>
+      <div class="section-title">Microsoft Defender for Servers &mdash; Protection Arc <span class="lic lic-std">Defender P1</span> <span class="lic lic-prem">Defender P2</span></div>
+      <div class="section-desc">D&eacute;tection des menaces, &eacute;valuation de vuln&eacute;rabilit&eacute;s et acc&egrave;s JIT sur les serveurs hybrides</div>
+    </div>
+  </div>
+  <div class="alert alert-error">
+    <span class="alert-icon">&#x1F6A8;</span>
+    <div><strong>Sc&eacute;nario :</strong> Un serveur on-premises connect&eacute; via Arc mais sans Defender est une cible sans d&eacute;fense EDR. Une attaque par ransomware (ex: double extorsion via RDP brute-force) ne sera d&eacute;tect&eacute;e que lors de l'impact. Defender for Servers Plan 1 active l'int&eacute;gration MDE rapidement apr&egrave;s activation du plan ; pour le co&ucirc;t, s'appuyer sur la page pricing live Microsoft Defender for Cloud plut&ocirc;t que sur un montant fig&eacute; dans le guide.</div>
+  </div>
+  <h3>5.1 — Tableau de configuration Defender</h3>
+  <div class="table-container"><table>
+    <thead><tr><th>Param&egrave;tre</th><th>D&eacute;faut Arc</th><th>&#x26A1; Quick Win</th><th>&#x1F512; Durci</th><th>&#x1F3AF; Optimal</th><th>Licence</th></tr></thead>
+    <tbody>
+      <tr class="row-ko"><td><strong>Defender for Servers activ&eacute;</strong></td><td><span class="hl-red">Off</span></td><td><span class="hl-green">Plan 1</span></td><td>Plan 1</td><td>Plan 2</td><td><span class="lic lic-std">Defender P1</span></td></tr>
+      <tr class="row-ko"><td><strong>MDE extension d&eacute;ploy&eacute;e</strong> (<code>MDE.Windows/Linux</code>)</td><td><span class="hl-red">Non</span></td><td><span class="hl-green">Oui (via Policy)</span></td><td>Oui</td><td>Oui + config avanc&eacute;e</td><td><span class="lic lic-std">Defender P1</span></td></tr>
+      <tr class="row-ko"><td><strong>Vulnerability Assessment</strong> (MDVM/Qualys)</td><td><span class="hl-red">Off</span></td><td>Off</td><td>MDVM basique</td><td><span class="hl-green">MDVM Premium</span></td><td><span class="lic lic-prem">Defender P2</span></td></tr>
+      <tr class="row-ko"><td><strong>Just-in-Time VM Access</strong></td><td><span class="hl-red">Off</span></td><td>Off</td><td>Off</td><td><span class="hl-green">Activ&eacute; (3h max)</span></td><td><span class="lic lic-prem">Defender P2</span></td></tr>
+      <tr class="row-ko"><td><strong>File Integrity Monitoring</strong></td><td><span class="hl-red">Off</span></td><td>Off</td><td><span class="hl-green">Activ&eacute;</span></td><td>Activ&eacute; + alertes</td><td><span class="lic lic-prem">Defender P2</span></td></tr>
+      <tr class="row-warn"><td><strong>Auto-provisioning extensions</strong> (MDC)</td><td><span class="hl-red">Off</span></td><td><span class="hl-green">On (AMA + MDE)</span></td><td>On</td><td>On + monitoring</td><td><span class="lic lic-std">Defender P1</span></td></tr>
+    </tbody>
+  </table></div>
+  <div class="alert alert-info">
+    <span class="alert-icon">&#x1F4A1;</span>
+    <div><strong>Plan 1 vs Plan 2 :</strong> Plan 1 = MDE int&eacute;gr&eacute; (EDR, threat detection). Plan 2 ajoute : &eacute;valuation de vuln&eacute;rabilit&eacute;s (MDVM), JIT Access, FIM, analyse comportementale approfondie. Pour 90% des PME, Plan 1 suffit. Plan 2 est recommand&eacute; pour les serveurs critiques (AD, SQL, fichiers).</div>
+  </div>
+  <h3>5.2 — Activation Defender for Servers</h3>
+  <div class="code-block">
+    <div class="code-header"><span>Azure CLI — Activation Defender for Servers Plan 1 sur l'abonnement</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div>
+<pre><span class="comment"># Activer Defender for Servers Plan 1</span>
+<span class="keyword">az security pricing create</span> <span class="param">--name</span> <span class="string">VirtualMachines</span> <span class="param">--tier</span> <span class="string">Standard</span> `
+  <span class="param">--subplan</span> <span class="string">P1</span>
+
+<span class="comment"># V&eacute;rifier le plan actif</span>
+<span class="keyword">az security pricing show</span> <span class="param">--name</span> <span class="string">VirtualMachines</span> `
+  <span class="param">--query</span> <span class="string">"{Plan:pricingTier, SubPlan:subPlan}"</span>
+
+<span class="comment"># Activer l'auto-provisioning MDE extension</span>
+<span class="keyword">az security auto-provisioning-setting update</span> <span class="param">--name</span> <span class="string">MicrosoftDefenderForEndpoint</span> `
+  <span class="param">--auto-provision</span> <span class="string">On</span></pre>
+  </div>
+  <h3>5.3 — V&eacute;rification couverture Defender sur Arc</h3>
+  <div class="code-block">
+    <div class="code-header"><span>Azure CLI — Machines Arc sans Defender</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div>
+<pre><span class="comment"># Machines Arc sans extension MDE install&eacute;e</span>
+<span class="keyword">az connectedmachine extension list</span> <span class="param">--resource-group</span> <span class="string">rg-arc-servers-prod</span> `
+  <span class="param">--machine-name</span> <span class="string">&lt;machine-name&gt;</span> `
+  <span class="param">--query</span> <span class="string">"[?contains(name,'MDE')].{Name:name, Status:provisioningState}"</span> <span class="param">--output</span> table</pre>
+  </div>
+  <div class="checklist-item"><input type="checkbox"><span><strong>&Eacute;tat des lieux :</strong> Defender for Servers P1 activ&eacute; sur l'abonnement et extension MDE d&eacute;ploy&eacute;e sur toutes les machines Arc</span></div>
+</div>
+
+<!-- ═══ S6 — MONITOR ═══ -->
+<div class="section" id="s6">
+  <div class="section-header orange">
+    <div class="section-number orange">6</div>
+    <div>
+      <div class="section-title">Azure Monitor &amp; Log Analytics &mdash; Observabilit&eacute; Hybride <span class="lic lic-free">Gratuit</span> <span class="lic lic-addon">Pay/Go LA</span></div>
+      <div class="section-desc">Collecte des logs, m&eacute;triques et alertes sur toutes les machines Arc</div>
+    </div>
+  </div>
+  <div class="alert alert-error">
+    <span class="alert-icon">&#x1F6A8;</span>
+    <div><strong>Sc&eacute;nario :</strong> Sans Azure Monitor, les logs Windows Event et syslog Linux restent enferm&eacute;s sur la machine. Lors d'un incident de s&eacute;curit&eacute;, l'investigation r&eacute;trospective est impossible (&gt;72h de travail d'investigation perdu). L'agent Azure Monitor (AMA) centralise tous les logs dans Log Analytics en moins d'une heure &mdash; base de toute investigation SIEM.</div>
+  </div>
+  <h3>6.1 — Tableau de configuration Monitor</h3>
+  <div class="table-container"><table>
+    <thead><tr><th>Param&egrave;tre</th><th>D&eacute;faut Arc</th><th>&#x26A1; Quick Win</th><th>&#x1F512; Durci</th><th>&#x1F3AF; Optimal</th><th>Licence</th></tr></thead>
+    <tbody>
+      <tr class="row-ko"><td><strong>Agent Azure Monitor (AMA) install&eacute;</strong></td><td><span class="hl-red">Non</span></td><td><span class="hl-green">Oui (via Policy)</span></td><td>Oui</td><td>Oui</td><td><span class="lic lic-free">Gratuit</span> (pay/Go LA)</td></tr>
+      <tr class="row-ko"><td><strong>Data Collection Rule (DCR)</strong></td><td><span class="hl-red">Aucune</span></td><td>DCR basique (Security Events)</td><td><span class="hl-green">DCR + Perf + Syslog</span></td><td>DCR compl&egrave;te</td><td><span class="lic lic-free">Gratuit</span> (pay/Go LA)</td></tr>
+      <tr class="row-ko"><td><strong>R&eacute;tention Log Analytics</strong></td><td><span class="hl-red">30 jours (d&eacute;faut workspace)</span></td><td>30 jours</td><td><span class="hl-green">90 jours</span></td><td>1 an (+ archive cold)</td><td><span class="lic lic-addon">Pay/Go</span></td></tr>
+      <tr class="row-warn"><td><strong>Alertes m&eacute;triques CPU/Mem</strong></td><td><span class="hl-red">Aucune</span></td><td>Alerte CPU &gt;90%</td><td><span class="hl-green">CPU + Mem + Disk</span></td><td>Alertes + ITSM</td><td><span class="lic lic-free">Gratuit</span></td></tr>
+      <tr class="row-ko"><td><strong>VM Insights activ&eacute;</strong></td><td><span class="hl-red">Off</span></td><td>Off</td><td><span class="hl-green">On (Map + Performance)</span></td><td>On + Service Map</td><td><span class="lic lic-addon">Pay/Go LA</span></td></tr>
+      <tr class="row-warn"><td><strong>Workspace centralis&eacute;</strong> (un workspace par r&eacute;gion)</td><td><span class="hl-red">Pas de workspace</span></td><td>1 workspace cr&eacute;&eacute;</td><td><span class="hl-green">1 workspace par r&eacute;gion</span></td><td>Hub centralis&eacute; + Sentinel</td><td><span class="lic lic-addon">Pay/Go</span></td></tr>
+    </tbody>
+  </table></div>
+  <div class="alert alert-info">
+    <span class="alert-icon">&#x1F4A1;</span>
+    <div><strong>R&eacute;tention 90 jours :</strong> le RGPD et la norme ISO 27001 recommandent une r&eacute;tention des logs de s&eacute;curit&eacute; d'au moins 90 jours pour la d&eacute;tection tardive d'incidents (cf. ANSSI &mdash; <em>Guide de gestion des journaux</em> 2023). Au-del&agrave; de 90 jours, utiliser le mode <em>Archive</em> (r&eacute;duction de co&ucirc;t x10).</div>
+  </div>
+  <h3>6.2 — D&eacute;ploiement AMA + DCR</h3>
+  <div class="code-block">
+    <div class="code-header"><span>Azure CLI — Cr&eacute;ation workspace + DCR + association</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div>
+<pre><span class="comment"># Cr&eacute;er le workspace Log Analytics</span>
+<span class="keyword">az monitor log-analytics workspace create</span> `
+  <span class="param">--resource-group</span> <span class="string">rg-arc-monitoring</span> `
+  <span class="param">--workspace-name</span> <span class="string">law-arc-prod-westeurope</span> `
+  <span class="param">--location</span> <span class="string">westeurope</span> `
+  <span class="param">--retention-time</span> <span class="string">90</span>
+
+<span class="comment"># Cr&eacute;er une DCR pour les Security Events Windows</span>
+<span class="keyword">az monitor data-collection rule create</span> `
+  <span class="param">--resource-group</span> <span class="string">rg-arc-monitoring</span> `
+  <span class="param">--name</span> <span class="string">dcr-arc-security-windows</span> `
+  <span class="param">--location</span> <span class="string">westeurope</span> `
+  <span class="param">--rule-file</span> <span class="string">dcr-security-events.json</span>
+
+<span class="comment"># Installer extension AMA sur une machine Arc</span>
+<span class="keyword">az connectedmachine extension create</span> `
+  <span class="param">--resource-group</span> <span class="string">rg-arc-servers-prod</span> `
+  <span class="param">--machine-name</span> <span class="string">&lt;machine-name&gt;</span> `
+  <span class="param">--name</span> <span class="string">AzureMonitorWindowsAgent</span> `
+  <span class="param">--type</span> <span class="string">AzureMonitorWindowsAgent</span> `
+  <span class="param">--publisher</span> <span class="string">Microsoft.Azure.Monitor</span> `
+  <span class="param">--location</span> <span class="string">westeurope</span></pre>
+  </div>
+  <h3>6.3 — V&eacute;rification via KQL</h3>
+  <div class="code-block">
+    <div class="code-header"><span>KQL — V&eacute;rifier la r&eacute;ception des logs depuis les machines Arc</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div>
+<pre><span class="comment">// Machines Arc actives qui envoient des heartbeats</span>
+Heartbeat
+| where TimeGenerated &gt; ago(1h)
+| where Category == <span class="string">"Direct Agent"</span>
+| summarize LastHeartbeat = max(TimeGenerated) by Computer, SourceSystem
+| where SourceSystem in (<span class="string">"Operations Manager"</span>, <span class="string">"OMS"</span>)
+| order by LastHeartbeat desc</pre>
+  </div>
+  <div class="checklist-item"><input type="checkbox"><span><strong>&Eacute;tat des lieux :</strong> Agent AMA d&eacute;ploy&eacute; sur toutes les machines Arc et DCR actif avec r&eacute;tention 90 jours</span></div>
+</div>
+<!-- ═══ S7 — SQL ARC ═══ -->
+<div class="section" id="s7">
+  <div class="section-header orange">
+    <div class="section-number orange">7</div>
+    <div>
+      <div class="section-title">Arc-enabled SQL Server &mdash; Gouvernance &amp; S&eacute;curit&eacute; SQL <span class="lic lic-free">Gratuit</span> <span class="lic lic-addon">Defender SQL</span></div>
+      <div class="section-desc">Visibilit&eacute;, conformit&eacute; et protection des instances SQL Server on-premises via Azure</div>
+    </div>
+  </div>
+  <div class="alert alert-error">
+    <span class="alert-icon">&#x1F6A8;</span>
+    <div><strong>Sc&eacute;nario :</strong> Des instances SQL Server 2012 en fin de vie, non patch&eacute;es, sur des serveurs on-premises invisibles &mdash; CVE critiques non corrig&eacute;es. Arc-enabled SQL Server permet de d&eacute;tecter toutes ces instances automatiquement, d'appliquer la conformit&eacute; CIS et d'activer Defender for SQL en quelques clics.</div>
+  </div>
+  <div class="alert alert-info">
+    <span class="alert-icon">&#x1F4A1;</span>
+    <div><strong>Pourquoi c'est utile :</strong> Arc-enabled SQL Server d&eacute;tecte automatiquement toutes les instances SQL on-premises via les machines Arc connect&eacute;es &mdash; sans agent SCOM ni System Center. C'est la base d'un inventaire SQL entreprise exhaustif avec &eacute;valuation Best Practices ; la protection menace SQL s'active ensuite via le plan s&eacute;par&eacute; Defender for SQL Servers on Machines.</div>
+  </div>
+  <h3>7.1 — Tableau de configuration SQL Arc</h3>
+  <div class="table-container"><table>
+    <thead><tr><th>Param&egrave;tre</th><th>D&eacute;faut</th><th>&#x26A1; Quick Win</th><th>&#x1F3AF; Optimal</th><th>Licence</th></tr></thead>
+    <tbody>
+      <tr class="row-ko"><td><strong>Arc SQL extension install&eacute;e</strong></td><td><span class="hl-red">Non</span></td><td><span class="hl-green">Oui (d&eacute;tection auto)</span></td><td>Oui + config</td><td><span class="lic lic-free">Gratuit</span></td></tr>
+      <tr class="row-ko"><td><strong>Best Practices Assessment</strong></td><td><span class="hl-red">Off</span></td><td><span class="hl-green">On (1x/semaine)</span></td><td>On + correction</td><td><span class="lic lic-free">Gratuit</span></td></tr>
+      <tr class="row-ko"><td><strong>Defender for SQL</strong></td><td><span class="hl-red">Off</span></td><td><span class="hl-green">On</span></td><td>On + alertes</td><td><span class="lic lic-addon">Defender SQL</span></td></tr>
+      <tr class="row-ko"><td><strong>Microsoft Entra ID auth (SQL)</strong></td><td><span class="hl-red">SQL auth seulement</span></td><td>SQL + Entra ID</td><td><span class="hl-green">Entra ID uniquement</span></td><td><span class="lic lic-free">Gratuit</span></td></tr>
+      <tr class="row-warn"><td><strong>Inventaire SQL visible dans Azure</strong></td><td><span class="hl-red">Non</span></td><td><span class="hl-green">Oui</span></td><td>Oui + version tracking</td><td><span class="lic lic-free">Gratuit</span></td></tr>
+    </tbody>
+  </table></div>
+  <div class="alert alert-warn">
+    <span class="alert-icon">&#x26A0;&#xFE0F;</span>
+    <div><strong>Pi&egrave;ge Best Practices Assessment :</strong> l'&eacute;valuation n&eacute;cessite un <strong>workspace Log Analytics associ&eacute;</strong>. Sans workspace configur&eacute;, le bouton "Run assessment" ne g&eacute;n&egrave;re aucun rapport et aucune erreur n'est affich&eacute;e dans le portail.</div>
+  </div>
+  <h3>7.2 — Activation Defender for SQL sur Arc</h3>
+  <div class="code-block">
+    <div class="code-header"><span>Azure CLI — Activation Defender for SQL sur les serveurs Arc</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div>
+<pre><span class="comment"># Activer Defender for SQL Servers on Machines (plan Databases s&eacute;par&eacute;)</span>
+<span class="keyword">az security pricing create</span> `
+  <span class="param">--name</span> <span class="string">SqlServerVirtualMachines</span> `
+  <span class="param">--tier</span> <span class="string">Standard</span>
+
+<span class="comment"># V&eacute;rifier les instances SQL d&eacute;tect&eacute;es via Arc</span>
+<span class="keyword">az resource list</span> `
+  <span class="param">--resource-type</span> <span class="string">"Microsoft.AzureArcData/SqlServerInstances"</span> `
+  <span class="param">--query</span> <span class="string">"[].{Name:name, Version:properties.version, Edition:properties.edition}"</span> `
+  <span class="param">--output</span> table</pre>
+  </div>
+  <div class="checklist-item"><input type="checkbox"><span><strong>&Eacute;tat des lieux :</strong> Arc SQL extension install&eacute;e, inventaire SQL visible dans Azure et Best Practices Assessment actif</span></div>
+</div>
+
+<!-- ═══ S8 — UPDATE ═══ -->
+<div class="section" id="s8">
+  <div class="section-header orange">
+    <div class="section-number orange">8</div>
+    <div>
+      <div class="section-title">Azure Update Manager &mdash; Gestion des Mises &agrave; Jour Hybrides <span class="lic lic-addon">Add-on / inclus P2</span></div>
+      <div class="section-desc">Fen&ecirc;tres de maintenance, conformit&eacute; des patchs et d&eacute;ploiement orchestr&eacute; depuis Azure</div>
+    </div>
+  </div>
+  <div class="alert alert-error">
+    <span class="alert-icon">&#x1F6A8;</span>
+    <div><strong>Sc&eacute;nario :</strong> Sans Azure Update Manager, les serveurs on-premises ne sont patch&eacute;s que lors des campagnes manuelles trimestrielles. 60% des compromissions exploitent des CVE de plus de 30 jours (CISA 2024). Arc + Azure Update Manager permet des fen&ecirc;tres de maintenance <strong>automatis&eacute;es</strong> coordonn&eacute;es avec les workflows de patching Azure.</div>
+  </div>
+  <h3>8.1 — Tableau de configuration Azure Update Manager</h3>
+  <div class="table-container"><table>
+    <thead><tr><th>Param&egrave;tre</th><th>D&eacute;faut Arc</th><th>&#x26A1; Quick Win</th><th>&#x1F3AF; Optimal</th><th>Licence</th></tr></thead>
+    <tbody>
+      <tr class="row-ko"><td><strong>Azure Update Manager activ&eacute;</strong></td><td><span class="hl-red">Non</span></td><td><span class="hl-green">Oui (assessment)</span></td><td>Oui + d&eacute;ploiement auto</td><td><span class="lic lic-addon">Add-on / inclus P2</span></td></tr>
+      <tr class="row-ko"><td><strong>Assessment automatique</strong></td><td><span class="hl-red">Jamais</span></td><td>Hebdomadaire</td><td><span class="hl-green">Quotidien</span></td><td><span class="lic lic-addon">Add-on / inclus P2</span></td></tr>
+      <tr class="row-warn"><td><strong>Fen&ecirc;tre de maintenance</strong></td><td><span class="hl-red">Aucune</span></td><td>Mensuelle (dimanche 2h)</td><td><span class="hl-green">Bi-mensuelle + hotpatch</span></td><td><span class="lic lic-addon">Add-on / inclus P2</span></td></tr>
+      <tr class="row-ko"><td><strong>Critical updates auto</strong></td><td><span class="hl-red">Manuel</span></td><td>Alert uniquement</td><td><span class="hl-green">Auto-d&eacute;ploy Critical+Security</span></td><td><span class="lic lic-addon">Add-on / inclus P2</span></td></tr>
+      <tr class="row-warn"><td><strong>Rapport conformit&eacute; patchs</strong></td><td><span class="hl-red">Non</span></td><td>Dashboard Azure</td><td><span class="hl-green">Dashboard + export CSV</span></td><td><span class="lic lic-addon">Add-on / inclus P2</span></td></tr>
+    </tbody>
+  </table></div>
+  <div class="alert alert-info">
+    <span class="alert-icon">&#x1F4A1;</span>
+    <div><strong>Azure Update Manager vs legacy Azure Automation :</strong> Update Management (ancien) utilisait Azure Automation + Log Analytics. <strong>Azure Update Manager</strong> est natif Arc, sans agent suppl&eacute;mentaire, avec une interface unifi&eacute;e VMs Azure + Arc. Privil&eacute;gier le nouveau syst&egrave;me pour tout nouveau d&eacute;ploiement.</div>
+  </div>
+  <h3>8.2 — Fen&ecirc;tre de maintenance et d&eacute;ploiement</h3>
+  <div class="code-block">
+    <div class="code-header"><span>Azure CLI — Cr&eacute;ation d'une fen&ecirc;tre de maintenance mensuelle</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div>
+<pre><span class="comment"># Cr&eacute;er une fen&ecirc;tre de maintenance (2&egrave;me dimanche du mois, 02h00-04h00)</span>
+<span class="keyword">az maintenance configuration create</span> `
+  <span class="param">--resource-group</span> <span class="string">rg-arc-management</span> `
+  <span class="param">--resource-name</span> <span class="string">mc-arc-monthly-patch</span> `
+  <span class="param">--maintenance-scope</span> <span class="string">InGuestPatch</span> `
+  <span class="param">--location</span> <span class="string">westeurope</span> `
+  <span class="param">--recur-every</span> <span class="string">"Month Second Sunday"</span> `
+  <span class="param">--start-date-time</span> <span class="string">"2024-01-01 02:00"</span> `
+  <span class="param">--duration</span> <span class="string">"02:00"</span> `
+  <span class="param">--time-zone</span> <span class="string">"Romance Standard Time"</span>
+
+<span class="comment"># Associer une machine Arc &agrave; la fen&ecirc;tre</span>
+<span class="keyword">az maintenance assignment create</span> `
+  <span class="param">--resource-group</span> <span class="string">rg-arc-servers-prod</span> `
+  <span class="param">--resource-name</span> <span class="string">&lt;machine-name&gt;</span> `
+  <span class="param">--resource-type</span> <span class="string">machines</span> `
+  <span class="param">--provider-name</span> <span class="string">Microsoft.HybridCompute</span> `
+  <span class="param">--configuration-assignment-name</span> <span class="string">mc-arc-monthly-patch</span> `
+  <span class="param">--maintenance-configuration-id</span> <span class="string">/subscriptions/&lt;sub&gt;/resourceGroups/rg-arc-management/providers/Microsoft.Maintenance/maintenanceConfigurations/mc-arc-monthly-patch</span></pre>
+  </div>
+  <div class="checklist-item"><input type="checkbox"><span><strong>&Eacute;tat des lieux :</strong> Fen&ecirc;tre de maintenance mensuelle configur&eacute;e et assessment hebdomadaire des patchs actif</span></div>
+</div>
+<!-- ═══ S9 — KUBERNETES ARC ═══ -->
+<div class="section" id="s9">
+  <div class="section-header blue">
+    <div class="section-number blue">9</div>
+    <div>
+      <div class="section-title">Arc-enabled Kubernetes &mdash; GitOps &amp; Defender for Containers <span class="lic lic-free">Gratuit</span> <span class="lic lic-addon">Defender Containers</span></div>
+      <div class="section-desc">Connecter, auditer et s&eacute;curiser des clusters Kubernetes on-premises ou multi-cloud via Azure</div>
+    </div>
+  </div>
+  <div class="alert alert-error">
+    <span class="alert-icon">&#x1F6A8;</span>
+    <div><strong>Sc&eacute;nario :</strong> Des clusters Kubernetes on-premises (RKE, K3s, OpenShift) g&eacute;r&eacute;s manuellement, sans conformit&eacute; centralis&eacute;e, ni d&eacute;tection d'images vuln&eacute;rables. Arc K8s permet d'appliquer des <strong>GitOps Policies (Flux)</strong> et d'activer Defender for Containers &mdash; m&ecirc;me exp&eacute;rience que les clusters AKS natifs.</div>
+  </div>
+  <div class="alert alert-info">
+    <span class="alert-icon">&#x1F4A1;</span>
+    <div><strong>Pourquoi c'est structurant :</strong> Arc K8s est la seule solution appliquant Azure RBAC, Azure Policy et Defender for Containers sur n'importe quel cluster Kubernetes &mdash; on-premises, AWS EKS ou GCP GKE. GitOps Flux garantit la coh&eacute;rence d&eacute;clarative de toute la flotte sans acc&egrave;s SSH direct aux n&oelig;uds ; la protection Defender for Containers s'active via un plan d&eacute;di&eacute; Defender for Cloud.</div>
+  </div>
+  <h3>9.1 — Tableau de configuration Kubernetes Arc</h3>
+  <div class="table-container"><table>
+    <thead><tr><th>Param&egrave;tre</th><th>D&eacute;faut</th><th>&#x26A1; Quick Win</th><th>&#x1F3AF; Optimal</th><th>Licence</th></tr></thead>
+    <tbody>
+      <tr class="row-ko"><td><strong>Cluster connect&eacute; via Arc</strong></td><td><span class="hl-red">Non</span></td><td><span class="hl-green">Oui (<code>az connectedk8s connect</code>)</span></td><td>Oui + RBAC</td><td><span class="lic lic-free">Gratuit</span></td></tr>
+      <tr class="row-ko"><td><strong>GitOps (Flux v2)</strong></td><td><span class="hl-red">Off</span></td><td>Off</td><td><span class="hl-green">Activ&eacute; + sync Git repo</span></td><td><span class="lic lic-free">Gratuit</span></td></tr>
+      <tr class="row-ko"><td><strong>Defender for Containers</strong></td><td><span class="hl-red">Off</span></td><td><span class="hl-green">On (scan images)</span></td><td>On + runtime detection</td><td><span class="lic lic-addon">Defender Containers</span></td></tr>
+      <tr class="row-ko"><td><strong>Azure Policy for K8s</strong></td><td><span class="hl-red">Off</span></td><td><span class="hl-green">On (audit)</span></td><td>On + deny</td><td><span class="lic lic-free">Gratuit</span></td></tr>
+      <tr class="row-warn"><td><strong>Kubeconfig centralis&eacute; Azure</strong></td><td><span class="hl-red">Local seulement</span></td><td>Partag&eacute; via Arc</td><td><span class="hl-green">RBAC Entra ID + Arc</span></td><td><span class="lic lic-free">Gratuit</span></td></tr>
+    </tbody>
+  </table></div>
+  <div class="alert alert-warn">
+    <span class="alert-icon">&#x26A0;&#xFE0F;</span>
+    <div><strong>Pi&egrave;ge kubeconfig Arc :</strong> l'acc&egrave;s au cluster via Arc (<code>az connectedk8s proxy</code>) cr&eacute;e un token de proxy temporaire. Ce token expire apr&egrave;s 1 heure. Dans les pipelines CI/CD, utiliser un service principal d&eacute;di&eacute; avec le r&ocirc;le <em>Azure Arc Kubernetes Cluster User</em>.</div>
+  </div>
+  <h3>9.2 — Connexion et GitOps</h3>
+  <div class="code-block">
+    <div class="code-header"><span>Azure CLI — Connexion cluster + activation GitOps Flux</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div>
+<pre><span class="comment"># Connecter un cluster Kubernetes &agrave; Azure Arc</span>
+<span class="keyword">az connectedk8s connect</span> `
+  <span class="param">--name</span> <span class="string">k8s-onprem-prod</span> `
+  <span class="param">--resource-group</span> <span class="string">rg-arc-kubernetes</span> `
+  <span class="param">--location</span> <span class="string">westeurope</span>
+
+<span class="comment"># Activer l'extension GitOps Flux v2</span>
+<span class="keyword">az k8s-extension create</span> `
+  <span class="param">--name</span> <span class="string">flux</span> `
+  <span class="param">--extension-type</span> <span class="string">microsoft.flux</span> `
+  <span class="param">--cluster-type</span> <span class="string">connectedClusters</span> `
+  <span class="param">--cluster-name</span> <span class="string">k8s-onprem-prod</span> `
+  <span class="param">--resource-group</span> <span class="string">rg-arc-kubernetes</span>
+
+<span class="comment"># Cr&eacute;er une configuration GitOps point&eacute;e sur le repo Git</span>
+<span class="keyword">az k8s-configuration flux create</span> `
+  <span class="param">--name</span> <span class="string">prod-config</span> `
+  <span class="param">--cluster-name</span> <span class="string">k8s-onprem-prod</span> `
+  <span class="param">--resource-group</span> <span class="string">rg-arc-kubernetes</span> `
+  <span class="param">--cluster-type</span> <span class="string">connectedClusters</span> `
+  <span class="param">--url</span> <span class="string">https://github.com/corp/k8s-config</span> `
+  <span class="param">--branch</span> <span class="string">main</span> `
+  <span class="param">--namespace</span> <span class="string">prod</span></pre>
+  </div>
+  <div class="checklist-item"><input type="checkbox"><span><strong>&Eacute;tat des lieux :</strong> Cluster Kubernetes connect&eacute; &agrave; Arc, GitOps Flux actif et Defender for Containers d&eacute;ploy&eacute;</span></div>
+</div>
+
+<!-- ═══ S10 — CONFORMITÉ ═══ -->
+<div class="section" id="s10">
+  <div class="section-header green">
+    <div class="section-number green">10</div>
+    <div>
+      <div class="section-title">Conformit&eacute; &amp; Audit CIS &mdash; Tableau de Bord R&eacute;glementaire <span class="lic lic-free">Gratuit</span> <span class="lic lic-addon">Standards additionnels</span></div>
+      <div class="section-desc">CIS Benchmark, NIST, ISO 27001 &mdash; &eacute;tat de conformit&eacute; unifi&eacute; Azure + hybride</div>
+    </div>
+  </div>
+  <div class="alert alert-error">
+    <span class="alert-icon">&#x1F6A8;</span>
+    <div><strong>Sc&eacute;nario :</strong> Un RSSI doit pr&eacute;senter trimestriellement l'&eacute;tat de conformit&eacute; ISO 27001 au COMEX. Sans Microsoft Defender for Cloud (MDC), la pr&eacute;paration prend 2 semaines. Avec le <strong>Regulatory Compliance Dashboard</strong>, l'export du rapport prend 5 minutes &mdash; incluant Azure ET les serveurs Arc.</div>
+  </div>
+  <h3>10.1 — Tableau de configuration conformit&eacute;</h3>
+  <div class="table-container"><table>
+    <thead><tr><th>Standard</th><th>D&eacute;faut MDC</th><th>&#x26A1; Quick Win</th><th>&#x1F3AF; Optimal</th><th>Licence</th></tr></thead>
+    <tbody>
+      <tr class="row-ko"><td><strong>CIS Azure Foundations Benchmark</strong></td><td><span class="hl-red">Non assign&eacute;</span></td><td><span class="hl-green">Assign&eacute; (audit)</span></td><td>Assign&eacute; + alertes</td><td><span class="lic lic-addon">Plan payant MDC</span></td></tr>
+      <tr class="row-ko"><td><strong>NIST SP 800-53</strong></td><td><span class="hl-red">Non assign&eacute;</span></td><td>Non assign&eacute;</td><td><span class="hl-green">Assign&eacute;</span></td><td><span class="lic lic-addon">Plan payant MDC</span></td></tr>
+      <tr class="row-ko"><td><strong>ISO 27001:2013</strong></td><td><span class="hl-red">Non assign&eacute;</span></td><td>Non assign&eacute;</td><td><span class="hl-green">Assign&eacute;</span></td><td><span class="lic lic-addon">Plan payant MDC</span></td></tr>
+      <tr class="row-warn"><td><strong>Score de s&eacute;curit&eacute; MDC (Secure Score)</strong></td><td>Calcul&eacute; automatiquement</td><td>Visible</td><td><span class="hl-green">&ge;70% et alertes</span></td><td><span class="lic lic-free">Gratuit</span></td></tr>
+      <tr class="row-ko"><td><strong>Export conformit&eacute; (CSV / API)</strong></td><td><span class="hl-red">Manuel portail</span></td><td>Export manuel</td><td><span class="hl-green">Export automatique mensuel</span></td><td><span class="lic lic-addon">Selon standards activ&eacute;s</span></td></tr>
+    </tbody>
+  </table></div>
+  <div class="alert alert-info">
+    <span class="alert-icon">&#x1F4A1;</span>
+    <div><strong>Secure Score Arc :</strong> les machines Arc contribuent au <em>Secure Score</em> MDC au m&ecirc;me titre que les VMs Azure natives. Chaque recommandation non appliqu&eacute;e (ex: MDE non install&eacute;, patches manquants) fait baisser le score. Le socle Foundational CSPM fournit Secure Score et le benchmark MCSB par d&eacute;faut ; les standards r&eacute;glementaires additionnels du tableau exigent au moins un plan payant activ&eacute; dans Defender for Cloud.</div>
+  </div>
+  <h3>10.2 — Activation des standards de conformit&eacute;</h3>
+  <div class="code-block">
+    <div class="code-header"><span>Azure CLI — Assignation CIS Benchmark + ISO 27001 dans MDC</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div>
+<pre><span class="comment"># Assigner le CIS Azure Foundations Benchmark v2.0</span>
+<span class="keyword">az security regulatory-compliance-standards list</span> `
+  <span class="param">--query</span> <span class="string">"[?contains(id,'CIS')].id"</span>
+
+<span class="comment"># Activer via MDC (portail) ou Policy Initiative</span>
+<span class="keyword">az policy assignment create</span> `
+  <span class="param">--name</span> <span class="string">"cis-azure-benchmark"</span> `
+  <span class="param">--display-name</span> <span class="string">"CIS Azure Foundations Benchmark v2.0"</span> `
+  <span class="param">--policy-set-definition</span> <span class="string">"/providers/Microsoft.Authorization/policySetDefinitions/06f19060-9e68-4070-92ca-f15cc126059e"</span> `
+  <span class="param">--scope</span> <span class="string">"/subscriptions/&lt;subscription-id&gt;"</span>
+
+<span class="comment"># Exporter le rapport de conformit&eacute;</span>
+<span class="keyword">az security regulatory-compliance-controls list</span> `
+  <span class="param">--standard-name</span> <span class="string">CIS-Azure-Benchmark-2.0</span> `
+  <span class="param">--query</span> <span class="string">"[].{Control:name, State:state, Passed:passedAssessments, Failed:failedAssessments}"</span> `
+  <span class="param">--output</span> table</pre>
+  </div>
+  <div class="checklist-item"><input type="checkbox"><span><strong>&Eacute;tat des lieux :</strong> Standard CIS Benchmark assign&eacute; dans MDC et Secure Score &ge;50% sur les machines Arc</span></div>
+</div>
+<!-- ═══ SCORES ═══ -->
+<div class="section" id="scores">
+  <h2 style="color:var(--azure-dark);margin-bottom:1.5rem">&#x1F3AF; Scoring de Maturit&eacute; Azure Arc &mdash; 100 points</h2>
+  <div class="alert alert-info" style="margin-bottom:1.5rem">
+    <span class="alert-icon">&#x1F4A1;</span>
+    <div><strong>Comment utiliser ce score :</strong> &eacute;valuez votre environnement en cochant les pr&eacute;requis de chaque section. Le score <strong>par d&eacute;faut</strong> (agent install&eacute;, aucune configuration) est ~25 pts. Un <strong>Quick Win</strong> (agent + Defender P1 + Policy CIS) permet d'atteindre ~55 pts en moins d'une heure.</div>
+  </div>
+  <div class="table-container"><table>
+    <thead><tr><th>#</th><th>Section</th><th>Max</th><th>D&eacute;faut</th><th>Quick Win</th><th>Optimal</th><th>Pr&eacute;requis Quick Win</th></tr></thead>
+    <tbody>
+      <tr class="row-warn"><td>S1</td><td><strong>Onboarding des Serveurs</strong></td><td>15 pts</td><td>0</td><td>10</td><td>15</td><td>Agent install&eacute; + auto-upgrade + tags</td></tr>
+      <tr class="row-warn"><td>S2</td><td><strong>S&eacute;curit&eacute; R&eacute;seau</strong></td><td>10 pts</td><td>2</td><td>5</td><td>10</td><td>FQDN list&eacute;s + proxy configur&eacute;</td></tr>
+      <tr class="row-warn"><td>S3</td><td><strong>RBAC &amp; Gouvernance</strong></td><td>10 pts</td><td>0</td><td>7</td><td>10</td><td>SP onboarding + admins RBAC d&eacute;di&eacute;s</td></tr>
+      <tr class="row-ok"><td>S4</td><td><strong>Azure Policy</strong></td><td>15 pts</td><td>0</td><td>10</td><td>15</td><td>CIS Benchmark assign&eacute; + DeployIfNotExists</td></tr>
+      <tr class="row-ko"><td>S5</td><td><strong>Defender for Servers</strong></td><td>20 pts</td><td>0</td><td>12</td><td>20</td><td>Defender P1 + MDE extension auto-prov</td></tr>
+      <tr class="row-warn"><td>S6</td><td><strong>Azure Monitor &amp; Logs</strong></td><td>10 pts</td><td>0</td><td>7</td><td>10</td><td>AMA install&eacute; + DCR + workspace 90j</td></tr>
+      <tr class="row-warn"><td>S7</td><td><strong>SQL Server Arc</strong></td><td>5 pts</td><td>0</td><td>3</td><td>5</td><td>Arc SQL extension + Best Practices Assessment</td></tr>
+      <tr class="row-warn"><td>S8</td><td><strong>Azure Update Manager</strong></td><td>5 pts</td><td>0</td><td>3</td><td>5</td><td>Assessment hebdo + fen&ecirc;tre maintenance</td></tr>
+      <tr class="row-warn"><td>S9</td><td><strong>Kubernetes Arc</strong></td><td>5 pts</td><td>0</td><td>3</td><td>5</td><td>Cluster connect&eacute; + GitOps Flux</td></tr>
+      <tr class="row-ok"><td>S10</td><td><strong>Conformit&eacute; CIS</strong></td><td>5 pts</td><td>2</td><td>4</td><td>5</td><td>CIS Benchmark assign&eacute; + Secure Score</td></tr>
+      <tr style="background:var(--azure-light);font-weight:700"><td colspan="2"><strong>TOTAL</strong></td><td><strong>100 pts</strong></td><td><span class="hl-red">~4 pts</span></td><td><span style="color:var(--warning-orange)">~64 pts</span></td><td><span class="hl-green">100 pts</span></td><td>&nbsp;</td></tr>
+    </tbody>
+  </table></div>
+  <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-top:1.5rem">
+    <div style="flex:1;min-width:200px;padding:1.2rem;border-radius:8px;border:2px solid var(--danger-red);text-align:center">
+      <div style="font-size:2.5rem;font-weight:700;color:var(--danger-red)">0-30</div>
+      <div style="font-weight:600">Critique</div>
+      <div style="font-size:.85rem;color:#666">Serveur aveugle, non prot&eacute;g&eacute;</div>
+    </div>
+    <div style="flex:1;min-width:200px;padding:1.2rem;border-radius:8px;border:2px solid var(--warning-orange);text-align:center">
+      <div style="font-size:2.5rem;font-weight:700;color:var(--warning-orange)">31-60</div>
+      <div style="font-weight:600">En cours</div>
+      <div style="font-size:.85rem;color:#666">Visibilit&eacute; partielle, Defender actif</div>
+    </div>
+    <div style="flex:1;min-width:200px;padding:1.2rem;border-radius:8px;border:2px solid var(--success-green);text-align:center">
+      <div style="font-size:2.5rem;font-weight:700;color:var(--success-green)">61-100</div>
+      <div style="font-weight:600">Mature</div>
+      <div style="font-size:.85rem;color:#666">Gouvernance compl&egrave;te, conformit&eacute; CIS</div>
+    </div>
+  </div>
+</div>
+<!-- ═══ SCRIPT ALL-IN-ONE ═══ -->
+<div class="section" id="script">
+  <h2 style="color:var(--azure-dark);margin-bottom:1.5rem">&#x26A1; Script All-in-One &mdash; D&eacute;ploiement Azure Arc Complet</h2>
+  <div class="alert alert-warn" style="margin-bottom:1.5rem">
+    <span class="alert-icon">&#x26A0;&#xFE0F;</span>
+    <div><strong>Pr&eacute;requis :</strong> Az CLI connect&eacute; (<code>az login</code>), Azure PowerShell module, droits <em>Owner</em> sur l'abonnement, serveur cible avec acc&egrave;s Internet ou proxy configur&eacute;.</div>
+  </div>
+  <div class="code-block">
+    <div class="code-header"><span>PowerShell — Arc Deploy All-in-One (10 &eacute;tapes)</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div>
+<pre><span class="comment"># ============================================================
+# AZURE ARC — SCRIPT DE D&Eacute;PLOIEMENT ALL-IN-ONE
+# Adapte les variables de configuration ci-dessous
+# ============================================================</span>
+
+<span class="var">$SUB</span>   = <span class="string">"&lt;subscription-id&gt;"</span>
+<span class="var">$RG</span>    = <span class="string">"rg-arc-servers-prod"</span>
+<span class="var">$LOC</span>   = <span class="string">"westeurope"</span>
+<span class="var">$RGMON</span> = <span class="string">"rg-arc-monitoring"</span>
+<span class="var">$LAW</span>   = <span class="string">"law-arc-prod"</span>
+<span class="var">$TENANT</span>= <span class="string">"&lt;tenant-id&gt;"</span>
+
+<span class="comment"># [1/10] — S&eacute;lectionner l'abonnement</span>
+<span class="keyword">az account set</span> <span class="param">--subscription</span> <span class="var">$SUB</span>
+
+<span class="comment"># [2/10] — Cr&eacute;er les Resource Groups</span>
+<span class="keyword">az group create</span> <span class="param">--name</span> <span class="var">$RG</span>    <span class="param">--location</span> <span class="var">$LOC</span>
+<span class="keyword">az group create</span> <span class="param">--name</span> <span class="var">$RGMON</span> <span class="param">--location</span> <span class="var">$LOC</span>
+
+<span class="comment"># [3/10] — Cr&eacute;er le Service Principal d'onboarding</span>
+<span class="var">$SP</span> = <span class="keyword">az ad sp create-for-rbac</span> <span class="param">--name</span> <span class="string">"arc-onboarding-sp"</span> `
+  <span class="param">--role</span> <span class="string">"Azure Connected Machine Onboarding"</span> `
+  <span class="param">--scopes</span> <span class="string">"/subscriptions/<span class="var">$SUB</span>"</span> | <span class="keyword">ConvertFrom-Json</span>
+
+<span class="comment"># [4/10] — Cr&eacute;er le workspace Log Analytics (90j r&eacute;tention)</span>
+<span class="keyword">az monitor log-analytics workspace create</span> `
+  <span class="param">--resource-group</span> <span class="var">$RGMON</span> `
+  <span class="param">--workspace-name</span> <span class="var">$LAW</span> `
+  <span class="param">--location</span> <span class="var">$LOC</span> `
+  <span class="param">--retention-time</span> <span class="string">90</span>
+
+<span class="comment"># [5/10] — Activer Defender for Servers Plan 1</span>
+<span class="keyword">az security pricing create</span> <span class="param">--name</span> <span class="string">VirtualMachines</span> <span class="param">--tier</span> <span class="string">Standard</span> <span class="param">--subplan</span> <span class="string">P1</span>
+
+<span class="comment"># [6/10] — Activer auto-provisioning MDE + AMA</span>
+<span class="keyword">az security auto-provisioning-setting update</span> <span class="param">--name</span> <span class="string">MicrosoftDefenderForEndpoint</span> <span class="param">--auto-provision</span> <span class="string">On</span>
+<span class="keyword">az security auto-provisioning-setting update</span> <span class="param">--name</span> <span class="string">MicrosoftMonitoringAgent</span> <span class="param">--auto-provision</span> <span class="string">On</span>
+
+<span class="comment"># [7/10] — Assigner la Policy CIS Azure Benchmark</span>
+<span class="keyword">az policy assignment create</span> `
+  <span class="param">--name</span> <span class="string">"cis-azure-v2"</span> `
+  <span class="param">--policy-set-definition</span> <span class="string">"/providers/Microsoft.Authorization/policySetDefinitions/06f19060-9e68-4070-92ca-f15cc126059e"</span> `
+  <span class="param">--scope</span> <span class="string">"/subscriptions/<span class="var">$SUB</span>"</span>
+
+<span class="comment"># [8/10] — Attribuer RBAC admins Arc sur le RG</span>
+<span class="keyword">az role assignment create</span> `
+  <span class="param">--assignee</span> <span class="string">"arc-admins@corp.com"</span> `
+  <span class="param">--role</span> <span class="string">"Azure Connected Machine Resource Administrator"</span> `
+  <span class="param">--scope</span> <span class="string">"/subscriptions/<span class="var">$SUB</span>/resourceGroups/<span class="var">$RG</span>"</span>
+
+<span class="comment"># [9/10] — Sur la machine cible : installer l'agent Arc</span>
+<span class="comment"># (Commande &agrave; ex&eacute;cuter sur le serveur on-premises)</span>
+<span class="comment"># Invoke-WebRequest -Uri "https://aka.ms/AzureConnectedMachineAgent" -OutFile "AzureConnectedMachineAgent.msi"</span>
+<span class="comment"># msiexec.exe /i AzureConnectedMachineAgent.msi /qn</span>
+<span class="comment"># azcmagent connect --service-principal-id $SP.appId --service-principal-secret $SP.password --tenant-id $TENANT --subscription-id $SUB --resource-group $RG --location $LOC</span>
+
+<span class="comment"># [10/10] — V&eacute;rifier le d&eacute;ploiement</span>
+<span class="keyword">az connectedmachine list</span> `
+  <span class="param">--resource-group</span> <span class="var">$RG</span> `
+  <span class="param">--query</span> <span class="string">"[].{Name:name, Status:status, Agent:agentVersion}"</span> `
+  <span class="param">--output</span> table
+
+<span class="keyword">Write-Host</span> <span class="string">"[OK] D&eacute;ploiement Arc termin&eacute;. V&eacute;rifiez le portail : portal.azure.com &gt; Azure Arc &gt; Servers"</span></pre>
+  </div>
+</div>
+<!-- ═══ CHECKLIST ═══ -->
+<div class="section" id="checklist">
+  <h2 style="color:var(--azure-dark);margin-bottom:1.5rem">&#x2705; Checklist de D&eacute;ploiement Arc Compl&egrave;te</h2>
+  <h3>Phase 1 &mdash; Pr&eacute;paration (J-7)</h3>
+  <div class="checklist-item"><input type="checkbox"><span>[ S1 ] Inventaire de tous les serveurs &agrave; connecter (OS, version, site)</span></div>
+  <div class="checklist-item"><input type="checkbox"><span>[ S1 ] Service Principal <code>arc-onboarding-sp</code> cr&eacute;&eacute; avec r&ocirc;le <em>Azure Connected Machine Onboarding</em></span></div>
+  <div class="checklist-item"><input type="checkbox"><span>[ S2 ] Liste FQDN Arc valid&eacute;e avec l'&eacute;quipe r&eacute;seau / firewall</span></div>
+  <div class="checklist-item"><input type="checkbox"><span>[ S2 ] Proxy configur&eacute; ou Private Link Scope planifi&eacute;</span></div>
+  <div class="checklist-item"><input type="checkbox"><span>[ S3 ] Groupes RBAC cr&eacute;&eacute;s dans Microsoft Entra ID (arc-admins, arc-readers)</span></div>
+  <h3>Phase 2 &mdash; D&eacute;ploiement (J0)</h3>
+  <div class="checklist-item"><input type="checkbox"><span>[ S1 ] Agent Arc install&eacute; et statut <span class="hl-green">Connected</span> sur toutes les machines</span></div>
+  <div class="checklist-item"><input type="checkbox"><span>[ S1 ] Auto-upgrade agent (preview) activ&eacute; : <code>properties.agentUpgrade.enableAutomaticUpgrade</code> = <code>true</code> sur les machines cibl&eacute;es</span></div>
+  <div class="checklist-item"><input type="checkbox"><span>[ S1 ] Tags Env/Owner/Site pr&eacute;sents sur chaque machine Arc</span></div>
+  <div class="checklist-item"><input type="checkbox"><span>[ S4 ] Policy CIS Benchmark assign&eacute;e sur l'abonnement</span></div>
+  <div class="checklist-item"><input type="checkbox"><span>[ S5 ] Defender for Servers Plan 1 activ&eacute;, extension MDE d&eacute;ploy&eacute;e</span></div>
+  <h3>Phase 3 &mdash; Consolidation (J+30)</h3>
+  <div class="checklist-item"><input type="checkbox"><span>[ S6 ] AMA install&eacute;, DCR associ&eacute;e, heartbeats re&ccedil;us dans Log Analytics</span></div>
+  <div class="checklist-item"><input type="checkbox"><span>[ S6 ] R&eacute;tention workspace r&eacute;gl&eacute;e &agrave; 90 jours minimum</span></div>
+  <div class="checklist-item"><input type="checkbox"><span>[ S8 ] Fen&ecirc;tre de maintenance mensuelle configur&eacute;e + toutes machines associ&eacute;es</span></div>
+  <div class="checklist-item"><input type="checkbox"><span>[ S10 ] Secure Score MDC &ge;50%, rapport conformit&eacute; CIS export&eacute;</span></div>
+  <div class="checklist-item"><input type="checkbox"><span>[ ALL ] SP d'onboarding d&eacute;sactiv&eacute; ou supprim&eacute; apr&egrave;s d&eacute;ploiement masse</span></div>
+</div>
+
+<!-- ═══ GLOSSAIRE ═══ -->
+<div class="section" id="glossaire">
+  <h2 style="color:var(--azure-dark);margin-bottom:1.5rem">&#x1F4D6; Glossaire Azure Arc</h2>
+  <div class="table-container"><table>
+    <thead><tr><th>Sigle</th><th>Signification</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Arc</strong></td><td>Azure Arc</td><td>Service Microsoft permettant de g&eacute;rer des ressources on-premises et multi-cloud depuis Azure</td></tr>
+      <tr><td><strong>AMA</strong></td><td>Azure Monitor Agent</td><td>Agent de collecte de logs et m&eacute;triques, successeur du Log Analytics Agent (MMA)</td></tr>
+      <tr><td><strong>AMPLS</strong></td><td>Azure Monitor Private Link Scope</td><td>Scope de liaison priv&eacute;e pour router le trafic AMA via un Private Endpoint</td></tr>
+      <tr><td><strong>CMA</strong></td><td>Connected Machine Agent</td><td>Agent Arc install&eacute; sur les serveurs pour les connecter &agrave; Azure (azcmagent)</td></tr>
+      <tr><td><strong>DCR</strong></td><td>Data Collection Rule</td><td>R&egrave;gle d&eacute;finissant quels logs/m&eacute;triques l'AMA collecte et o&ugrave; les envoyer</td></tr>
+      <tr><td><strong>PLS</strong></td><td>Azure Arc Private Link Scope</td><td>Ressource Arc qui groupe les machines pour le routage via Private Endpoint</td></tr>
+      <tr><td><strong>Guest Config</strong></td><td>Azure Policy Guest Configuration</td><td>Extension Arc permettant d'auditer la configuration interne des OS (ex: param&egrave;tres CIS)</td></tr>
+      <tr><td><strong>CSPM</strong></td><td>Cloud Security Posture Management</td><td>Gestion de la posture de s&eacute;curit&eacute; cloud &mdash; fonctionnalit&eacute; MDC</td></tr>
+      <tr><td><strong>JIT</strong></td><td>Just-in-Time Access</td><td>Acc&egrave;s temporaire aux ports de gestion (RDP/SSH) avec approbation MDC (Defender P2)</td></tr>
+      <tr><td><strong>CIS</strong></td><td>Center for Internet Security</td><td>Organisation &eacute;ditant les benchmarks de s&eacute;curit&eacute; (CIS Azure Foundations Benchmark)</td></tr>
+      <tr><td><strong>MDE</strong></td><td>Microsoft Defender for Endpoint</td><td>Solution EDR int&eacute;gr&eacute;e via l'extension Arc pour les serveurs on-premises</td></tr>
+      <tr><td><strong>MDC</strong></td><td>Microsoft Defender for Cloud</td><td>Plateforme CNAPP unifi&eacute;e (anciennement Security Center) pour la posture et la protection</td></tr>
+      <tr><td><strong>MDVM</strong></td><td>Microsoft Defender Vulnerability Management</td><td>Gestion des vuln&eacute;rabilit&eacute;s int&eacute;gr&eacute;e &agrave; MDE (Defender P2)</td></tr>
+      <tr><td><strong>GitOps</strong></td><td>Git Operations</td><td>Paradigme de gestion de configuration Kubernetes via un d&eacute;p&ocirc;t Git (impl&eacute;ment&eacute; avec Flux v2)</td></tr>
+    </tbody>
+  </table></div>
+</div>
+<!-- ═══ MATRICE INTERACTIONS ═══ -->
+<div class="section" id="matrice">
+  <h2 style="color:var(--azure-dark);margin-bottom:1.5rem">&#x1F517; Matrice d'Interactions Inter-Sections</h2>
+  <div class="alert alert-info" style="margin-bottom:1.5rem">
+    <span class="alert-icon">&#x1F4A1;</span>
+    <div><strong>Lecture :</strong> la section en ligne <strong>d&eacute;pend de</strong> ou <strong>am&eacute;liore</strong> la section en colonne. <span style="color:var(--success-green)">&#x25CF;</span> = d&eacute;pendance forte / pr&eacute;requis. <span style="color:var(--warning-orange)">&#x25CB;</span> = interaction recommand&eacute;e. &mdash; = ind&eacute;pendant.</div>
+  </div>
+  <div class="table-container"><table>
+    <thead><tr><th>&#x2193; D&eacute;pend de &rarr;</th><th>S1 Onboarding</th><th>S2 R&eacute;seau</th><th>S3 RBAC</th><th>S4 Policy</th><th>S5 Defender</th><th>S6 Monitor</th><th>S7 SQL</th><th>S8 Update</th><th>S9 K8s</th><th>S10 CIS</th></tr></thead>
+    <tbody>
+      <tr><td><strong>S1 Onboarding</strong></td><td>&mdash;</td><td><span style="color:var(--success-green)">&#x25CF;</span> FQDN</td><td><span style="color:var(--warning-orange)">&#x25CB;</span> SP</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+      <tr><td><strong>S2 R&eacute;seau</strong></td><td><span style="color:var(--success-green)">&#x25CF;</span> Agent</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+      <tr><td><strong>S3 RBAC</strong></td><td><span style="color:var(--success-green)">&#x25CF;</span> RG cr&eacute;&eacute;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+      <tr><td><strong>S4 Policy</strong></td><td><span style="color:var(--success-green)">&#x25CF;</span> Machines</td><td>&mdash;</td><td><span style="color:var(--warning-orange)">&#x25CB;</span> MI</td><td>&mdash;</td><td><span style="color:var(--warning-orange)">&#x25CB;</span> DINE</td><td><span style="color:var(--warning-orange)">&#x25CB;</span> AMA</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td><span style="color:var(--success-green)">&#x25CF;</span> CIS</td></tr>
+      <tr><td><strong>S5 Defender</strong></td><td><span style="color:var(--success-green)">&#x25CF;</span> Agent</td><td><span style="color:var(--warning-orange)">&#x25CB;</span> PE</td><td>&mdash;</td><td><span style="color:var(--warning-orange)">&#x25CB;</span> Policy</td><td>&mdash;</td><td><span style="color:var(--warning-orange)">&#x25CB;</span> Logs</td><td><span style="color:var(--warning-orange)">&#x25CB;</span> SQL</td><td>&mdash;</td><td><span style="color:var(--warning-orange)">&#x25CB;</span> K8s</td><td><span style="color:var(--success-green)">&#x25CF;</span> Score</td></tr>
+      <tr><td><strong>S6 Monitor</strong></td><td><span style="color:var(--success-green)">&#x25CF;</span> Agent</td><td><span style="color:var(--warning-orange)">&#x25CB;</span> AMPLS</td><td>&mdash;</td><td><span style="color:var(--warning-orange)">&#x25CB;</span> DINE</td><td><span style="color:var(--warning-orange)">&#x25CB;</span> Sentinel</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td><span style="color:var(--warning-orange)">&#x25CB;</span> Logs</td></tr>
+      <tr><td><strong>S7 SQL</strong></td><td><span style="color:var(--success-green)">&#x25CF;</span> Agent</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td><span style="color:var(--warning-orange)">&#x25CB;</span> SQL Def</td><td><span style="color:var(--success-green)">&#x25CF;</span> LAW</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+      <tr><td><strong>S8 Update</strong></td><td><span style="color:var(--success-green)">&#x25CF;</span> Agent</td><td>&mdash;</td><td>&mdash;</td><td><span style="color:var(--warning-orange)">&#x25CB;</span> Policy</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td><span style="color:var(--warning-orange)">&#x25CB;</span> Patches</td></tr>
+      <tr><td><strong>S9 Kubernetes</strong></td><td>&mdash;</td><td><span style="color:var(--warning-orange)">&#x25CB;</span> PE</td><td><span style="color:var(--success-green)">&#x25CF;</span> RBAC</td><td><span style="color:var(--warning-orange)">&#x25CB;</span> Policy K8s</td><td><span style="color:var(--warning-orange)">&#x25CB;</span> Containers</td><td><span style="color:var(--warning-orange)">&#x25CB;</span> Logs</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+      <tr><td><strong>S10 CIS</strong></td><td><span style="color:var(--success-green)">&#x25CF;</span> Machines</td><td>&mdash;</td><td>&mdash;</td><td><span style="color:var(--success-green)">&#x25CF;</span> CIS Pol</td><td><span style="color:var(--success-green)">&#x25CF;</span> Score</td><td><span style="color:var(--warning-orange)">&#x25CB;</span> Logs</td><td>&mdash;</td><td><span style="color:var(--warning-orange)">&#x25CB;</span> Patches</td><td>&mdash;</td><td>&mdash;</td></tr>
+    </tbody>
+  </table></div>
+</div>
+
+</div><!-- /container -->
+
+<footer>
+  <strong>Azure Arc &mdash; Guide de Configuration &amp; Audit</strong> &mdash; Version 1.0 &mdash; Avril 2026<br>
+  Portail : <a href="https://portal.azure.com/#blade/Microsoft_Azure_HybridCompute/AzureArcCenterBlade" target="_blank">portal.azure.com &gt; Azure Arc</a> &mdash;
+  Docs : <a href="https://learn.microsoft.com/fr-fr/azure/azure-arc/" target="_blank">learn.microsoft.com/azure/azure-arc</a>
+</footer>
+
+<script>
+function copyCode(btn){const pre=btn.closest('.code-block').querySelector('pre');navigator.clipboard.writeText(pre.innerText).then(()=>{btn.textContent='Copiez !';setTimeout(()=>btn.textContent='Copier',2000)});}
+</script>
+<script id="v1a-script">
+(function(){
+  const sidebar = document.querySelector('.v1a-sidebar');
+  if(!sidebar) return;
+  const accs = [...sidebar.querySelectorAll('details.acc')];
+  accs.forEach(a => a.addEventListener('toggle', () => {
+    if(a.open) accs.forEach(o => { if(o!==a) o.open = false; });
+  }));
+  const links = [...sidebar.querySelectorAll('.acc-body a[href^="#"]')];
+  const map = new Map(links.map(a => [a.getAttribute('href').slice(1), a]));
+  const sections = [...document.querySelectorAll('.section[id], section[id]')];
+  function onScroll(){
+    const y = window.scrollY + 120;
+    let cur = null;
+    for(const s of sections){ if(s.offsetTop <= y) cur = s; else break; }
+    links.forEach(a => a.classList.remove('active'));
+    if(cur){
+      const a = map.get(cur.id);
+      if(a){
+        a.classList.add('active');
+        const det = a.closest('details.acc');
+        if(det && !det.open){ accs.forEach(o=>o.open=false); det.open = true; }
+      }
+    }
+  }
+  document.addEventListener('scroll', onScroll, {passive:true});
+  onScroll();
+})();
+</script>
+</main>
+</div>
+</body>
+</html>

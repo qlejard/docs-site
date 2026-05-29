@@ -1,0 +1,2702 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!--
+    ╔══════════════════════════════════════════════════════════════════════╗
+    ║  azure-firewall.html                                         ║
+    ║  Azure Firewall — Filtrage Réseau L4/L7, IDPS & Protection        ║
+    ║  des Workloads — Guide de Configuration & Audit                    ║
+    ║                                                                    ║
+    ║  Version : 1.1                                                     ║
+    ║  Date    : Mai 2026                                                ║
+    ║  Console : portal.azure.com > Azure Firewall                      ║
+    ║  Outils  : Az CLI (az network firewall), PowerShell (Az.Network), ║
+    ║            Terraform, Bicep                                        ║
+    ╚══════════════════════════════════════════════════════════════════════╝
+    -->
+    <title>Azure Firewall &mdash; Filtrage R&eacute;seau L4/L7, IDPS &amp; Protection des Workloads</title>
+    <style>
+        :root {
+            --azure-blue: #0078d4;
+            --azure-dark: #004578;
+            --azure-light: #deecf9;
+            --success-green: #107c10;
+            --warning-orange: #ff8c00;
+            --danger-red: #d13438;
+            --neutral-bg: #f3f2f1;
+            --neutral-dark: #323130;
+            --neutral-medium: #605e5c;
+            --white: #ffffff;
+            --shadow: 0 2px 8px rgba(0,0,0,0.12);
+            --shadow-hover: 0 4px 16px rgba(0,0,0,0.18);
+            --radius: 8px;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--neutral-bg); color: var(--neutral-dark); line-height: 1.6; }
+        a { color: var(--azure-blue); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        code { font-family: 'Cascadia Code', Consolas, 'Courier New', monospace; font-size: 0.88em; background: #e8e6e4; padding: 1px 6px; border-radius: 3px; }
+        .hero { background: var(--white); border-bottom: 3px solid var(--azure-blue); padding: 40px 40px 32px; text-align: center; max-width: 1400px; margin: 0 auto; }
+        .hero h1 { font-size: 1.7em; font-weight: 700; color: var(--azure-dark); margin-bottom: 6px; letter-spacing: -0.3px; }
+        .hero .subtitle { font-size: 0.95em; color: var(--neutral-medium); max-width: 800px; margin: 0 auto; }
+        .hero .badge-row { margin-top: 16px; display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; }
+        .hero .badge { background: var(--neutral-bg); border: 1px solid #e1dfdd; color: var(--neutral-dark); padding: 4px 12px; border-radius: 4px; font-size: 0.78em; }
+        .hero .meta-row { margin-top: 14px; display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; font-size: 0.8em; color: var(--neutral-medium); }
+        .nav-container { max-width: 1400px; margin: 0 auto; border-bottom: 1px solid #e1dfdd; position: sticky; top: 0; z-index: 100; background: var(--neutral-bg); }
+        .nav-container nav { display: flex; justify-content: flex-start; gap: 0; overflow-x: auto; padding: 0 16px; -webkit-overflow-scrolling: touch; }
+        .nav-container nav a { text-decoration: none; color: var(--neutral-medium); padding: 10px 14px; font-size: 0.78em; font-weight: 500; white-space: nowrap; border-bottom: 2px solid transparent; transition: all 0.2s; }
+        .nav-container nav a:hover { color: var(--azure-blue); border-bottom-color: var(--azure-blue); text-decoration: none; }
+        .container { max-width: 1400px; margin: 0 auto; padding: 30px 40px; }
+        .section { background: var(--white); border-radius: var(--radius); box-shadow: var(--shadow); padding: 28px 32px; margin-bottom: 28px; transition: box-shadow 0.2s; }
+        .section:hover { box-shadow: var(--shadow-hover); }
+        .section-header { display: flex; align-items: center; gap: 15px; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid var(--neutral-bg); }
+        .section-header.blue { border-bottom-color: var(--azure-blue); }
+        .section-header.red { border-bottom-color: var(--danger-red); }
+        .section-header.orange { border-bottom-color: var(--warning-orange); }
+        .section-header.green { border-bottom-color: var(--success-green); }
+        .section-number { background: var(--azure-blue); color: white; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.1em; flex-shrink: 0; }
+        .section-number.red { background: var(--danger-red); }
+        .section-number.orange { background: var(--warning-orange); }
+        .section-number.green { background: var(--success-green); }
+        .section-title { font-size: 1.4em; color: var(--azure-dark); font-weight: 700; }
+        .section-desc { font-size: 0.92em; color: var(--neutral-medium); margin-top: 2px; }
+        h3 { font-size: 1.05em; font-weight: 600; margin: 24px 0 10px 0; padding-left: 12px; border-left: 3px solid var(--azure-blue); }
+        h4 { font-size: 0.95em; font-weight: 600; margin: 16px 0 8px 0; color: var(--azure-dark); }
+        .badge-sm { font-size: 0.7em; padding: 2px 8px; border-radius: 3px; font-weight: 600; vertical-align: middle; }
+        .badge-critical { background: #fde7e9; color: var(--danger-red); }
+        .badge-high { background: #fff0e0; color: #d83b01; }
+        .badge-medium { background: #fff8e1; color: #6d4c00; }
+        .badge-low { background: #e8f5e9; color: var(--success-green); }
+        .badge-ok { background: #dff6dd; color: var(--success-green); }
+        .lic { display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 0.72em; font-weight: 600; vertical-align: middle; margin-left: 4px; }
+        .lic-azure-free { background: #e8e6e4; color: #605e5c; }
+        .lic-azure-std { background: var(--azure-light); color: var(--azure-blue); }
+        .lic-azure-prem { background: #e8d4f0; color: #6b2fa0; }
+        .lic-azure-pay { background: #fff3cd; color: #6d4c00; }
+        .alert { border-radius: var(--radius); padding: 16px 20px; margin: 15px 0; font-size: 0.93em; line-height: 1.6; }
+        .alert:has(.alert-icon) { display: flex; gap: 12px; align-items: flex-start; }
+        .alert-icon { font-size: 1.2em; flex-shrink: 0; margin-top: 2px; }
+        .alert-info { background: #e6f2ff; border: 1px solid #b3d7ff; color: #004578; }
+        .alert-warn { background: #fff8e1; border: 1px solid #ffe082; color: #6d4c00; }
+        .alert-error { background: #fde7e9; border: 1px solid #f5c6cb; color: #721c24; }
+        .alert-ok { background: #e8f5e9; border: 1px solid #a5d6a7; color: #1b5e20; }
+        .table-container { overflow-x: auto; border-radius: var(--radius); box-shadow: 0 1px 4px rgba(0,0,0,0.08); margin: 12px 0 18px 0; }
+        table { width: 100%; border-collapse: collapse; background: var(--white); font-size: 0.9em; }
+        thead th { background: var(--azure-dark); color: white; padding: 12px 14px; text-align: left; font-weight: 600; font-size: 0.85em; text-transform: uppercase; letter-spacing: .3px; }
+        tbody td { padding: 10px 14px; border-bottom: 1px solid #edebe9; vertical-align: top; }
+        tbody tr:hover { background: #f8f7f6; }
+        tbody tr:last-child td { border-bottom: none; }
+        tr.row-ok { background: #f0fff0; }
+        tr.row-ko { background: #fff5f5; }
+        tr.row-warn { background: #fffdf0; }
+        .code-block { background: #1e1e1e; border-radius: var(--radius); overflow: hidden; margin: 12px 0 18px 0; }
+        .code-header { display: flex; justify-content: space-between; align-items: center; padding: 8px 14px; background: #2d2d2d; font-size: 0.78em; color: #a0a0a0; }
+        .copy-btn { background: var(--azure-blue); color: white; border: none; padding: 4px 12px; border-radius: 4px; cursor: pointer; font-size: 0.85em; transition: background 0.2s; }
+        .copy-btn:hover { background: #106EBE; }
+        .code-block pre { padding: 16px 18px; color: #d4d4d4; font-family: 'Cascadia Code', Consolas, monospace; font-size: 0.85em; overflow-x: auto; white-space: pre; line-height: 1.55; }
+        .code-block pre .comment { color: #6a9955; }
+        .code-block pre .keyword { color: #569cd6; }
+        .code-block pre .string { color: #ce9178; }
+        .code-block pre .param { color: #9cdcfe; }
+        .code-block pre .var { color: #4ec9b0; }
+        .step { display: flex; gap: 12px; margin-bottom: 10px; padding: 14px 16px; background: #faf9f8; border-radius: var(--radius); border-left: 3px solid var(--azure-blue); font-size: 0.93em; }
+        .step.step-red { border-left-color: var(--danger-red); }
+        .step.step-orange { border-left-color: var(--warning-orange); }
+        .step.step-green { border-left-color: var(--success-green); }
+        .step-n { min-width: 28px; height: 28px; border-radius: 50%; background: var(--azure-blue); color: white; display: flex; align-items: center; justify-content: center; font-size: 0.8em; font-weight: 700; flex-shrink: 0; }
+        .step-n.red { background: var(--danger-red); }
+        .step-n.orange { background: var(--warning-orange); }
+        .step-n.green { background: var(--success-green); }
+        .step-c { flex: 1; }
+        .step-c ul, .step-c ol { margin-top: 6px; padding-left: 20px; }
+        .hl { background: #fff3cd; padding: 1px 6px; border-radius: 3px; font-weight: 600; }
+        .hl-blue { background: var(--azure-light); padding: 1px 6px; border-radius: 3px; font-weight: 600; color: var(--azure-dark); }
+        .hl-green { background: #dff6dd; padding: 1px 6px; border-radius: 3px; font-weight: 600; color: var(--success-green); }
+        .hl-red { background: #fde7e9; padding: 1px 6px; border-radius: 3px; font-weight: 600; color: var(--danger-red); }
+        .progress-bar { background: #e1dfdd; border-radius: 10px; height: 24px; overflow: hidden; margin: 12px 0; position: relative; }
+        .progress-fill { height: 100%; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 0.78em; font-weight: 700; color: white; transition: width 0.3s; }
+        .progress-fill.red { background: linear-gradient(90deg, #a01020, #d13438); }
+        .progress-fill.orange { background: linear-gradient(90deg, #d83b01, #ff8c00); }
+        .progress-fill.green { background: linear-gradient(90deg, #107c10, #2ea72e); }
+        .progress-fill.blue { background: linear-gradient(90deg, #004578, #0078d4); }
+        .checklist-item { display: flex; align-items: flex-start; gap: 10px; padding: 8px 0; border-bottom: 1px solid #f3f2f1; }
+        .checklist-item:last-child { border-bottom: none; }
+        .checklist-item input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--azure-blue); flex-shrink: 0; margin-top: 3px; }
+        .diagram-block { background: #1e1e1e; color: #d4d4d4; border-radius: var(--radius); padding: 24px; margin: 16px 0; overflow-x: auto; font-family: 'Cascadia Code', Consolas, monospace; font-size: 0.78em; line-height: 1.35; white-space: pre; }
+        .diagram-block .d-ok { color: #4ec9b0; }
+        .diagram-block .d-ko { color: #f44747; }
+        .diagram-block .d-warn { color: #dcdcaa; }
+        .diagram-block .d-line { color: #808080; }
+        .diagram-block .d-label { color: #569cd6; }
+        .flow-diagram { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); border-radius: var(--radius); padding: 28px 24px; margin: 12px 0 18px 0; overflow-x: auto; }
+        .flow-diagram-title { text-align: center; color: #c8cfe0; font-size: 0.75em; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 20px; font-weight: 600; }
+        .flow-grid { display: grid; gap: 0; align-items: stretch; }
+        .flow-col { display: flex; flex-direction: column; }
+        .flow-col-header { text-align: center; font-size: 0.72em; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; padding-bottom: 8px; margin-bottom: 12px; border-bottom: 2px solid; border-color: var(--fc-color, #8892b0); color: var(--fc-color, #8892b0); }
+        .flow-col-body { display: flex; flex-direction: column; gap: 8px; flex: 1; }
+        .flow-card { border-radius: 6px; padding: 10px 12px; border-left: 3px solid var(--fc-color, #8892b0); }
+        .flow-card-title { font-weight: 700; font-size: 0.82em; color: var(--fc-color, #64ffda); }
+        .flow-card-detail { color: #c8cfe0; font-size: 0.72em; margin-top: 4px; font-family: 'Cascadia Code', Consolas, monospace; }
+        .flow-card-content { color: #c8cfe0; font-size: 0.75em; line-height: 1.5; }
+        .flow-card.green  { background: rgba(100,255,218,0.08); border-color: rgba(100,255,218,0.25); border-left-color: #64ffda; --fc-color: #64ffda; }
+        .flow-card.purple { background: rgba(180,100,255,0.08); border-color: rgba(180,100,255,0.25); border-left-color: #c792ea; --fc-color: #c792ea; }
+        .flow-card.orange { background: rgba(255,140,0,0.06); border-color: rgba(255,140,0,0.25); border-left-color: #ff8c00; --fc-color: #ffcb6b; }
+        .flow-card.blue   { background: rgba(0,120,212,0.08); border-color: rgba(0,120,212,0.3); border-left-color: #0078d4; --fc-color: #569cd6; }
+        .flow-card.red    { background: rgba(244,71,71,0.08); border-color: rgba(244,71,71,0.3); border-left-color: #f44747; --fc-color: #f44747; }
+        .flow-card.teal   { background: rgba(100,255,218,0.08); border-color: rgba(100,255,218,0.3); border-left-color: #64ffda; --fc-color: #64ffda; }
+        .flow-col-arrow { display: flex; align-items: center; justify-content: center; padding: 0 8px; }
+        .flow-col-arrow::after { content: "→"; color: #8892b0; font-size: 1.4em; opacity: 0.6; }
+        .level-comparison { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 16px 0; }
+        .level-card { border-radius: var(--radius); padding: 16px; text-align: center; }
+        .level-card.lc-basic { background: #f0f7ff; border: 2px solid #c2d9f5; }
+        .level-card.lc-std { background: #e6f2ff; border: 2px solid #b3d7ff; }
+        .level-card.lc-prem { background: #e8d4f0; border: 2px solid #c59de0; }
+        .level-card h4 { font-size: 0.95em; margin-bottom: 6px; }
+        .level-card .level-score { font-size: 1.8em; font-weight: 700; margin: 8px 0; }
+        .level-card .level-desc { font-size: 0.78em; color: var(--neutral-medium); }
+        .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 12px 0; }
+        footer { background: #faf9f8; color: var(--neutral-medium); text-align: center; padding: 24px; margin-top: 40px; font-size: 0.8em; border-top: 1px solid #e1dfdd; }
+        @media print {
+            body { background: white; font-size: 11px; }
+            .hero { padding: 16px; border-bottom-width: 2px; }
+            .nav-container { display: none; }
+            .container { max-width: 100%; padding: 0 16px; }
+            .section { box-shadow: none; border: 1px solid #ccc; break-inside: avoid; }
+            .code-block pre { font-size: 0.75em; }
+        }
+        @media (max-width: 768px) {
+            .hero { padding: 24px 16px 20px; }
+            .hero h1 { font-size: 1.3em; }
+            .container { padding: 16px; }
+            .section { padding: 20px; }
+            .level-comparison { grid-template-columns: 1fr; }
+            .two-col { grid-template-columns: 1fr; }
+        }
+    </style>
+<style id="v1a-overlay">
+:root{--c:#0078d4;--azure-dark:#004578;--light:#deecf9;--bg:#f8f9fb;--surface:#fff;--border:#e3e6ec;--muted:#5b6478;--radius:14px}
+.nav-container,.back-to-index{display:none!important}
+body{background:var(--bg)}
+.v1a-layout{display:grid;grid-template-columns:280px 1fr;gap:0;align-items:start}
+.v1a-sidebar{position:sticky;top:0;height:100vh;overflow-y:auto;padding:18px 14px 24px;background:#fff;border-right:1px solid var(--border)}
+.v1a-main{min-width:0}
+.v1a-main .hero{max-width:none;margin:0;border-radius:0}
+.v1a-main .container{max-width:1200px}
+.back-index{display:inline-flex;align-items:center;gap:6px;margin:0 0 16px;padding:6px 10px;background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--muted);font-size:.78em;font-weight:500;text-decoration:none;transition:all .15s}
+.back-index:hover{background:transparent;border-color:var(--c);color:var(--azure-dark);text-decoration:none}
+.back-index .arr{font-size:1em;line-height:1;opacity:.85}
+.side-head{display:flex;align-items:center;gap:10px;padding:6px 6px 14px;border-bottom:1px solid var(--border);margin-bottom:12px}
+.side-head .ico{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--c),#50a4f0);display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.1em;flex-shrink:0}
+.side-head .t{font-weight:700;color:var(--azure-dark);font-size:.95em;line-height:1.15}
+.side-head .s{font-size:.72em;color:var(--muted);margin-top:2px;line-height:1.3}
+.acc{margin-bottom:6px;border-radius:10px;overflow:hidden}
+.acc>summary{list-style:none;cursor:pointer;padding:8px 10px;display:flex;align-items:center;gap:8px;color:var(--azure-dark);font-weight:600;font-size:.82em;border-radius:8px;user-select:none}
+.acc>summary::-webkit-details-marker{display:none}
+.acc>summary:hover{background:var(--bg)}
+.acc>summary .chev{margin-left:auto;font-size:.7em;transition:transform .15s;color:var(--muted)}
+.acc[open]>summary{background:var(--light);color:var(--c)}
+.acc[open]>summary .chev{transform:rotate(90deg)}
+.acc-body{padding:4px 0 6px 6px;display:flex;flex-direction:column;gap:2px}
+.acc-body a{display:flex;align-items:center;gap:8px;padding:6px 10px 6px 18px;border-radius:6px;font-size:.8em;color:var(--muted);text-decoration:none;border-left:2px solid transparent;transition:all .12s}
+.acc-body a:hover{color:var(--c);background:var(--bg);text-decoration:none}
+.acc-body a.active{color:var(--c);background:var(--light);border-left-color:var(--c);font-weight:600}
+.acc-body a .num{font-size:.7em;color:#9aa2b1;font-variant-numeric:tabular-nums;min-width:22px}
+.acc-body a.active .num{color:var(--c)}
+.side-foot{margin-top:14px;padding-top:12px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:4px}
+.side-foot a{display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:6px;font-size:.78em;color:var(--muted);text-decoration:none}
+.side-foot a:hover{color:var(--c);background:var(--bg);text-decoration:none}
+@media (max-width:900px){
+  .v1a-layout{grid-template-columns:1fr}
+  .v1a-sidebar{position:static;height:auto;border-right:none;border-bottom:1px solid var(--border)}
+}
+</style>
+</head>
+<body>
+<div class="v1a-layout">
+<aside class="v1a-sidebar">
+  <a href="../index.html" class="back-index" title="Revenir à l'index"><span class="arr" aria-hidden="true">&#127968;</span> Index</a>
+  <div class="side-head">
+    <div class="ico">&#x1F4D8;</div>
+    <div>
+      <div class="t">Azure Firewall</div>
+      <div class="s">Guide de Configuration &amp; Audit &mdash; Standard vs Premium, Firewall Policy, R&egra&hellip;</div>
+    </div>
+  </div>
+  <details class="acc" open>
+    <summary>Introduction <span class="chev">&rsaquo;</span></summary>
+    <div class="acc-body">
+      <a href="#guide"><span class="num">&bull;</span> &#x1F4D6; Mode d'emploi</a>
+      <a href="#licences"><span class="num">&bull;</span> &#x1F4B0; Tarifs</a>
+    </div>
+  </details>
+  <details class="acc">
+    <summary>Sections <span class="chev">&rsaquo;</span></summary>
+    <div class="acc-body">
+      <a href="#s1"><span class="num">S1</span> 1. SKUs</a>
+      <a href="#s2"><span class="num">S2</span> 2. Policy</a>
+      <a href="#s3"><span class="num">S3</span> 3. R&egrave;gles</a>
+      <a href="#s4"><span class="num">S4</span> 4. Premium &amp; IDPS</a>
+      <a href="#s5"><span class="num">S5</span> 5. Hub-Spoke</a>
+      <a href="#s6"><span class="num">S6</span> 6. Logging</a>
+      <a href="#s7"><span class="num">S7</span> 7. DNS Proxy</a>
+      <a href="#s8"><span class="num">S8</span> 8. Firewall Manager</a>
+      <a href="#s9"><span class="num">S9</span> 9. HA &amp; Scaling</a>
+      <a href="#s10"><span class="num">S10</span> 10. Conformit&eacute;</a>
+    </div>
+  </details>
+  <details class="acc">
+    <summary>Annexes <span class="chev">&rsaquo;</span></summary>
+    <div class="acc-body">
+      <a href="#matrice"><span class="num">&bull;</span> &#x1F5FA;&#xFE0F; Matrice</a>
+      <a href="#scores"><span class="num">&bull;</span> &#x1F4CA; Scores</a>
+      <a href="#script"><span class="num">&bull;</span> &#x1F4DC; Script</a>
+      <a href="#checklist"><span class="num">&bull;</span> &#x2705; Checklist</a>
+      <a href="#glossaire"><span class="num">&bull;</span> &#x1F4D8; Glossaire</a>
+    </div>
+  </details>
+  <div class="side-foot">
+    <a href="#top">&uarr; Retour en haut</a>
+    <a href="#" onclick="window.print();return false;">&#x2B07; Imprimer / PDF</a>
+    <a href="#" onclick="navigator.clipboard.writeText(location.href);this.textContent='&#x2713; Lien copié';return false;">&#x2398; Copier le lien</a>
+  </div>
+</aside>
+<main class="v1a-main">
+
+
+
+<!-- ═══════════════════════ BACK TO INDEX ═══════════════════════ -->
+<a href="../index.html" class="back-to-index" style="position:fixed;top:16px;left:16px;z-index:1000;display:inline-flex;align-items:center;gap:6px;padding:8px 14px;background:#0078d4;color:#fff;text-decoration:none;border-radius:8px;font:600 14px/1 'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;box-shadow:0 2px 8px rgba(0,0,0,0.15);transition:background .2s" onmouseover="this.style.background='#004578'" onmouseout="this.style.background='#0078d4'" aria-label="Retour à l'index">&larr;&nbsp;Index</a>
+<!-- ═══════════════════════ HEADER ═══════════════════════ -->
+<header class="hero">
+    <h1>Azure Firewall &mdash; Filtrage R&eacute;seau L4/L7, IDPS &amp; Protection des Workloads</h1>
+    <p class="subtitle">Guide de Configuration &amp; Audit &mdash; Standard vs Premium, Firewall Policy, R&egrave;gles DNAT/Network/Application, TLS Inspection, Hub-Spoke, Logging KQL</p>
+    <div class="badge-row">
+        <span class="badge">portal.azure.com &gt; Azure Firewall</span>
+        <span class="badge">az network firewall</span>
+        <span class="badge">Az.Network (PowerShell)</span>
+        <span class="badge">Terraform / Bicep</span>
+        <span class="badge"><span class="lic lic-azure-pay">pay-per-hour + per-GB</span></span>
+    </div>
+    <div class="meta-row">
+        <span>Version : <strong>1.1</strong></span>
+        <span>Derni&egrave;re MAJ : <strong>Mai 2026</strong></span>
+        <span>R&eacute;f. : <a href="https://learn.microsoft.com/azure/firewall/" target="_blank">Azure Firewall Documentation</a></span>
+        <span>Score d&eacute;faut : <strong class="hl-red">~25/100</strong></span>
+    </div>
+</header>
+
+<!-- ═══════════════════════ NAV ═══════════════════════ -->
+<div class="nav-container">
+    <nav>
+        <a href="#guide">&#x1F4D6; Mode d'emploi</a>
+        <a href="#licences">&#x1F4B0; Tarifs</a>
+        <a href="#s1">1. SKUs</a>
+        <a href="#s2">2. Policy</a>
+        <a href="#s3">3. R&egrave;gles</a>
+        <a href="#s4">4. Premium &amp; IDPS</a>
+        <a href="#s5">5. Hub-Spoke</a>
+        <a href="#s6">6. Logging</a>
+        <a href="#s7">7. DNS Proxy</a>
+        <a href="#s8">8. Firewall Manager</a>
+        <a href="#s9">9. HA &amp; Scaling</a>
+        <a href="#s10">10. Conformit&eacute;</a>
+        <a href="#matrice">&#x1F5FA;&#xFE0F; Matrice</a>
+        <a href="#scores">&#x1F4CA; Scores</a>
+        <a href="#script">&#x1F4DC; Script</a>
+        <a href="#checklist">&#x2705; Checklist</a>
+        <a href="#glossaire">&#x1F4D8; Glossaire</a>
+    </nav>
+</div>
+
+<div class="container">
+
+<!-- ═══════════════════════ MODE D'EMPLOI ═══════════════════════ -->
+<div class="section" id="guide">
+    <div class="section-header blue">
+        <div class="section-number">&#x1F4D6;</div>
+        <div>
+            <div class="section-title">Mode d'emploi de ce guide</div>
+            <div class="section-desc">P&eacute;rim&egrave;tre, audiences, strat&eacute;gie de d&eacute;ploiement et conventions</div>
+        </div>
+    </div>
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x1F4CB;</span>
+        <div>
+            Ce guide couvre la <strong>configuration, l'audit et l'op&eacute;ration d'Azure Firewall</strong> (Standard, Premium, Basic).
+            Il s'adresse aux architectes cloud, admins r&eacute;seau et &eacute;quipes s&eacute;curit&eacute;. Utilisable tel quel en livrable client ou adapt&eacute; &agrave; un environnement sp&eacute;cifique.
+        </div>
+    </div>
+
+    <h3>P&eacute;rim&egrave;tre du guide</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr><th>Dans le p&eacute;rim&egrave;tre</th><th>Hors p&eacute;rim&egrave;tre</th><th>Renvoi</th></tr></thead>
+        <tbody>
+            <tr class="row-ok"><td>Azure Firewall Basic / Standard / Premium</td><td>Azure WAF (protection L7 applicative)</td><td><a href="azure-waf.html">azure-waf.html</a></td></tr>
+            <tr class="row-ok"><td>Firewall Policy, règles DNAT/Network/Application</td><td>NSGs (filtrage L4 subnet/NIC)</td><td><a href="azure-networking.html">azure-networking.html</a></td></tr>
+            <tr class="row-ok"><td>TLS Inspection, IDPS, URL Filtering (Premium)</td><td>DDoS Protection (volumétrique)</td><td><a href="azure-networking.html">azure-networking.html</a></td></tr>
+            <tr class="row-ok"><td>Architecture Hub-Spoke, UDRs, DNS Proxy</td><td>VPN / ExpressRoute (connectivité)</td><td><a href="azure-networking.html">azure-networking.html</a></td></tr>
+            <tr class="row-ok"><td>Logging KQL, Azure Monitor, Firewall Manager</td><td>NVAs tierces (Palo Alto standalone)</td><td>Documentation éditeur</td></tr>
+        </tbody>
+    </table>
+    </div>
+
+    <h3>Convention des colonnes</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr><th>Colonne</th><th>Signification</th><th>Effort</th></tr></thead>
+        <tbody>
+            <tr><td><strong>D&eacute;faut Azure</strong></td><td>Valeur appliqu&eacute;e par d&eacute;faut — aucune action requise</td><td>0 min</td></tr>
+            <tr><td><strong>&#x26A1; Quick Win</strong></td><td>Configuration minimale recommand&eacute;e — <span class="hl-green">gains imm&eacute;diats</span></td><td>~30 min</td></tr>
+            <tr><td><strong>&#x1F512; Avanc&eacute;</strong></td><td>Configuration durcie (Premium, IDPS, TLS)</td><td>~2-4h</td></tr>
+            <tr><td><strong>&#x1F3AF; Optimal</strong></td><td>Hub-Spoke + Firewall Manager + conformit&eacute; compl&egrave;te</td><td>Variable</td></tr>
+        </tbody>
+    </table>
+    </div>
+
+    <h3>Convention des badges de licence / tarif</h3>
+    <p>
+        <span class="lic lic-azure-free">Inclus VNet</span> Fonctionnalit&eacute; gratuite incluse dans Azure Networking<br>
+        <span class="lic lic-azure-std">Standard</span> Azure Firewall Standard — tarification variable selon r&eacute;gion / devise / contrat<br>
+        <span class="lic lic-azure-prem">Premium</span> Azure Firewall Premium — tarification variable selon r&eacute;gion / devise / contrat<br>
+        <span class="lic lic-azure-pay">pay-per-hour</span> Facturation compos&eacute;e d'un co&ucirc;t de d&eacute;ploiement, d'un co&ucirc;t de donn&eacute;es trait&eacute;es et, selon le SKU, d'unit&eacute;s de capacit&eacute; optionnelles
+    </p>
+
+    <h3>Strat&eacute;gie de d&eacute;ploiement recommand&eacute;e</h3>
+    <div class="step step-green">
+        <div class="step-n green">1</div>
+        <div class="step-c"><strong>Quick Win</strong> &mdash; D&eacute;ployer Azure Firewall Standard + Firewall Policy + r&egrave;gles de base + logs (+30 pts, ~2h)</div>
+    </div>
+    <div class="step step-green">
+        <div class="step-n green">2</div>
+        <div class="step-c"><strong>Architecture</strong> &mdash; Implanter la topologie Hub-Spoke avec UDRs pour centraliser tout le trafic Internet via le Firewall (~4h)</div>
+    </div>
+    <div class="step">
+        <div class="step-n">3</div>
+        <div class="step-c"><strong>Durcissement Premium</strong> &mdash; Activer TLS Inspection + IDPS en mode Deny + URL Filtering par cat&eacute;gorie (~2h)</div>
+    </div>
+    <div class="step">
+        <div class="step-n">4</div>
+        <div class="step-c"><strong>Gouvernance</strong> &mdash; Firewall Manager, hi&eacute;rarchie de policies, conformit&eacute; MDC, Azure Policy — optimisation op&eacute;rationnelle</div>
+    </div>
+
+    <div class="alert alert-warn">
+        <span class="alert-icon">&#x26A0;&#xFE0F;</span>
+        <div>
+            <strong>Score de d&eacute;part typique : ~25/100.</strong> La plupart des environnements Azure disposent de NSGs mais <em>pas</em> d'Azure Firewall.
+            Le trafic Internet sortant est non filtr&eacute;, il n'y a pas de Hub-Spoke, et le trafic inter-VNets n'est pas inspecté. Ce guide adresse chacun de ces angles morts.
+        </div>
+    </div>
+
+    <h3>Solutions &eacute;cart&eacute;es</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr><th>Alternative</th><th>Pourquoi &eacute;cart&eacute;e</th><th>Cas o&ugrave; elle reste pertinente</th></tr></thead>
+        <tbody>
+            <tr><td><strong>NSGs seuls</strong></td><td>Pas de FQDN filtering r&eacute;seau, pas d'inspection applicative centralis&eacute;e, pas de journalisation Azure Firewall &mdash; peut laisser un manque sur les besoins d'audit et de filtrage egress</td><td>Compl&eacute;ment d'Azure Firewall pour segmentation fine au niveau subnet/NIC</td></tr>
+            <tr><td><strong>NVA tierce (Palo Alto, Fortinet)</strong></td><td>Gestion et licences suppl&eacute;mentaires, mod&egrave;le op&eacute;rationnel distinct, pas de service manag&eacute; Azure Firewall natif</td><td>Si migration depuis on-prem avec politiques Palo Alto existantes ou si fonctions NGFW tr&egrave;s sp&eacute;cifiques requises</td></tr>
+            <tr><td><strong>Azure WAF seul</strong></td><td>Prot&egrave;ge uniquement le trafic HTTP/HTTPS entrant (L7) — ne couvre pas le trafic sortant, inter-VNet ou non-HTTP</td><td>Compl&eacute;ment d'Azure Firewall pour prot&eacute;ger les applications web accessibles depuis Internet</td></tr>
+            <tr><td><strong>Azure DDoS Protection seul</strong></td><td>Prot&egrave;ge contre les attaques volumiques — ne filtre pas le trafic applicatif ni les connexions sortantes malveillantes</td><td>Couche de protection compl&eacute;mentaire sur le Hub VNet en production</td></tr>
+        </tbody>
+    </table>
+    </div>
+</div>
+
+<!-- ═══════════════════════ TARIFS ═══════════════════════ -->
+<div class="section" id="licences">
+    <div class="section-header blue">
+        <div class="section-number">&#x1F4B0;</div>
+        <div>
+            <div class="section-title">Tarifs &amp; SKUs Azure Firewall</div>
+            <div class="section-desc">Mod&egrave;le de facturation : d&eacute;ploiement horaire + volume trait&eacute;</div>
+        </div>
+    </div>
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x1F4B0;</span>
+        <div>
+            Azure Firewall est factur&eacute; autour de <strong>frais de d&eacute;ploiement</strong> et de <strong>donn&eacute;es trait&eacute;es</strong>. La page pricing 2026 documente aussi des <strong>Capacity Units optionnelles</strong> pour Standard et Premium.
+            Les montants exacts varient selon la r&eacute;gion, la devise et le contrat ; utilisez la page pricing ou le calculateur Azure pour chiffrer un cas r&eacute;el.
+        </div>
+    </div>
+
+    <h3>Comparatif des SKUs Azure Firewall</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr>
+            <th>SKU</th>
+            <th>Prix d&eacute;ploiement</th>
+            <th>Prix donn&eacute;es</th>
+            <th>Cas d'usage</th>
+            <th>Fonctionnalit&eacute;s cl&eacute;s</th>
+        </tr></thead>
+        <tbody>
+            <tr class="row-warn">
+                <td><strong>Basic</strong> <span class="lic lic-azure-std">Basic</span></td>
+                <td>Variable (voir pricing live)</td>
+                <td>Variable (voir pricing live)</td>
+                <td>PME, workloads non critiques</td>
+                <td>Filtrage L3/L7 essentiel, Threat Intel en alerte seule, Availability Zones, jusqu'&agrave; 250&nbsp;Mbps</td>
+            </tr>
+            <tr class="row-ok">
+                <td><strong>Standard</strong> <span class="lic lic-azure-std">Standard</span></td>
+                <td>Variable (voir pricing live)</td>
+                <td>Variable (voir pricing live)</td>
+                <td>Entreprises, workloads production</td>
+                <td>FQDN filtering r&eacute;seau, Threat Intel Alert/Deny, DNS Proxy, Web Categories, autoscale jusqu'&agrave; 30&nbsp;Gbps</td>
+            </tr>
+            <tr class="row-ok">
+                <td><strong>Premium</strong> <span class="lic lic-azure-prem">Premium</span></td>
+                <td>Variable (voir pricing live)</td>
+                <td>Variable (voir pricing live)</td>
+                <td>Entreprises r&eacute;glement&eacute;es, haute s&eacute;curit&eacute;</td>
+                <td>Tout Standard + TLS Inspection, IDPS, URL filtering complet, web categories avanc&eacute;es, autoscale jusqu'&agrave; 100&nbsp;Gbps</td>
+            </tr>
+            <tr>
+                <td><strong>Firewall Policy</strong> <span class="lic lic-azure-free">Inclus</span></td>
+                <td>Inclus</td>
+                <td>N/A</td>
+                <td>Tous SKUs</td>
+                <td>Ressource centralis&eacute;e de gestion des r&egrave;gles — m&eacute;thode recommand&eacute;e pour les nouveaux d&eacute;ploiements</td>
+            </tr>
+        </tbody>
+    </table>
+    </div>
+
+    <h3>Rep&egrave;res de chiffrage (environnement type)</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr><th>Sc&eacute;nario</th><th>SKU</th><th>Trafic/mois</th><th>Principaux drivers</th><th>Point d'attention</th></tr></thead>
+        <tbody>
+            <tr><td>PME 10 VMs</td><td>Standard</td><td>~500 Go</td><td>Heures de d&eacute;ploiement + donn&eacute;es trait&eacute;es</td><td>Comparer Basic vs Standard selon besoin FQDN/DNS/Threat Intel</td></tr>
+            <tr><td>ETI Hub-Spoke 3 Spokes</td><td>Standard</td><td>~5 To</td><td>D&eacute;ploiement continu + trafic + capacit&eacute; optionnelle</td><td>Surveiller le trafic inter-spokes et les besoins de Forced Tunneling</td></tr>
+            <tr><td>GC avec IDPS + TLS</td><td>Premium</td><td>~10 To</td><td>D&eacute;ploiement continu + trafic + capacit&eacute; optionnelle Premium</td><td>Chiffrer avec le calculateur, surtout si TLS inspection / IDPS sont activ&eacute;s</td></tr>
+        </tbody>
+    </table>
+    </div>
+
+    <div class="alert alert-warn">
+        <span class="alert-icon">&#x26A0;&#xFE0F;</span>
+        <div>
+            <strong>Pi&egrave;ge coût :</strong> Azure Firewall est factur&eacute; tant qu'il reste d&eacute;ploy&eacute;.
+            Dans les environnements Dev/Test, utilisez <code>az network firewall deallocate</code> la nuit et le week-end
+            pour r&eacute;duire significativement le coût de d&eacute;ploiement.
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════ S1 — SKUs ═══════════════════════ -->
+<div class="section" id="s1">
+    <div class="section-header red">
+        <div class="section-number red">1</div>
+        <div>
+            <div class="section-title">Standard vs Premium &amp; SKUs <span class="lic lic-azure-pay">pay-per-hour</span></div>
+            <div class="section-desc">Basic (PME), Standard (L4+FQDN), Premium (L7+TLS+IDPS+URL) — crit&egrave;res de choix, zone redundancy, forced tunneling</div>
+        </div>
+    </div>
+    <div class="alert alert-error">
+        <span class="alert-icon">&#x1F6A8;</span>
+        <div>
+            <strong>Sc&eacute;nario :</strong> Un attaquant compromet une VM dans votre VNet Azure. Sans Azure Firewall, il pivote librement vers toutes les autres VMs,
+            acc&egrave;de &agrave; Internet pour exfiltrer des donn&eacute;es, et contacte ses serveurs C2 (Command &amp; Control) via HTTPS &mdash; le tout sans aucun contr&ocirc;le ni journalisation.
+            <br><br>
+            <strong>Analogie :</strong> Azure Firewall est le <span class="hl">"douanier central"</span> de votre r&eacute;seau cloud. Tout le trafic entre
+            zones (Internet, entre VNets, vers on-premises) doit passer par lui &mdash; il d&eacute;cide qui entre, qui sort, et journalise chaque d&eacute;cision.
+        </div>
+    </div>
+
+    <h3>1.1 &mdash; Comparatif des SKUs Azure Firewall</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr>
+            <th>Fonctionnalit&eacute;</th>
+            <th>Basic</th>
+            <th>Standard</th>
+            <th>Premium</th>
+            <th>Recommandation</th>
+        </tr></thead>
+        <tbody>
+            <tr class="row-ok"><td><strong>Filtrage L4 (IP/Port/Protocole)</strong></td><td>✅</td><td>✅</td><td>✅</td><td>Minimum absolu</td></tr>
+            <tr class="row-ok"><td><strong>FQDN Filtering (Application Rules)</strong></td><td>Basique</td><td>✅ Complet</td><td>✅ Complet</td><td>Standard minimum</td></tr>
+            <tr class="row-ok"><td><strong>FQDN Tags (WindowsUpdate, AzureKubernetesService…)</strong></td><td>✅</td><td>✅</td><td>✅</td><td>Disponibles sur tous les SKUs</td></tr>
+            <tr class="row-ok"><td><strong>Threat Intelligence (blocage IPs malveillantes)</strong></td><td>✅ Alert seul</td><td>✅ Alert + Deny</td><td>✅ Alert + Deny</td><td>Standard minimum si blocage attendu</td></tr>
+            <tr class="row-ok"><td><strong>DNS Proxy</strong></td><td>❌</td><td>✅</td><td>✅</td><td>Activer pour FQDN dans Network Rules</td></tr>
+            <tr class="row-warn"><td><strong>TLS Inspection (d&eacute;chiffrement HTTPS)</strong></td><td>❌</td><td>❌</td><td>✅</td><td>Premium si HTTPS sortant doit &ecirc;tre inspecté</td></tr>
+            <tr class="row-warn"><td><strong>IDPS (67 000+ signatures)</strong></td><td>❌</td><td>❌</td><td>✅</td><td>Premium pour environments r&eacute;glement&eacute;s</td></tr>
+            <tr class="row-warn"><td><strong>Web Categories / URL Filtering</strong></td><td>❌</td><td>✅ Web Categories (FQDN)</td><td>✅ Web Categories avanc&eacute;es + URL filtering complet</td><td>Premium si filtrage URL complet requis</td></tr>
+            <tr class="row-ok"><td><strong>Zone Redundancy (3 AZs)</strong></td><td>✅</td><td>✅</td><td>✅</td><td><span class="hl-green">Activer en production quand la r&eacute;gion le permet</span></td></tr>
+            <tr class="row-ok"><td><strong>Forced Tunneling</strong></td><td>❌</td><td>✅</td><td>✅</td><td>Si le trafic Internet doit passer par un proxy on-prem</td></tr>
+            <tr><td><strong>Throughput max</strong></td><td>~250 Mbps</td><td>~30 Gbps</td><td>~100 Gbps</td><td>V&eacute;rifier la perf selon le profil r&eacute;el et les fonctions activ&eacute;es</td></tr>
+            <tr><td><strong>SLA</strong></td><td>Voir la page SLA Microsoft</td><td>Voir la page SLA Microsoft</td><td>Voir la page SLA Microsoft</td><td>Ne pas figer les pourcentages hors page SLA courante</td></tr>
+        </tbody>
+    </table>
+    </div>
+
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x1F4A1;</span>
+        <div>
+            <strong>Pourquoi chaque paramètre compte :</strong><br>
+            &bull; <strong>FQDN Tags</strong> : permettent d'autoriser certains services Microsoft via une seule r&egrave;gle, sans maintenir manuellement des listes d'adresses qui &eacute;voluent.<br>
+            &bull; <strong>Threat Intelligence</strong> : alimenté par Microsoft Threat Intelligence (MSTIC), il bloque les IPs et FQDNs connus comme malveillants. En mode "Alert seul" (Standard), il journalise sans bloquer &mdash; passer en Deny via Firewall Policy pour une protection active.<br>
+            &bull; <strong>Zone Redundancy</strong> : les SKUs Azure Firewall supportent les Availability Zones et la documentation pr&eacute;cise qu'il n'y a pas de surco&ucirc;t sp&eacute;cifique &agrave; ce d&eacute;ploiement.<br>
+            &bull; <strong>Forced Tunneling</strong> : si activ&eacute;, le plan de gestion du Firewall utilise une IP de management d&eacute;di&eacute;e et le trafic Internet peut &ecirc;tre redirig&eacute; vers un autre next hop ou bloqu&eacute;.
+        </div>
+    </div>
+
+    <h3>1.2 &mdash; Crit&egrave;res de choix du SKU</h3>
+    <div class="level-comparison">
+        <div class="level-card lc-basic">
+            <h4>&#x1F535; Basic</h4>
+            <div class="level-score" style="color:#605e5c;">Entr&eacute;e</div>
+            <div class="level-desc">Protection essentielle pour petits environnements, NAT / filtrage &eacute;tatful, throughput jusqu'&agrave; 250 Mbps</div>
+        </div>
+        <div class="level-card lc-std">
+            <h4>&#x1F7E2; Standard</h4>
+            <div class="level-score" style="color:#0078d4;">Interm&eacute;diaire</div>
+            <div class="level-desc">Filtrage L3-L7 avec DNS proxy, Threat Intel, Web Categories et autoscale jusqu'&agrave; 30 Gbps</div>
+        </div>
+        <div class="level-card lc-prem">
+            <h4>&#x1F7E3; Premium</h4>
+            <div class="level-score" style="color:#6b2fa0;">Avanc&eacute;</div>
+            <div class="level-desc">Workloads sensibles et besoins d'inspection avanc&eacute;e : TLS inspection, IDPS, URL filtering complet, autoscale jusqu'&agrave; 100 Gbps</div>
+        </div>
+    </div>
+
+    <div class="alert alert-warn">
+        <span class="alert-icon">&#x26A0;&#xFE0F;</span>
+        <div>
+            <strong>Pi&egrave;ge courant :</strong> Le changement de SKU est d&eacute;sormais document&eacute; pour Standard/Premium, mais il reste soumis &agrave; des pr&eacute;requis de policy et &agrave; certaines limites r&eacute;gionales ou de configuration.
+            Le SKU Basic reste le plus contraint : Basic &rarr; Standard n'est pas support&eacute; sur un firewall existant, et Basic &rarr; Premium passe par un flux stop/start. Si vous anticipez IDPS ou TLS inspection, partez directement sur Premium.
+        </div>
+    </div>
+
+    <h3>1.3 &mdash; D&eacute;ploiement Azure Firewall Standard avec Zone Redundancy</h3>
+    <div class="code-block">
+        <div class="code-header">
+            <span>&#x2601;&#xFE0F; Azure CLI — D&eacute;ploiement Azure Firewall Standard + Zone Redundancy</span>
+            <button class="copy-btn">Copier</button>
+        </div>
+        <pre><span class="comment"># Variables</span>
+<span class="var">$RG</span>         = <span class="string">"rg-hub-prod"</span>
+<span class="var">$LOCATION</span>   = <span class="string">"westeurope"</span>
+<span class="var">$VNET_NAME</span>  = <span class="string">"vnet-hub"</span>
+<span class="var">$FW_NAME</span>    = <span class="string">"fw-hub-prod"</span>
+<span class="var">$FW_POLICY</span>  = <span class="string">"fwpol-hub-prod"</span>
+<span class="var">$FW_PIP</span>     = <span class="string">"pip-fw-hub-prod"</span>
+
+<span class="comment"># Créer la Public IP (Standard SKU requis pour Zone Redundancy)</span>
+az network public-ip create \
+  --resource-group <span class="var">$RG</span> \
+  --name <span class="var">$FW_PIP</span> \
+  --sku Standard \
+  --zone 1 2 3 \
+  --location <span class="var">$LOCATION</span>
+
+<span class="comment"># Créer la Firewall Policy (méthode recommandée)</span>
+az network firewall policy create \
+  --resource-group <span class="var">$RG</span> \
+  --name <span class="var">$FW_POLICY</span> \
+  --location <span class="var">$LOCATION</span> \
+  --sku Standard \
+  --threat-intel-mode Alert
+
+<span class="comment"># Créer Azure Firewall Standard avec Zone Redundancy</span>
+az network firewall create \
+  --resource-group <span class="var">$RG</span> \
+  --name <span class="var">$FW_NAME</span> \
+  --location <span class="var">$LOCATION</span> \
+  --sku AZFW_VNet \
+  --tier Standard \
+  --vnet-name <span class="var">$VNET_NAME</span> \
+  --public-ip <span class="var">$FW_PIP</span> \
+  --firewall-policy <span class="var">$FW_POLICY</span> \
+  --zones 1 2 3
+
+<span class="comment"># Obtenir l'IP privée du Firewall (pour les UDRs)</span>
+az network firewall show \
+  --resource-group <span class="var">$RG</span> \
+  --name <span class="var">$FW_NAME</span> \
+  --query "ipConfigurations[0].privateIPAddress" \
+  --output tsv</pre>
+    </div>
+
+    <div class="code-block">
+        <div class="code-header">
+            <span>&#x1F4BB; PowerShell (Az.Network) — D&eacute;ploiement Azure Firewall Standard</span>
+            <button class="copy-btn">Copier</button>
+        </div>
+        <pre><span class="comment"># Variables</span>
+<span class="var">$rgName</span>      = <span class="string">"rg-hub-prod"</span>
+<span class="var">$location</span>    = <span class="string">"westeurope"</span>
+<span class="var">$vnetName</span>    = <span class="string">"vnet-hub"</span>
+<span class="var">$fwName</span>      = <span class="string">"fw-hub-prod"</span>
+<span class="var">$fwPolicyName</span>= <span class="string">"fwpol-hub-prod"</span>
+<span class="var">$pipName</span>     = <span class="string">"pip-fw-hub-prod"</span>
+
+<span class="comment"># Créer la Public IP avec Zone Redundancy</span>
+<span class="var">$pip</span> = New-AzPublicIpAddress -ResourceGroupName <span class="var">$rgName</span> -Name <span class="var">$pipName</span> `
+    -Location <span class="var">$location</span> -Sku Standard -Zone 1,2,3 -AllocationMethod Static
+
+<span class="comment"># Créer la Firewall Policy</span>
+<span class="var">$fwPolicy</span> = New-AzFirewallPolicy -ResourceGroupName <span class="var">$rgName</span> -Name <span class="var">$fwPolicyName</span> `
+    -Location <span class="var">$location</span> -SkuTier Standard -ThreatIntelMode Alert
+
+<span class="comment"># Obtenir le VNet et le sous-réseau AzureFirewallSubnet</span>
+<span class="var">$vnet</span>    = Get-AzVirtualNetwork -ResourceGroupName <span class="var">$rgName</span> -Name <span class="var">$vnetName</span>
+<span class="var">$fwSubnet</span>= Get-AzVirtualNetworkSubnetConfig -VirtualNetwork <span class="var">$vnet</span> -Name <span class="string">"AzureFirewallSubnet"</span>
+
+<span class="comment"># Configurer l'IP du Firewall</span>
+<span class="var">$fwIpConfig</span> = New-AzFirewallIpConfiguration -Name <span class="string">"IpConf"</span> -PublicIpAddress <span class="var">$pip</span> `
+    -Subnet <span class="var">$fwSubnet</span>
+
+<span class="comment"># Créer Azure Firewall Standard avec Zone Redundancy</span>
+<span class="var">$fw</span> = New-AzFirewall -ResourceGroupName <span class="var">$rgName</span> -Name <span class="var">$fwName</span> `
+    -Location <span class="var">$location</span> -IpConfiguration <span class="var">$fwIpConfig</span> `
+    -FirewallPolicyId <span class="var">$fwPolicy</span>.Id -Zone 1,2,3
+
+<span class="comment"># Vérification</span>
+Get-AzFirewall -ResourceGroupName <span class="var">$rgName</span> -Name <span class="var">$fwName</span> | `
+    Select-Object Name, Location, Zones, ProvisioningState</pre>
+    </div>
+
+    <h3>1.4 &mdash; Checklist &eacute;tat des lieux SKU &amp; d&eacute;ploiement</h3>
+    <div class="checklist-item"><input type="checkbox"><div>Azure Firewall d&eacute;ploy&eacute; dans le Hub VNet (ou pr&eacute;vu)</div></div>
+    <div class="checklist-item"><input type="checkbox"><div>SKU choisi adapt&eacute; aux besoins (Standard minimum pour prod)</div></div>
+    <div class="checklist-item"><input type="checkbox"><div>Zone Redundancy activ&eacute;e (zones: 1, 2, 3) sur le Firewall et sa Public IP</div></div>
+    <div class="checklist-item"><input type="checkbox"><div>Firewall Policy associ&eacute;e (pas de Classic Rules pour les nouveaux d&eacute;ploiements)</div></div>
+    <div class="checklist-item"><input type="checkbox"><div>Sous-r&eacute;seau <code>AzureFirewallSubnet</code> de taille /26 minimum (recommand&eacute; : /24)</div></div>
+    <div class="checklist-item"><input type="checkbox"><div>IP priv&eacute;e du Firewall document&eacute;e pour configuration des UDRs</div></div>
+    <div class="checklist-item"><input type="checkbox"><div>Threat Intelligence configur&eacute;e en mode Alert (minimum) ou Deny (recommand&eacute;)</div></div>
+</div>
+
+<!-- ═══════════════════════ S2 — FIREWALL POLICY ═══════════════════════ -->
+<div class="section" id="s2">
+    <div class="section-header red">
+        <div class="section-number red">2</div>
+        <div>
+            <div class="section-title">Firewall Policy <span class="lic lic-azure-pay">pay-per-hour</span></div>
+            <div class="section-desc">Ressource centralis&eacute;e recommand&eacute;e — Rule Collection Groups, hi&eacute;rarchie, RBAC, migration depuis classic rules</div>
+        </div>
+    </div>
+    <div class="alert alert-error">
+        <span class="alert-icon">&#x1F6A8;</span>
+        <div>
+            <strong>Sc&eacute;nario :</strong> Sans Firewall Policy centralis&eacute;e, chaque &eacute;quipe d&eacute;finit ses propres r&egrave;gles par Firewall.
+            R&eacute;sultat : incoh&eacute;rences entre environnements (Dev autorise ce que Prod bloque), pas de gouvernance,
+            impossible d'auditer l'ensemble des r&egrave;gles en vigueur, et la migration vers un deuxi&egrave;me Firewall n&eacute;cessite de recr&eacute;er toutes les r&egrave;gles manuellement.
+            <br><br>
+            <strong>Analogie :</strong> La Firewall Policy est le <span class="hl">"r&egrave;glement int&eacute;rieur"</span> de votre r&eacute;seau &mdash;
+            la liste partageable des autorisations et interdictions. Un seul r&egrave;glement peut s'appliquer &agrave; plusieurs firewalls (multi-r&eacute;gions, multi-environments).
+        </div>
+    </div>
+
+    <h3>2.1 &mdash; Structure d'une Firewall Policy</h3>
+    <div class="diagram-block"><span class="d-label">Firewall Policy (fwpol-hub-prod)</span>
+<span class="d-line">│</span>
+<span class="d-line">├──</span> <span class="d-ok">Rule Collection Group : RCG-Infra</span>         <span class="d-warn">[Priority: 100]</span>
+<span class="d-line">│   ├──</span> <span class="d-ok">Rule Collection : RC-DNAT-JumpBox</span>     <span class="d-label">[DNAT, Priority: 100]</span>
+<span class="d-line">│   └──</span> <span class="d-ok">Rule Collection : RC-Network-Azure</span>    <span class="d-label">[Network, Priority: 200]</span>
+<span class="d-line">│</span>
+<span class="d-line">├──</span> <span class="d-ok">Rule Collection Group : RCG-Workloads</span>       <span class="d-warn">[Priority: 200]</span>
+<span class="d-line">│   ├──</span> <span class="d-ok">Rule Collection : RC-App-Egress</span>       <span class="d-label">[Application, Priority: 100]</span>
+<span class="d-line">│   └──</span> <span class="d-ok">Rule Collection : RC-Network-Spoke</span>    <span class="d-label">[Network, Priority: 200]</span>
+<span class="d-line">│</span>
+<span class="d-line">└──</span> <span class="d-ok">Rule Collection Group : RCG-Security</span>        <span class="d-warn">[Priority: 300]</span>
+    <span class="d-line">├──</span> <span class="d-ok">Rule Collection : RC-Block-Malicious</span>  <span class="d-label">[Network, Priority: 100 — Deny]</span>
+    <span class="d-line">└──</span> <span class="d-ok">Rule Collection : RC-Block-BadFQDN</span>    <span class="d-label">[Application, Priority: 200 — Deny]</span></div>
+
+    <h3>2.2 &mdash; Tableau de configuration Firewall Policy</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr>
+            <th>Param&egrave;tre</th>
+            <th>D&eacute;faut Azure</th>
+            <th>&#x26A1; Quick Win</th>
+            <th>&#x1F512; Avanc&eacute;</th>
+            <th>&#x1F3AF; Optimal</th>
+            <th>Licence</th>
+        </tr></thead>
+        <tbody>
+            <tr class="row-ko">
+                <td><strong>ThreatIntelMode</strong></td>
+                <td><span class="hl-red">Off</span></td>
+                <td><span class="hl-green">Alert</span></td>
+                <td><span class="hl-green">Deny</span></td>
+                <td>Deny</td>
+                <td><span class="lic lic-azure-std">Standard+</span></td>
+            </tr>
+            <tr class="row-ko">
+                <td><strong>DNS Proxy (EnableDnsProxy)</strong></td>
+                <td><span class="hl-red">Disabled</span></td>
+                <td><span class="hl-green">Enabled</span></td>
+                <td>Enabled</td>
+                <td>Enabled + Custom DNS</td>
+                <td><span class="lic lic-azure-std">Standard+</span></td>
+            </tr>
+            <tr class="row-warn">
+                <td><strong>BasePolicy (parent policy)</strong></td>
+                <td>Aucune</td>
+                <td>Aucune (si 1 env)</td>
+                <td>Policy globale parent</td>
+                <td>Hi&eacute;rarchie Global → R&eacute;gional → Env</td>
+                <td><span class="lic lic-azure-std">Standard+</span></td>
+            </tr>
+            <tr class="row-ok">
+                <td><strong>Rule Collection Group Priority</strong></td>
+                <td>100</td>
+                <td>100-500 segment&eacute;s</td>
+                <td>Espac&eacute;s de 100 (marge)</td>
+                <td>Espac&eacute;s de 100, nomenclature standardis&eacute;e</td>
+                <td><span class="lic lic-azure-free">Inclus</span></td>
+            </tr>
+            <tr class="row-ok">
+                <td><strong>SNAT (PrivateRanges)</strong></td>
+                <td>Automatique RFC1918</td>
+                <td>RFC1918 + plages custom</td>
+                <td>Toutes plages priv&eacute;es d&eacute;clar&eacute;es</td>
+                <td>Explicit, document&eacute;</td>
+                <td><span class="lic lic-azure-free">Inclus</span></td>
+            </tr>
+            <tr class="row-warn">
+                <td><strong>Intrusion Detection (IDPS)</strong></td>
+                <td>Off</td>
+                <td>N/A (Standard)</td>
+                <td>Alert (Premium)</td>
+                <td>Deny (Premium)</td>
+                <td><span class="lic lic-azure-prem">Premium</span></td>
+            </tr>
+            <tr class="row-ko">
+                <td><strong>TLS Inspection (TransportSecurity)</strong></td>
+                <td>Disabled</td>
+                <td>N/A (Standard)</td>
+                <td>Enabled (Premium)</td>
+                <td>Enabled + cert Key Vault</td>
+                <td><span class="lic lic-azure-prem">Premium</span></td>
+            </tr>
+        </tbody>
+    </table>
+    </div>
+
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x1F4A1;</span>
+        <div>
+            <strong>Pourquoi chaque param&egrave;tre compte :</strong><br>
+            &bull; <strong>ThreatIntelMode = Deny</strong> : bloque en temps r&eacute;el les communications vers des IPs/domaines connus comme malveillants selon MSTIC. En mode <em>Alert</em> seul, un malware peut quand m&ecirc;me contacter son C2.<br>
+            &bull; <strong>DNS Proxy = Enabled</strong> : obligatoire pour que les FQDN fonctionnent dans les <em>Network Rules</em>. Sans DNS Proxy, seules les <em>Application Rules</em> supportent les FQDN &mdash; ce qui limite les sc&eacute;narios de filtrage non-HTTP.<br>
+            &bull; <strong>Hi&eacute;rarchie de policies</strong> : une policy parent ("globale") peut imposer des r&egrave;gles non modifiables aux policies enfants (r&eacute;gionales, par business unit). Utile pour les grandes organisations avec plusieurs &eacute;quipes.<br>
+            &bull; <strong>SNAT PrivateRanges</strong> : par d&eacute;faut, le Firewall SNATe tout le trafic vers Internet. Si vous avez des plages IP priv&eacute;es non-RFC1918 (ex : 100.64.0.0/10), d&eacute;clarez-les explicitement pour &eacute;viter un SNAT non d&eacute;sir&eacute;.
+        </div>
+    </div>
+
+    <div class="alert alert-warn">
+        <span class="alert-icon">&#x26A0;&#xFE0F;</span>
+        <div>
+            <strong>Pi&egrave;ge migration Classic Rules → Firewall Policy :</strong> si vous avez cr&eacute;&eacute; votre Firewall avec des "Classic Rules" (avant Firewall Policy),
+            vous ne pouvez pas m&eacute;langer les deux mod&egrave;les. La migration se fait via Azure CLI :
+            <code>az network firewall policy create</code> + importer les r&egrave;gles manuellement. Pr&eacute;voir une fen&ecirc;tre de maintenance.
+        </div>
+    </div>
+
+    <h3>2.3 &mdash; Cr&eacute;er une Firewall Policy avec hi&eacute;rarchie et Threat Intel</h3>
+    <div class="code-block">
+        <div class="code-header">
+            <span>&#x2601;&#xFE0F; Azure CLI — Firewall Policy + Rule Collection Group</span>
+            <button class="copy-btn">Copier</button>
+        </div>
+        <pre><span class="comment"># Créer la Firewall Policy Standard avec Threat Intel en mode Deny</span>
+az network firewall policy create \
+  --resource-group rg-hub-prod \
+  --name fwpol-hub-prod \
+  --location westeurope \
+  --sku Standard \
+  --threat-intel-mode Deny \
+  --enable-dns-proxy true \
+  --dns-servers 168.63.129.16
+
+<span class="comment"># Créer le Rule Collection Group "Infrastructure" (priorité 100)</span>
+az network firewall policy rule-collection-group create \
+  --resource-group rg-hub-prod \
+  --policy-name fwpol-hub-prod \
+  --name RCG-Infra \
+  --priority 100
+
+<span class="comment"># Créer le Rule Collection Group "Workloads" (priorité 200)</span>
+az network firewall policy rule-collection-group create \
+  --resource-group rg-hub-prod \
+  --policy-name fwpol-hub-prod \
+  --name RCG-Workloads \
+  --priority 200
+
+<span class="comment"># Vérification</span>
+az network firewall policy show \
+  --resource-group rg-hub-prod \
+  --name fwpol-hub-prod \
+  --query <span class="string">"{sku:sku.tier, threatIntel:threatIntelMode, dnsProxy:dnsSettings.enableProxy}"</span> \
+  --output table</pre>
+    </div>
+
+    <div class="code-block">
+        <div class="code-header">
+            <span>&#x1F4BB; PowerShell — Firewall Policy + configuration DNS Proxy</span>
+            <button class="copy-btn">Copier</button>
+        </div>
+        <pre><span class="comment"># Créer la DNS Settings pour le proxy</span>
+<span class="var">$dnsSettings</span> = New-AzFirewallPolicyDnsSettings -EnableProxy -Server <span class="string">"168.63.129.16"</span>
+
+<span class="comment"># Créer la Firewall Policy Standard</span>
+<span class="var">$fwPolicy</span> = New-AzFirewallPolicy `
+  -ResourceGroupName <span class="string">"rg-hub-prod"</span> `
+  -Name <span class="string">"fwpol-hub-prod"</span> `
+  -Location <span class="string">"westeurope"</span> `
+  -SkuTier Standard `
+  -ThreatIntelMode Deny `
+  -DnsSettings <span class="var">$dnsSettings</span>
+
+<span class="comment"># Créer le Rule Collection Group Infrastructure</span>
+<span class="var">$rcgInfra</span> = New-AzFirewallPolicyRuleCollectionGroup `
+  -ResourceGroupName <span class="string">"rg-hub-prod"</span> `
+  -FirewallPolicyName <span class="string">"fwpol-hub-prod"</span> `
+  -Name <span class="string">"RCG-Infra"</span> `
+  -Priority 100
+
+<span class="comment"># Vérification</span>
+Get-AzFirewallPolicy -ResourceGroupName <span class="string">"rg-hub-prod"</span> -Name <span class="string">"fwpol-hub-prod"</span> | `
+    Select-Object Name, ThreatIntelMode, @{N='DNS';E={$_.DnsSettings.EnableProxy}}, @{N='SKU';E={$_.Sku.Tier}}</pre>
+    </div>
+
+    <h3>2.4 &mdash; Checklist Firewall Policy</h3>
+    <div class="checklist-item"><input type="checkbox"><div>Firewall Policy cr&eacute;&eacute;e et associ&eacute;e au Firewall (pas de Classic Rules)</div></div>
+    <div class="checklist-item"><input type="checkbox"><div>Threat Intelligence configur&eacute;e en mode <strong>Deny</strong> (pas Alert)</div></div>
+    <div class="checklist-item"><input type="checkbox"><div>DNS Proxy activ&eacute; sur la policy (<code>enableProxy: true</code>)</div></div>
+    <div class="checklist-item"><input type="checkbox"><div>Rule Collection Groups cr&eacute;&eacute;s avec priorit&eacute;s espac&eacute;es (100, 200, 300...)</div></div>
+    <div class="checklist-item"><input type="checkbox"><div>SNAT PrivateRanges configur&eacute; si plages non-RFC1918 en usage</div></div>
+    <div class="checklist-item"><input type="checkbox"><div>Hi&eacute;rarchie parent/child d&eacute;finie si multi-firewalls (multi-r&eacute;gions)</div></div>
+</div>
+
+<!-- ═══════════════════════ S3 — RÈGLES ═══════════════════════ -->
+<div class="section" id="s3">
+    <div class="section-header red">
+        <div class="section-number red">3</div>
+        <div>
+            <div class="section-title">R&egrave;gles : DNAT, Network, Application <span class="lic lic-azure-pay">pay-per-hour</span></div>
+            <div class="section-desc">Ordre de traitement, DNAT (inbound), Network (L4), Application (FQDN/L7), FQDN Tags, Default Deny</div>
+        </div>
+    </div>
+    <div class="alert alert-error">
+        <span class="alert-icon">&#x1F6A8;</span>
+        <div>
+            <strong>Sc&eacute;nario :</strong> Sans r&egrave;gles explicites, Azure Firewall applique un <em>Default Deny</em> total &mdash; tout le trafic est bloqu&eacute;.
+            Un mauvais ordre de r&egrave;gles (Network avant Application pour le m&ecirc;me flux) peut faire passer du trafic HTTPS non inspecté,
+            ou au contraire bloquer des services Azure l&eacute;gitimes comme Windows Update ou Azure Monitor.
+            <br><br>
+            <strong>Analogies :</strong>
+            <strong>DNAT</strong> = <span class="hl">"standard t&eacute;l&eacute;phonique"</span> (redirige les appels entrants vers le bon interlocuteur) |
+            <strong>Network Rules</strong> = <span class="hl">"liste blanche IP/port"</span> |
+            <strong>Application Rules</strong> = <span class="hl">"contrat de navigation web"</span> (autorise par nom de domaine, pas par IP).
+        </div>
+    </div>
+
+    <h3>3.1 &mdash; Ordre de traitement des r&egrave;gles (CRITIQUE)</h3>
+    <div class="diagram-block"><span class="d-label">Trafic entrant/sortant</span>
+        <span class="d-line">│</span>
+        <span class="d-line">▼</span>
+<span class="d-ok">1. DNAT Rules</span>        <span class="d-label">→ Si match : traduire la destination et transmettre</span>
+        <span class="d-line">│  (Si pas de match → passe à l'étape suivante)</span>
+        <span class="d-line">▼</span>
+<span class="d-ok">2. Network Rules</span>     <span class="d-label">→ Si match Allow : autoriser | Si match Deny : bloquer</span>
+        <span class="d-line">│  (Si pas de match → passe à l'étape suivante)</span>
+        <span class="d-line">▼</span>
+<span class="d-ok">3. Application Rules</span> <span class="d-label">→ Si match Allow : autoriser | Si match Deny : bloquer</span>
+        <span class="d-line">│  (Si pas de match)</span>
+        <span class="d-line">▼</span>
+<span class="d-ko">4. Default Deny</span>      <span class="d-label">→ BLOQUER &amp; journaliser (comportement par défaut)</span></div>
+
+    <h3>3.2 &mdash; Tableau comparatif des types de r&egrave;gles</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr>
+            <th>Type</th>
+            <th>Direction</th>
+            <th>Crit&egrave;res de correspondance</th>
+            <th>Cas d'usage typique</th>
+            <th>Supporte FQDN</th>
+        </tr></thead>
+        <tbody>
+            <tr class="row-ok">
+                <td><strong>DNAT</strong></td>
+                <td>Inbound (Internet → VNet)</td>
+                <td>IP publique + port destination</td>
+                <td>Exposer une JumpBox RDP, un service HTTP interne</td>
+                <td>Non (IP publique fixe)</td>
+            </tr>
+            <tr class="row-ok">
+                <td><strong>Network</strong></td>
+                <td>Inbound / Outbound / Lateral</td>
+                <td>IP source, IP dest, port, protocole (TCP/UDP/ICMP/Any)</td>
+                <td>Trafic inter-Spoke, acc&egrave;s Azure SQL, DNS, NTP</td>
+                <td>Oui (avec DNS Proxy activ&eacute;)</td>
+            </tr>
+            <tr class="row-ok">
+                <td><strong>Application</strong></td>
+                <td>Outbound uniquement</td>
+                <td>FQDN, URL, HTTP/HTTPS, protocoles (HTTP, HTTPS, MSSQL)</td>
+                <td>Internet egress filtr&eacute; par nom de domaine, SaaS</td>
+                <td>Oui (natif)</td>
+            </tr>
+        </tbody>
+    </table>
+    </div>
+
+    <h3>3.3 &mdash; Jeu de r&egrave;gles de base pr&ecirc;t &agrave; d&eacute;ployer</h3>
+
+    <h4>DNAT Rules — Acc&egrave;s entrant (JumpBox RDP)</h4>
+    <div class="table-container">
+    <table>
+        <thead><tr><th>Nom</th><th>IP Publique Firewall</th><th>Port ext.</th><th>Destination traduite</th><th>Port int.</th><th>Protocole</th></tr></thead>
+        <tbody>
+            <tr class="row-ok"><td>dnat-jumpbox-rdp</td><td>Pip-Firewall (dynamic)</td><td>3389</td><td>10.0.1.10 (jumpbox)</td><td>3389</td><td>TCP</td></tr>
+            <tr class="row-ok"><td>dnat-appserver-https</td><td>Pip-Firewall (dynamic)</td><td>443</td><td>10.0.2.20 (app)</td><td>443</td><td>TCP</td></tr>
+        </tbody>
+    </table>
+    </div>
+
+    <h4>Network Rules — Trafic interne et services Azure</h4>
+    <div class="table-container">
+    <table>
+        <thead><tr><th>Nom</th><th>Source</th><th>Destination</th><th>Port</th><th>Protocole</th><th>Action</th></tr></thead>
+        <tbody>
+            <tr class="row-ok"><td>net-spoke-to-spoke</td><td>10.1.0.0/16 (Spoke1)</td><td>10.2.0.0/16 (Spoke2)</td><td>Any</td><td>TCP</td><td>Allow</td></tr>
+            <tr class="row-ok"><td>net-dns-azure</td><td>VNetSpace</td><td>168.63.129.16</td><td>53</td><td>UDP</td><td>Allow</td></tr>
+            <tr class="row-ok"><td>net-ntp</td><td>VNetSpace</td><td>time.windows.com</td><td>123</td><td>UDP</td><td>Allow</td></tr>
+            <tr class="row-ok"><td>net-azure-monitor</td><td>VNetSpace</td><td>AzureMonitor</td><td>443</td><td>TCP</td><td>Allow</td></tr>
+            <tr class="row-ok"><td>net-azure-storage</td><td>VNetSpace</td><td>Storage</td><td>443</td><td>TCP</td><td>Allow</td></tr>
+            <tr class="row-ko"><td>net-deny-all</td><td>Any</td><td>Any</td><td>Any</td><td>Any</td><td>Deny (implicite)</td></tr>
+        </tbody>
+    </table>
+    </div>
+
+    <h4>Application Rules — Internet Egress filtr&eacute;</h4>
+    <div class="table-container">
+    <table>
+        <thead><tr><th>Nom</th><th>Source</th><th>FQDN / FQDN Tag</th><th>Protocole</th><th>Action</th></tr></thead>
+        <tbody>
+            <tr class="row-ok"><td>app-windows-update</td><td>VNetSpace</td><td><code>WindowsUpdate</code> (FQDN Tag)</td><td>HTTP:80, HTTPS:443</td><td>Allow</td></tr>
+            <tr class="row-ok"><td>app-azure-services</td><td>VNetSpace</td><td><code>AzureKubernetesService</code>, <code>AzureBackup</code>, <code>HDInsight</code></td><td>HTTPS:443</td><td>Allow</td></tr>
+            <tr class="row-ok"><td>app-ubuntu-update</td><td>VNetSpace</td><td><code>*.ubuntu.com</code>, <code>*.debian.org</code></td><td>HTTP:80, HTTPS:443</td><td>Allow</td></tr>
+            <tr class="row-ok"><td>app-microsoft-cdn</td><td>VNetSpace</td><td><code>*.microsoft.com</code>, <code>*.msftncsi.com</code></td><td>HTTPS:443</td><td>Allow</td></tr>
+            <tr class="row-ko"><td>app-deny-social</td><td>VNetSpace</td><td><code>*.facebook.com</code>, <code>*.tiktok.com</code></td><td>HTTPS:443</td><td>Deny</td></tr>
+        </tbody>
+    </table>
+    </div>
+
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x1F4A1;</span>
+        <div>
+            <strong>Pourquoi chaque type de r&egrave;gle compte :</strong><br>
+            &bull; <strong>FQDN Tags</strong> (<code>WindowsUpdate</code>, <code>AzureKubernetesService</code>…) : Microsoft maintient ces listes &agrave; jour automatiquement. Sans eux, vous devez g&eacute;rer manuellement des centaines d'IPs et FQDNs Microsoft qui changent r&eacute;guli&egrave;rement &mdash; et rater une mise &agrave; jour peut bloquer Windows Update sur l'ensemble de votre parc.<br>
+            &bull; <strong>Application Rules pour HTTPS</strong> : &agrave; la diff&eacute;rence des Network Rules, elles autorisent par <em>nom de domaine</em> (FQDN). Une IP peut changer (CDN, load balancer), un FQDN est stable &mdash; c'est la bonne maille de filtrage pour Internet egress.<br>
+            &bull; <strong>Ordre DNAT → Network → Application</strong> : ce n'est pas configurable. Comprendre cet ordre &eacute;vite des r&egrave;gles redondantes ou conflictuelles. Une Network Rule "allow all" en priorit&eacute; haute court-circuite toutes les Application Rules.
+        </div>
+    </div>
+
+    <div class="alert alert-warn">
+        <span class="alert-icon">&#x26A0;&#xFE0F;</span>
+        <div>
+            <strong>Pi&egrave;ge : Network Rules vs Application Rules pour HTTPS</strong><br>
+            Une Network Rule <code>allow * → * :443 TCP</code> autorise <em>tout le HTTPS sans inspection</em>, bypasse les Application Rules, et emp&ecirc;che la TLS Inspection (Premium).
+            Utilisez toujours des Application Rules pour le trafic HTTPS sortant vers Internet &mdash; et r&eacute;servez les Network Rules aux flux TCP/UDP non-HTTP (SQL, DNS, NTP, RDP...).
+        </div>
+    </div>
+
+    <h3>3.4 &mdash; D&eacute;ploiement des r&egrave;gles de base</h3>
+    <div class="code-block">
+        <div class="code-header">
+            <span>&#x2601;&#xFE0F; Azure CLI — R&egrave;gles DNAT + Network + Application</span>
+            <button class="copy-btn">Copier</button>
+        </div>
+        <pre><span class="var">$RG</span>     = <span class="string">"rg-hub-prod"</span>
+<span class="var">$POLICY</span> = <span class="string">"fwpol-hub-prod"</span>
+<span class="var">$RCG</span>    = <span class="string">"RCG-Infra"</span>
+<span class="var">$FW_PIP</span> = $(az network public-ip show -g <span class="var">$RG</span> -n pip-fw-hub-prod --query ipAddress -o tsv)
+
+<span class="comment"># ── DNAT : RDP vers JumpBox ──────────────────────────────────────────</span>
+az network firewall policy rule-collection-group collection add-nat-collection \
+  --resource-group <span class="var">$RG</span> --policy-name <span class="var">$POLICY</span> \
+  --rule-collection-group-name <span class="var">$RCG</span> \
+  --name RC-DNAT-JumpBox --collection-priority 100 --action DNAT \
+  --rule-name dnat-jumpbox-rdp \
+  --translated-address 10.0.1.10 --translated-port 3389 \
+  --ip-protocols TCP \
+  --source-addresses "*" \
+  --destination-addresses <span class="var">$FW_PIP</span> \
+  --destination-ports 3389
+
+<span class="comment"># ── Network : DNS + NTP + inter-spoke ───────────────────────────────</span>
+az network firewall policy rule-collection-group collection add-filter-collection \
+  --resource-group <span class="var">$RG</span> --policy-name <span class="var">$POLICY</span> \
+  --rule-collection-group-name <span class="var">$RCG</span> \
+  --name RC-Network-Core --collection-priority 200 \
+  --action Allow --rule-type NetworkRule \
+  --rule-name net-dns-azure \
+  --ip-protocols UDP \
+  --source-addresses "10.0.0.0/8" \
+  --destination-addresses "168.63.129.16" \
+  --destination-ports 53
+
+<span class="comment"># ── Application : Windows Update via FQDN Tag ───────────────────────</span>
+az network firewall policy rule-collection-group collection add-filter-collection \
+  --resource-group <span class="var">$RG</span> --policy-name <span class="var">$POLICY</span> \
+  --rule-collection-group-name RCG-Workloads \
+  --name RC-App-Core --collection-priority 100 \
+  --action Allow --rule-type ApplicationRule \
+  --rule-name app-windows-update \
+  --source-addresses "10.0.0.0/8" \
+  --fqdn-tags WindowsUpdate \
+  --protocols Http=80 Https=443
+
+<span class="comment"># ── Vérification ────────────────────────────────────────────────────</span>
+az network firewall policy rule-collection-group list \
+  --resource-group <span class="var">$RG</span> --policy-name <span class="var">$POLICY</span> \
+  --output table</pre>
+    </div>
+
+    <div class="code-block">
+        <div class="code-header">
+            <span>&#x1F4BB; PowerShell — Application Rule avec FQDN Tags</span>
+            <button class="copy-btn">Copier</button>
+        </div>
+        <pre><span class="comment"># Créer une Application Rule avec FQDN Tags (Windows Update + Azure Backup)</span>
+<span class="var">$appRule</span> = New-AzFirewallPolicyApplicationRule `
+    -Name <span class="string">"app-windows-update"</span> `
+    -Protocol @(New-AzFirewallPolicyApplicationRuleProtocol -ProtocolType Http -Port 80) `
+    -FqdnTag <span class="string">"WindowsUpdate"</span>, <span class="string">"AzureBackup"</span> `
+    -SourceAddress <span class="string">"10.0.0.0/8"</span>
+
+<span class="var">$appRuleCollection</span> = New-AzFirewallPolicyFilterRuleCollection `
+    -Name <span class="string">"RC-App-Core"</span> -Priority 100 -ActionType Allow `
+    -Rule <span class="var">$appRule</span>
+
+<span class="var">$rcgWorkloads</span> = Get-AzFirewallPolicyRuleCollectionGroup `
+    -ResourceGroupName <span class="string">"rg-hub-prod"</span> `
+    -FirewallPolicyName <span class="string">"fwpol-hub-prod"</span> `
+    -Name <span class="string">"RCG-Workloads"</span>
+
+<span class="var">$rcgWorkloads</span>.Properties.RuleCollection.Add(<span class="var">$appRuleCollection</span>)
+Set-AzFirewallPolicyRuleCollectionGroup -InputObject <span class="var">$rcgWorkloads</span>
+
+<span class="comment"># Vérification — lister toutes les règles Application</span>
+(Get-AzFirewallPolicyRuleCollectionGroup `
+    -ResourceGroupName <span class="string">"rg-hub-prod"</span> `
+    -FirewallPolicyName <span class="string">"fwpol-hub-prod"</span> `
+    -Name <span class="string">"RCG-Workloads"</span>).Properties.RuleCollection | Format-List</pre>
+    </div>
+
+    <h3>3.5 &mdash; Checklist r&egrave;gles</h3>
+    <div class="checklist-item"><input type="checkbox"><div>R&egrave;gles DNAT cr&eacute;&eacute;es pour tous les acc&egrave;s entrants depuis Internet</div></div>
+    <div class="checklist-item"><input type="checkbox"><div>Network Rules pour DNS (53/UDP), NTP (123/UDP), services Azure (443/TCP)</div></div>
+    <div class="checklist-item"><input type="checkbox"><div>FQDN Tag <code>WindowsUpdate</code> activ&eacute; sur toutes les sources VNet</div></div>
+    <div class="checklist-item"><input type="checkbox"><div>Application Rules utilis&eacute;es pour tout le trafic HTTPS sortant vers Internet (pas Network Rules)</div></div>
+    <div class="checklist-item"><input type="checkbox"><div>Aucune r&egrave;gle "allow any → any" non justifi&eacute;e</div></div>
+    <div class="checklist-item"><input type="checkbox"><div>Default Deny implicite v&eacute;rifi&eacute; (trafic non match&eacute; = bloqu&eacute; et journalis&eacute;)</div></div>
+    <div class="checklist-item"><input type="checkbox"><div>R&egrave;gles test&eacute;es via <code>az network firewall packet-capture</code> ou logs Log Analytics</div></div>
+</div>
+
+<!-- ═══════════════════════ S4 — PREMIUM & IDPS ═══════════════════════ -->
+<div class="section" id="s4">
+    <div class="section-header orange">
+        <div class="section-number orange">4</div>
+        <div>
+            <div class="section-title">Azure Firewall Premium : TLS Inspection &amp; IDPS <span class="lic lic-azure-prem">Premium</span></div>
+            <div class="section-desc">TLS Inspection (d&eacute;chiffrement HTTPS sortant), IDPS 67 000+ signatures, modes Off/Alert/Deny, URL Filtering, Web Categories</div>
+        </div>
+    </div>
+    <div class="alert alert-error">
+        <span class="alert-icon">&#x1F6A8;</span>
+        <div>
+            <strong>Sc&eacute;nario :</strong> 85% du trafic malveillant moderne utilise HTTPS pour se dissimuler. Sans TLS Inspection,
+            un ransomware peut t&eacute;l&eacute;charger son payload via <code>github.com</code> (domaine autoris&eacute; !) en HTTPS chiffr&eacute;,
+            et exfiltrer des donn&eacute;es via Google Drive &mdash; Azure Firewall Standard ne voit que l'enveloppe TCP/443, pas le contenu.
+            <br><br>
+            <strong>Analogie :</strong> TLS Inspection = <span class="hl">"douanier qui ouvre les valises"</span> pour inspecter le contenu,
+            remet les affaires et referme la valise (re-chiffrement). L'IDPS est le <span class="hl">"syst&egrave;me d'alarme"</span> qui
+            conna&icirc;t 67 000+ signatures d'attaques et d&eacute;clenche une alerte (ou un blocage) d&egrave;s qu'il en d&eacute;tecte une.
+        </div>
+    </div>
+
+    <div class="alert alert-warn">
+        <span class="alert-icon">&#x26A0;&#xFE0F;</span>
+        <div>
+            <strong>Fonctionnalit&eacute;s exclusives Premium :</strong> TLS Inspection, IDPS, URL Filtering par cat&eacute;gorie Web &mdash;
+            indisponibles sur Azure Firewall Standard. &Agrave; privil&eacute;gier lorsque l'architecture exige ces contr&ocirc;les d'inspection avanc&eacute;e, notamment pour des workloads sensibles ou de paiement.
+            <span class="lic lic-azure-prem">Premium</span>
+        </div>
+    </div>
+
+    <h3>4.1 &mdash; TLS Inspection : flux de fonctionnement</h3>
+    <div class="diagram-block"><span class="d-label">Client (VM dans VNet)</span>
+          <span class="d-line">│  TLS ClientHello → *.example.com</span>
+          <span class="d-line">▼</span>
+<span class="d-warn">Azure Firewall Premium</span>
+          <span class="d-line">│  1. Intercept TLS → déchiffre avec cert intermédiaire (Key Vault)</span>
+          <span class="d-line">│  2. Inspecte le contenu HTTP en clair</span>
+          <span class="d-line">│  3. Applique IDPS signatures + URL Filtering</span>
+          <span class="d-line">│  4. Re-chiffre avec le certificat du serveur réel</span>
+          <span class="d-line">▼</span>
+<span class="d-label">Serveur destination</span>  <span class="d-ok">(*.example.com)</span></div>
+
+    <h3>4.2 &mdash; Configuration TLS Inspection et IDPS</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr>
+            <th>Param&egrave;tre</th>
+            <th>D&eacute;faut Azure</th>
+            <th>&#x26A1; Quick Win</th>
+            <th>&#x1F512; Avanc&eacute;</th>
+            <th>&#x1F3AF; Optimal</th>
+            <th>Licence</th>
+        </tr></thead>
+        <tbody>
+            <tr class="row-ko">
+                <td><strong>IDPS Mode</strong></td>
+                <td><span class="hl-red">Off</span></td>
+                <td><span class="hl-green">Alert</span></td>
+                <td>Alert + Deny pour cat&eacute;gories critiques</td>
+                <td>Deny toutes cat&eacute;gories</td>
+                <td><span class="lic lic-azure-prem">Premium</span></td>
+            </tr>
+            <tr class="row-ko">
+                <td><strong>TLS Inspection</strong></td>
+                <td><span class="hl-red">Disabled</span></td>
+                <td>N/A (d&eacute;marrer par IDPS)</td>
+                <td>Enabled (cert interm&eacute;diaire Key Vault)</td>
+                <td>Enabled + bypasss list (O365, banking)</td>
+                <td><span class="lic lic-azure-prem">Premium</span></td>
+            </tr>
+            <tr class="row-ok">
+                <td><strong>URL Filtering (cat&eacute;gories)</strong></td>
+                <td>Disabled</td>
+                <td>Block: Malware, Phishing</td>
+                <td>Block + alert sur Social Media, P2P</td>
+                <td>Allowlist &agrave; la cat&eacute;gorie (moindre privil&egrave;ge)</td>
+                <td><span class="lic lic-azure-prem">Premium</span></td>
+            </tr>
+            <tr class="row-ok">
+                <td><strong>IDPS Signature Updates</strong></td>
+                <td>Automatique</td>
+                <td>Automatique</td>
+                <td>Automatique</td>
+                <td>Automatique (g&eacute;r&eacute; par Microsoft)</td>
+                <td><span class="lic lic-azure-prem">Premium</span></td>
+            </tr>
+            <tr class="row-warn">
+                <td><strong>Bypass List TLS</strong></td>
+                <td>Aucune</td>
+                <td>N/A</td>
+                <td>O365 + banking (impossible &agrave; inspecter)</td>
+                <td>Liste minimale document&eacute;e et justifi&eacute;e</td>
+                <td><span class="lic lic-azure-prem">Premium</span></td>
+            </tr>
+        </tbody>
+    </table>
+    </div>
+
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x1F4A1;</span>
+        <div>
+            <strong>Pourquoi chaque param&egrave;tre compte :</strong><br>
+            &bull; <strong>IDPS Alert vs Deny</strong> : commencez <em>toujours</em> par le mode Alert pendant 2-4 semaines pour &eacute;tudier les faux positifs avant de passer en Deny. Un passage direct en Deny peut bloquer des applications m&eacute;tier utilisant des protocoles inhabituels.<br>
+            &bull; <strong>Certificat TLS Key Vault</strong> : le certificat interm&eacute;diaire de d&eacute;chiffrement doit &ecirc;tre d&eacute;ploy&eacute; dans le trust store de toutes les VMs concern&eacute;es &mdash; sinon les navigateurs afficheront des avertissements de s&eacute;curit&eacute; (certificate not trusted).<br>
+            &bull; <strong>Bypass List</strong> : Microsoft 365, services bancaires, et certains sites m&eacute;tier utilisent du Certificate Pinning &mdash; la TLS Inspection les brise. Maintenez une bypass list minimale et document&eacute;e.<br>
+            &bull; <strong>Managed Identity</strong> : le Firewall doit avoir une identit&eacute; manag&eacute;e avec acc&egrave;s <code>Key Vault Certificate User</code> sur le Key Vault contenant le certificat CA.
+        </div>
+    </div>
+
+    <h3>4.3 &mdash; D&eacute;ploiement IDPS et TLS Inspection (Premium)</h3>
+    <div class="code-block">
+        <div class="code-header">
+            <span>&#x2601;&#xFE0F; Azure CLI — Activer IDPS sur Firewall Policy Premium</span>
+            <button class="copy-btn">Copier</button>
+        </div>
+        <pre><span class="comment"># Créer une Firewall Policy Premium avec IDPS en mode Alert</span>
+az network firewall policy create \
+  --resource-group rg-hub-prod \
+  --name fwpol-hub-prem \
+  --location westeurope \
+  --sku Premium \
+  --threat-intel-mode Deny \
+  --enable-dns-proxy true \
+  --idps-mode Alert
+
+<span class="comment"># Passer IDPS en mode Deny (après validation des faux positifs)</span>
+az network firewall policy update \
+  --resource-group rg-hub-prod \
+  --name fwpol-hub-prem \
+  --idps-mode Deny
+
+<span class="comment"># ── TLS Inspection ──────────────────────────────────────────────────</span>
+<span class="comment"># Prérequis : User-Assigned Managed Identity + certificat CA (secret PFX) dans Key Vault</span>
+<span class="var">$FW_IDENTITY</span>=$(az identity show -g rg-hub-prod -n id-firewall --query id -o tsv)
+<span class="var">$CERT_SECRET_ID</span>=$(az keyvault secret show --vault-name kv-firewall-certs \
+  --name fw-intermediate-ca --query id -o tsv)
+
+<span class="comment"># Étape 1 — Assigner l'identité managée à la policy</span>
+az network firewall policy identity assign \
+  --resource-group rg-hub-prod \
+  --name fwpol-hub-prem \
+  --identities <span class="var">$FW_IDENTITY</span>
+
+<span class="comment"># Étape 2 — Activer TLS Inspection (les 3 paramètres sont obligatoires ensemble)</span>
+az network firewall policy update \
+  --resource-group rg-hub-prod \
+  --name fwpol-hub-prem \
+  --key-vault-secret-id <span class="var">$CERT_SECRET_ID</span> \
+  --cert-name fw-intermediate-ca
+
+<span class="comment"># Vérification</span>
+az network firewall policy show \
+  --resource-group rg-hub-prod \
+  --name fwpol-hub-prem \
+  --query "{sku:sku.tier, idps:intrusionDetection.mode, tls:transportSecurity}" \
+  --output json</pre>
+    </div>
+
+    <div class="code-block">
+        <div class="code-header">
+            <span>&#x1F4BB; PowerShell — Configurer IDPS + TLS Inspection</span>
+            <button class="copy-btn">Copier</button>
+        </div>
+        <pre><span class="comment"># Configurer IDPS sur une policy Premium existante</span>
+<span class="var">$fwPolicy</span> = Get-AzFirewallPolicy -ResourceGroupName <span class="string">"rg-hub-prod"</span> -Name <span class="string">"fwpol-hub-prem"</span>
+
+<span class="comment"># Configuration IDPS : mode Alert (démarrer par là)</span>
+<span class="var">$idpsConfig</span> = New-AzFirewallPolicyIntrusionDetection -Mode Alert
+
+<span class="comment"># Mettre à jour la policy avec IDPS</span>
+<span class="var">$fwPolicy</span>.IntrusionDetection = <span class="var">$idpsConfig</span>
+Set-AzFirewallPolicy -InputObject <span class="var">$fwPolicy</span>
+
+<span class="comment"># NOTE — TLS Inspection (TransportSecurity) ne dispose pas de cmdlet PowerShell native</span>
+<span class="comment"># dédiée à ce jour. La configurer via Azure CLI (bloc ci-dessus) ou via le portail Azure.</span>
+<span class="comment"># Suivi : Az.Network module &gt;= 7.x apporte progressivement le support.</span>
+
+<span class="comment"># Vérification de l'état IDPS</span>
+(Get-AzFirewallPolicy -ResourceGroupName <span class="string">"rg-hub-prod"</span> -Name <span class="string">"fwpol-hub-prem"</span>).IntrusionDetection | `
+    Select-Object Mode</pre>
+    </div>
+
+    <h3>4.4 &mdash; Checklist Premium TLS + IDPS</h3>
+    <div class="checklist-item"><input type="checkbox"><div>SKU Premium s&eacute;lectionn&eacute; sur la Firewall Policy</div></div>
+    <div class="checklist-item"><input type="checkbox"><div>IDPS activ&eacute; en mode <strong>Alert</strong> minimum &mdash; surveiller 2-4 semaines avant de passer en Deny</div></div>
+    <div class="checklist-item"><input type="checkbox"><div>Certificat CA interm&eacute;diaire cr&eacute;&eacute; et stock&eacute; dans Azure Key Vault</div></div>
+    <div class="checklist-item"><input type="checkbox"><div>Managed Identity assign&eacute;e au Firewall avec r&ocirc;le <code>Key Vault Certificate User</code></div></div>
+    <div class="checklist-item"><input type="checkbox"><div>Certificat CA d&eacute;ploy&eacute; dans le trust store de toutes les VMs (via GPO ou Intune)</div></div>
+    <div class="checklist-item"><input type="checkbox"><div>Bypass List TLS configur&eacute;e pour O365 / services &agrave; certificate pinning</div></div>
+    <div class="checklist-item"><input type="checkbox"><div>URL Filtering activ&eacute; pour bloquer cat&eacute;gories Malware et Phishing minimum</div></div>
+</div>
+
+<!-- ═══════════════════════ S5 — HUB-SPOKE ═══════════════════════ -->
+<div class="section" id="s5">
+    <div class="section-header orange">
+        <div class="section-number orange">5</div>
+        <div>
+            <div class="section-title">Architecture Hub-Spoke <span class="lic lic-azure-pay">pay-per-hour</span></div>
+            <div class="section-desc">Azure Firewall dans le Hub, UDRs, Spoke-to-Spoke, Internet egress centralis&eacute;, DNS Proxy, Terraform complet</div>
+        </div>
+    </div>
+    <div class="alert alert-error">
+        <span class="alert-icon">&#x1F6A8;</span>
+        <div>
+            <strong>Sc&eacute;nario :</strong> Sans architecture Hub-Spoke, chaque VNet "Spoke" a sa propre passerelle Internet, ses propres NSGs &agrave; g&eacute;rer,
+            et les &eacute;quipes de s&eacute;curit&eacute; ne voient pas le trafic entre Spokes. Une VM compromise dans Spoke-A peut atteindre directement toutes les VMs de Spoke-B
+            sans passer par aucun contr&ocirc;le.
+            <br><br>
+            <strong>Analogie :</strong> Le Hub est le <span class="hl">"carrefour giratoire"</span> de votre r&eacute;seau &mdash; tout le trafic inter-Spoke et vers Internet
+            passe par lui. Azure Firewall dans le Hub est le radar de ce carrefour.
+        </div>
+    </div>
+
+    <h3>5.1 &mdash; Architecture Hub-Spoke avec Azure Firewall</h3>
+    <div class="diagram-block"><span class="d-label">Internet</span>
+          <span class="d-line">│</span>
+          <span class="d-line">▼</span>
+<span class="d-warn">Hub VNet (10.0.0.0/16)</span>
+<span class="d-line">│  ├── AzureFirewallSubnet (10.0.1.0/26)  ← Azure Firewall Premium</span>
+<span class="d-line">│  ├── GatewaySubnet (10.0.2.0/27)        ← VPN/ExpressRoute Gateway</span>
+<span class="d-line">│  └── AzureFirewallManagementSubnet      ← (si Forced Tunneling)</span>
+<span class="d-line">│</span>
+<span class="d-line">├──[VNet Peering]──&gt;</span> <span class="d-ok">Spoke-1 VNet (10.1.0.0/16)</span> — Workloads Production
+<span class="d-line">│   UDR: 0.0.0.0/0 → Firewall IP privée</span>
+<span class="d-line">│</span>
+<span class="d-line">├──[VNet Peering]──&gt;</span> <span class="d-ok">Spoke-2 VNet (10.2.0.0/16)</span> — Développement
+<span class="d-line">│   UDR: 0.0.0.0/0 → Firewall IP privée</span>
+<span class="d-line">│</span>
+<span class="d-line">└──[VPN/ExpressRoute]──&gt;</span> <span class="d-label">On-Premises</span></div>
+
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x1F4A1;</span>
+        <div>
+            <strong>R&egrave;gle critique &mdash; le Peering doit avoir <code>AllowGatewayTransit / UseRemoteGateways</code> d&eacute;sactiv&eacute; s&eacute;par&eacute;ment des UDRs.</strong>
+            Le trafic inter-Spoke passe par le Firewall gr&acirc;ce aux User Defined Routes (UDRs) sur les subnets Spoke &mdash; et non par une configuration de Peering.
+            Sans UDR <code>0.0.0.0/0 → IP_Firewall</code> sur chaque subnet Spoke, le trafic bypasse compl&egrave;tement le Firewall.
+        </div>
+    </div>
+
+    <h3>5.2 &mdash; Param&egrave;tres de la topologie Hub-Spoke</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr>
+            <th>Composant</th>
+            <th>D&eacute;faut Azure</th>
+            <th>&#x26A1; Quick Win</th>
+            <th>&#x1F3AF; Optimal</th>
+            <th>Note</th>
+        </tr></thead>
+        <tbody>
+            <tr class="row-ko">
+                <td><strong>AzureFirewallSubnet taille</strong></td>
+                <td><span class="hl-red">/26 minimum requis</span></td>
+                <td>/26 (64 IPs)</td>
+                <td>/24 (pour extensions futures)</td>
+                <td>Azure r&eacute;serve 5 IPs + Firewall en consomme plusieurs</td>
+            </tr>
+            <tr class="row-ok">
+                <td><strong>VNet Peering (Hub → Spoke)</strong></td>
+                <td>Non configur&eacute;</td>
+                <td>Allow Forwarded Traffic = true</td>
+                <td>+ Use Remote Gateways si ExpressRoute</td>
+                <td>Sans Forwarded Traffic, le retour des paquets est bloqu&eacute;</td>
+            </tr>
+            <tr class="row-ko">
+                <td><strong>UDR sur subnet Spoke</strong></td>
+                <td><span class="hl-red">Absent — trafic direct</span></td>
+                <td>0.0.0.0/0 → Firewall IP priv&eacute;e</td>
+                <td>0.0.0.0/0 + routes sp&eacute;cifiques inter-Spoke</td>
+                <td>Obligatoire pour que le trafic passe par le Firewall</td>
+            </tr>
+            <tr class="row-ok">
+                <td><strong>BGP Route Propagation sur UDR</strong></td>
+                <td>Activ&eacute; (risque bypass Firewall)</td>
+                <td>Disabled (--disable-bgp-route-propagation)</td>
+                <td>Disabled</td>
+                <td>Si activ&eacute;, les routes VPN peuvent bypasser le Firewall</td>
+            </tr>
+            <tr class="row-ok">
+                <td><strong>Nombre de Spokes recommand&eacute;</strong></td>
+                <td>N/A</td>
+                <td>1-5 Spokes (max pratique sans Firewall Manager)</td>
+                <td>Illimit&eacute; avec Firewall Manager + hi&eacute;rarchie Policy</td>
+                <td>Au-del&agrave; de 5 subscriptions, envisager Azure Firewall Manager</td>
+            </tr>
+        </tbody>
+    </table>
+    </div>
+
+    <h3>5.3 &mdash; Infrastructure Terraform compl&egrave;te (Hub + Spoke + Firewall + UDRs)</h3>
+    <div class="code-block">
+        <div class="code-header">
+            <span>&#x1F9F1; Terraform — main.tf (Hub VNet + Azure Firewall)</span>
+            <button class="copy-btn">Copier</button>
+        </div>
+        <pre><span class="comment">################################################################################
+# providers.tf — configurer avant de déployer
+################################################################################
+terraform {
+  required_version = ">= 1.5"
+  required_providers {
+    azurerm = {
+      source  = "hashicorp/azurerm"
+      version = "~> 4.0"
+    }
+  }
+}
+
+provider "azurerm" {
+  features {}
+}
+
+################################################################################
+# variables.tf
+################################################################################</span>
+variable "location"   { default = <span class="string">"westeurope"</span> }
+variable "rg_name"    { default = <span class="string">"rg-hub-prod"</span> }
+variable "hub_cidr"   { default = <span class="string">"10.0.0.0/16"</span> }
+variable "spoke1_cidr"{ default = <span class="string">"10.1.0.0/16"</span> }
+variable "spoke2_cidr"{ default = <span class="string">"10.2.0.0/16"</span> }
+
+################################################################################
+# main.tf
+################################################################################
+resource "azurerm_resource_group" "hub" {
+  name     = var.rg_name
+  location = var.location
+}
+
+<span class="comment"># ── Hub VNet ──────────────────────────────────────────────────────────</span>
+resource "azurerm_virtual_network" "hub" {
+  name                = <span class="string">"vnet-hub"</span>
+  location            = azurerm_resource_group.hub.location
+  resource_group_name = azurerm_resource_group.hub.name
+  address_space       = [var.hub_cidr]
+}
+
+resource "azurerm_subnet" "firewall" {
+  name                 = <span class="string">"AzureFirewallSubnet"</span>
+  resource_group_name  = azurerm_resource_group.hub.name
+  virtual_network_name = azurerm_virtual_network.hub.name
+  address_prefixes     = [<span class="string">"10.0.1.0/26"</span>]
+}
+
+<span class="comment"># ── Public IP + Azure Firewall Standard (Zone Redundant) ──────────────</span>
+resource "azurerm_public_ip" "firewall" {
+  name                = <span class="string">"pip-fw-hub"</span>
+  location            = azurerm_resource_group.hub.location
+  resource_group_name = azurerm_resource_group.hub.name
+  allocation_method   = <span class="string">"Static"</span>
+  sku                 = <span class="string">"Standard"</span>
+  zones               = [<span class="string">"1"</span>, <span class="string">"2"</span>, <span class="string">"3"</span>]
+}
+
+resource "azurerm_firewall_policy" "main" {
+  name                = <span class="string">"fwpol-hub"</span>
+  resource_group_name = azurerm_resource_group.hub.name
+  location            = azurerm_resource_group.hub.location
+  sku                 = <span class="string">"Standard"</span>
+  threat_intelligence_mode = <span class="string">"Deny"</span>
+  dns {
+    proxy_enabled = true
+    servers       = [<span class="string">"168.63.129.16"</span>]
+  }
+}
+
+resource "azurerm_firewall" "hub" {
+  name                = <span class="string">"fw-hub-prod"</span>
+  location            = azurerm_resource_group.hub.location
+  resource_group_name = azurerm_resource_group.hub.name
+  sku_name            = <span class="string">"AZFW_VNet"</span>
+  sku_tier            = <span class="string">"Standard"</span>
+  zones               = [<span class="string">"1"</span>, <span class="string">"2"</span>, <span class="string">"3"</span>]
+  firewall_policy_id  = azurerm_firewall_policy.main.id
+
+  ip_configuration {
+    name                 = <span class="string">"IpConf"</span>
+    subnet_id            = azurerm_subnet.firewall.id
+    public_ip_address_id = azurerm_public_ip.firewall.id
+  }
+}
+
+<span class="comment"># ── Spoke-1 VNet ──────────────────────────────────────────────────────</span>
+resource "azurerm_virtual_network" "spoke1" {
+  name                = <span class="string">"vnet-spoke1"</span>
+  location            = azurerm_resource_group.hub.location
+  resource_group_name = azurerm_resource_group.hub.name
+  address_space       = [var.spoke1_cidr]
+}
+
+resource "azurerm_subnet" "spoke1_workload" {
+  name                 = <span class="string">"snet-workload"</span>
+  resource_group_name  = azurerm_resource_group.hub.name
+  virtual_network_name = azurerm_virtual_network.spoke1.name
+  address_prefixes     = [<span class="string">"10.1.1.0/24"</span>]
+}
+
+<span class="comment"># ── VNet Peering Hub ↔ Spoke-1 ──────────────────────────────────────</span>
+resource "azurerm_virtual_network_peering" "hub_to_spoke1" {
+  name                      = <span class="string">"hub-to-spoke1"</span>
+  resource_group_name       = azurerm_resource_group.hub.name
+  virtual_network_name      = azurerm_virtual_network.hub.name
+  remote_virtual_network_id = azurerm_virtual_network.spoke1.id
+  allow_forwarded_traffic   = true
+  allow_gateway_transit     = false
+}
+
+resource "azurerm_virtual_network_peering" "spoke1_to_hub" {
+  name                      = <span class="string">"spoke1-to-hub"</span>
+  resource_group_name       = azurerm_resource_group.hub.name
+  virtual_network_name      = azurerm_virtual_network.spoke1.name
+  remote_virtual_network_id = azurerm_virtual_network.hub.id
+  allow_forwarded_traffic   = true
+  use_remote_gateways       = false
+}
+
+<span class="comment"># ── UDR : forcer tout le trafic Spoke-1 vers le Firewall ─────────────</span>
+resource "azurerm_route_table" "spoke1_rt" {
+  name                = <span class="string">"rt-spoke1"</span>
+  location            = azurerm_resource_group.hub.location
+  resource_group_name = azurerm_resource_group.hub.name
+  bgp_route_propagation_enabled = false
+
+  route {
+    name                   = <span class="string">"default-via-firewall"</span>
+    address_prefix         = <span class="string">"0.0.0.0/0"</span>
+    next_hop_type          = <span class="string">"VirtualAppliance"</span>
+    next_hop_in_ip_address = azurerm_firewall.hub.ip_configuration[0].private_ip_address
+  }
+}
+
+resource "azurerm_subnet_route_table_association" "spoke1" {
+  subnet_id      = azurerm_subnet.spoke1_workload.id
+  route_table_id = azurerm_route_table.spoke1_rt.id
+}
+
+<span class="comment">################################################################################
+# outputs.tf
+################################################################################</span>
+output "firewall_private_ip" {
+  value = azurerm_firewall.hub.ip_configuration[0].private_ip_address
+}
+output "firewall_public_ip" {
+  value = azurerm_public_ip.firewall.ip_address
+}</pre>
+    </div>
+
+    <div class="code-block">
+        <div class="code-header">
+            <span>&#x2601;&#xFE0F; Azure CLI — Ajouter un Spoke suppl&eacute;mentaire + UDR</span>
+            <button class="copy-btn">Copier</button>
+        </div>
+        <pre><span class="var">$RG</span>        = <span class="string">"rg-hub-prod"</span>
+<span class="var">$LOCATION</span>  = <span class="string">"westeurope"</span>
+<span class="var">$FW_IP</span>     = $(az network firewall show -g <span class="var">$RG</span> -n fw-hub-prod \
+               --query "ipConfigurations[0].privateIPAddress" -o tsv)
+
+<span class="comment"># Créer Spoke-2 VNet</span>
+az network vnet create -g <span class="var">$RG</span> -n vnet-spoke2 \
+  --address-prefix 10.2.0.0/16 \
+  --subnet-name snet-workload --subnet-prefix 10.2.1.0/24
+
+<span class="comment"># Peering bidirectionnel Hub ↔ Spoke-2</span>
+az network vnet peering create -g <span class="var">$RG</span> \
+  --vnet-name vnet-hub -n hub-to-spoke2 \
+  --remote-vnet vnet-spoke2 --allow-forwarded-traffic
+
+az network vnet peering create -g <span class="var">$RG</span> \
+  --vnet-name vnet-spoke2 -n spoke2-to-hub \
+  --remote-vnet vnet-hub --allow-forwarded-traffic
+
+<span class="comment"># UDR : forcer tout le trafic Spoke-2 vers le Firewall</span>
+<span class="comment"># (--bgp-route-propagation Disabled remplace l'ancien --disable-bgp-route-propagation)</span>
+az network route-table create -g <span class="var">$RG</span> -n rt-spoke2 --bgp-route-propagation Disabled
+
+az network route-table route create -g <span class="var">$RG</span> \
+  --route-table-name rt-spoke2 -n default-via-firewall \
+  --address-prefix 0.0.0.0/0 \
+  --next-hop-type VirtualAppliance \
+  --next-hop-ip-address <span class="var">$FW_IP</span>
+
+az network vnet subnet update -g <span class="var">$RG</span> \
+  --vnet-name vnet-spoke2 --name snet-workload \
+  --route-table rt-spoke2
+
+<span class="comment"># Vérification : les routes effectives d'une VM</span>
+az network nic show-effective-route-table -g <span class="var">$RG</span> -n nic-vm-spoke2 --output table</pre>
+    </div>
+
+    <h3>5.3 &mdash; Checklist Hub-Spoke</h3>
+    <div class="checklist-item"><input type="checkbox"><div>Hub VNet d&eacute;ploy&eacute; avec <code>AzureFirewallSubnet</code> /26 minimum</div></div>
+    <div class="checklist-item"><input type="checkbox"><div>VNet Peering bidirectionnel configur&eacute; entre Hub et chaque Spoke</div></div>
+    <div class="checklist-item"><input type="checkbox"><div>UDR <code>0.0.0.0/0 → Firewall_IP</code> appliqu&eacute; sur <em>chaque</em> subnet des Spokes</div></div>
+    <div class="checklist-item"><input type="checkbox"><div><code>--bgp-route-propagation Disabled</code> sur les Route Tables des Spokes (anciennement <code>--disable-bgp-route-propagation</code>)</div></div>
+    <div class="checklist-item"><input type="checkbox"><div>Routes effectives v&eacute;rifi&eacute;es sur une VM de chaque Spoke</div></div>
+    <div class="checklist-item"><input type="checkbox"><div>Trafic inter-Spoke journalis&eacute; dans Log Analytics via Diagnostic Settings</div></div>
+</div>
+
+<!-- ═══════════════════════ S6 — LOGGING ═══════════════════════ -->
+<div class="section" id="s6">
+    <div class="section-header orange">
+        <div class="section-number orange">6</div>
+        <div>
+            <div class="section-title">Logging &amp; Monitoring <span class="lic lic-azure-pay">Log Analytics</span></div>
+            <div class="section-desc">Diagnostic Logs, Structured Logs, Workbooks, 10+ requ&ecirc;tes KQL (trafic bloqu&eacute;, IDPS alerts, top sources)</div>
+        </div>
+    </div>
+    <div class="alert alert-error">
+        <span class="alert-icon">&#x1F6A8;</span>
+        <div>
+            <strong>Sc&eacute;nario :</strong> Azure Firewall expose des m&eacute;triques et des resource logs, mais les resource logs ne sont ni conserv&eacute;s ni interrogeables
+            tant qu'aucun Diagnostic Setting ne les route vers Log Analytics ou une autre destination support&eacute;e.
+            Sans cette collecte, impossible de reconstruire proprement l'activit&eacute; de la veille ou de corr&eacute;ler un trafic suspect avec d'autres journaux.
+            <br><br>
+            <strong>Structured Logs</strong> (mode recommand&eacute;) vs <strong>Azure Diagnostics</strong> (mode legacy) :
+            les Structured Logs utilisent des tables d&eacute;di&eacute;es (<code>AZFWApplicationRule</code>, <code>AZFWNetworkRule</code>…) et simplifient l'analyse op&eacute;rationnelle ;
+            selon le plan de table choisi, ils peuvent aussi r&eacute;duire les co&ucirc;ts de journalisation.
+        </div>
+    </div>
+
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x1F4A1;</span>
+        <div>
+            <strong>Pourquoi activer les Structured Logs plut&ocirc;t qu'Azure Diagnostics :</strong><br>
+            &bull; <strong>Co&ucirc;t / gouvernance</strong> : le mode Resource specific peut r&eacute;duire le co&ucirc;t global de journalisation et permet aussi un RBAC plus fin par table.<br>
+            &bull; <strong>KQL plus simple</strong> : les requ&ecirc;tes ciblent directement les tables <code>AZFW*</code> au lieu de filtrer la table g&eacute;n&eacute;rique <code>AzureDiagnostics</code>.<br>
+            &bull; <strong>Compatibilit&eacute; &agrave; v&eacute;rifier</strong> : Policy Analytics et certaines int&eacute;grations comme Security Copilot exigent les tables requises en plan <em>Analytics</em> ; le plan <em>Basic</em> n'est pas compatible avec ces fonctions.
+        </div>
+    </div>
+
+    <h3>6.1 &mdash; Tables de logs Structured Logs (recommand&eacute;)</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr><th>Table</th><th>Contenu</th><th>Usage typique</th></tr></thead>
+        <tbody>
+            <tr class="row-ok"><td><code>AZFWApplicationRule</code></td><td>FQDN autoris&eacute;s/bloqu&eacute;s, protocole HTTP/HTTPS, action</td><td>Audit Internet egress</td></tr>
+            <tr class="row-ok"><td><code>AZFWNetworkRule</code></td><td>IP source/dest, port, protocole, action</td><td>Flux inter-Spoke, DNS</td></tr>
+            <tr class="row-ok"><td><code>AZFWNatRule</code></td><td>Translations DNAT (IP publique → IP priv&eacute;e)</td><td>Audit acc&egrave;s entrants</td></tr>
+            <tr class="row-warn"><td><code>AZFWThreatIntel</code></td><td>IPs/FQDNs malveillants d&eacute;tect&eacute;s par MSTIC</td><td>Security incident response</td></tr>
+            <tr class="row-warn"><td><code>AZFWIdpsSignature</code></td><td>Signatures IDPS d&eacute;clench&eacute;es (Premium)</td><td>D&eacute;tection intrusions</td></tr>
+            <tr class="row-ok"><td><code>AZFWDnsQuery</code></td><td>Requ&ecirc;tes DNS via DNS Proxy</td><td>Audit DNS, d&eacute;tection DGA</td></tr>
+            <tr class="row-ok"><td><code>AZFWFatFlow</code></td><td>Top 50 flux par volume de donn&eacute;es</td><td>Capacit&eacute; et co&ucirc;t</td></tr>
+        </tbody>
+    </table>
+    </div>
+
+    <h3>6.2 &mdash; Requ&ecirc;tes KQL essentielles</h3>
+    <div class="code-block">
+        <div class="code-header">
+            <span>&#x1F50D; KQL — Top 10 FQDNs bloqu&eacute;s (dernières 24h)</span>
+            <button class="copy-btn">Copier</button>
+        </div>
+        <pre>AZFWApplicationRule
+| where TimeGenerated >= ago(24h)
+| where Action == <span class="string">"Deny"</span>
+| summarize Occurrences = count() by Fqdn, SourceIp
+| sort by Occurrences desc
+| take 10</pre>
+    </div>
+
+    <div class="code-block">
+        <div class="code-header">
+            <span>&#x1F50D; KQL — Top 10 IPs sources les plus bloqu&eacute;es (Network Rules)</span>
+            <button class="copy-btn">Copier</button>
+        </div>
+        <pre>AZFWNetworkRule
+| where TimeGenerated >= ago(24h)
+| where Action == <span class="string">"Deny"</span>
+| summarize Occurrences = count() by SourceIp, DestinationIp, DestinationPort
+| sort by Occurrences desc
+| take 10</pre>
+    </div>
+
+    <div class="code-block">
+        <div class="code-header">
+            <span>&#x1F50D; KQL — Alertes Threat Intelligence (IPs/FQDNs malveillants)</span>
+            <button class="copy-btn">Copier</button>
+        </div>
+        <pre>AZFWThreatIntel
+| where TimeGenerated >= ago(<span class="param">7d</span>)
+| project TimeGenerated, SourceIp, DestinationIp, Fqdn, Action, ThreatDescription
+| sort by TimeGenerated desc</pre>
+    </div>
+
+    <div class="code-block">
+        <div class="code-header">
+            <span>&#x1F50D; KQL — Alertes IDPS par signature (Premium)</span>
+            <button class="copy-btn">Copier</button>
+        </div>
+        <pre>AZFWIdpsSignature
+| where TimeGenerated >= ago(<span class="param">24h</span>)
+| summarize Count = count() by SignatureName, SignatureSeverity, Action, SourceIp
+| sort by Count desc</pre>
+    </div>
+
+    <div class="code-block">
+        <div class="code-header">
+            <span>&#x1F50D; KQL — Trafic autoris&eacute; vers Internet par VM (exfiltration)</span>
+            <button class="copy-btn">Copier</button>
+        </div>
+        <pre>AZFWApplicationRule
+| where TimeGenerated >= ago(24h)
+| where Action == <span class="string">"Allow"</span>
+| summarize DataTransferred_MB = sum(SentBytes + ReceivedBytes) / 1048576 by SourceIp, Fqdn
+| sort by DataTransferred_MB desc
+| take 20</pre>
+    </div>
+
+    <div class="code-block">
+        <div class="code-header">
+            <span>&#x1F50D; KQL — R&egrave;gles les plus d&eacute;clench&eacute;es (top policy rules)</span>
+            <button class="copy-btn">Copier</button>
+        </div>
+        <pre>union AZFWApplicationRule, AZFWNetworkRule
+| where TimeGenerated >= ago(<span class="param">7d</span>)
+| summarize Hits = count() by RuleCollection, RuleName, Action
+| sort by Hits desc
+| take 20</pre>
+    </div>
+
+    <div class="code-block">
+        <div class="code-header">
+            <span>&#x1F50D; KQL — DNAT : acc&egrave;s entrants depuis Internet</span>
+            <button class="copy-btn">Copier</button>
+        </div>
+        <pre>AZFWNatRule
+| where TimeGenerated >= ago(<span class="param">24h</span>)
+| summarize Connections = count() by SourceIp, DestinationIp, DestinationPort, TranslatedAddress
+| sort by Connections desc</pre>
+    </div>
+
+    <div class="code-block">
+        <div class="code-header">
+            <span>&#x1F50D; KQL — Requ&ecirc;tes DNS suspectes (DGA Detection)</span>
+            <button class="copy-btn">Copier</button>
+        </div>
+        <pre>AZFWDnsQuery
+| where TimeGenerated >= ago(24h)
+| where QueryName matches regex @<span class="string">"^[a-z0-9]{15,}\.(com|net|ru|cn)$"</span>  // Possible DGA
+| summarize Count = count() by QueryName, SourceIp
+| sort by Count desc</pre>
+    </div>
+
+    <div class="code-block">
+        <div class="code-header">
+            <span>&#x1F50D; KQL — Volume de donn&eacute;es trait&eacute;es par heure (co&ucirc;t estim&eacute;)</span>
+            <button class="copy-btn">Copier</button>
+        </div>
+        <pre>union AZFWApplicationRule, AZFWNetworkRule
+| where TimeGenerated >= ago(<span class="param">7d</span>)
+| summarize DataGB = sum(SentBytes + ReceivedBytes) / 1073741824 by bin(TimeGenerated, <span class="param">1h</span>)
+| render timechart</pre>
+    </div>
+
+    <div class="code-block">
+        <div class="code-header">
+            <span>&#x1F50D; KQL — D&eacute;tection acces hors heures ouvrables</span>
+            <button class="copy-btn">Copier</button>
+        </div>
+        <pre>AZFWNetworkRule
+| where TimeGenerated >= ago(7d)
+| where Action == <span class="string">"Allow"</span>
+| extend HourOfDay = hourofday(TimeGenerated)
+| where HourOfDay !between (8 .. 19)  // Hors 8h-19h
+| summarize Count = count() by SourceIp, DestinationIp, DestinationPort, HourOfDay
+| sort by Count desc</pre>
+    </div>
+
+    <h3>6.3 &mdash; Configurer les Diagnostic Settings</h3>
+    <div class="code-block">
+        <div class="code-header">
+            <span>&#x2601;&#xFE0F; Azure CLI — Activer Structured Logs vers Log Analytics</span>
+            <button class="copy-btn">Copier</button>
+        </div>
+        <pre><span class="var">$RG</span>         = <span class="string">"rg-hub-prod"</span>
+<span class="var">$FW_NAME</span>    = <span class="string">"fw-hub-prod"</span>
+<span class="var">$LAW_ID</span>     = $(az monitor log-analytics workspace show \
+                  -g <span class="var">$RG</span> -n law-hub-prod --query id -o tsv)
+<span class="var">$FW_ID</span>      = $(az network firewall show -g <span class="var">$RG</span> -n <span class="var">$FW_NAME</span> --query id -o tsv)
+
+<span class="comment"># Activer les Structured Logs (resource-specific = tables dédiées AZFW*)</span>
+<span class="comment"># --export-to-resource-specific true est requis pour alimenter les tables AZFW*</span>
+<span class="comment"># Sans ce flag, les logs partent dans la table générique AzureDiagnostics (mode legacy)</span>
+az monitor diagnostic-settings create \
+  --name "fw-to-law" \
+  --resource <span class="var">$FW_ID</span> \
+  --workspace <span class="var">$LAW_ID</span> \
+  --export-to-resource-specific true \
+  --logs '[
+    {"category":"AZFWApplicationRule","enabled":true},
+    {"category":"AZFWNetworkRule","enabled":true},
+    {"category":"AZFWNatRule","enabled":true},
+    {"category":"AZFWThreatIntel","enabled":true},
+    {"category":"AZFWIdpsSignature","enabled":true},
+    {"category":"AZFWDnsQuery","enabled":true}
+  ]' \
+  --metrics '[{"category":"AllMetrics","enabled":true}]'
+
+<span class="comment"># Vérification — la premi&egrave;re population peut prendre jusqu'&agrave; 30 minutes</span>
+az monitor log-analytics query \
+  --workspace <span class="var">$LAW_ID</span> \
+  --analytics-query "AZFWApplicationRule | take 5" \
+  --output table</pre>
+    </div>
+
+    <h3>6.4 &mdash; Checklist Logging</h3>
+    <div class="checklist-item"><input type="checkbox"><div>Log Analytics Workspace cr&eacute;&eacute; dans la m&ecirc;me r&eacute;gion que le Firewall</div></div>
+    <div class="checklist-item"><input type="checkbox"><div>Diagnostic Settings activ&eacute;s sur le Firewall (mode Structured Logs)</div></div>
+    <div class="checklist-item"><input type="checkbox"><div>Tables <code>AZFWApplicationRule</code> et <code>AZFWNetworkRule</code> re&ccedil;oivent des donn&eacute;es (pr&eacute;voir jusqu'&agrave; 30 min lors de la premi&egrave;re population)</div></div>
+    <div class="checklist-item"><input type="checkbox"><div>R&eacute;tention Log Analytics align&eacute;e sur la politique interne et les exigences r&eacute;glementaires valid&eacute;es hors produit</div></div>
+    <div class="checklist-item"><input type="checkbox"><div>Alerte Azure Monitor cr&eacute;&eacute;e sur <code>AZFWThreatIntel</code> pour notifications temps-r&eacute;el</div></div>
+    <div class="checklist-item"><input type="checkbox"><div>Workbook Azure Firewall d&eacute;ploy&eacute; depuis Azure Monitor (template Microsoft disponible)</div></div>
+</div>
+
+<!-- ═══════════════════════ S7 — DNS PROXY ═══════════════════════ -->
+<div class="section" id="s7">
+    <div class="section-header blue">
+        <div class="section-number">7</div>
+        <div>
+            <div class="section-title">DNS Proxy &amp; R&eacute;solution FQDN <span class="lic lic-azure-pay">pay-per-hour</span></div>
+            <div class="section-desc">DNS Proxy, Custom DNS, FQDN dans Network Rules, Private DNS Zones, split-horizon DNS, Private Endpoints</div>
+        </div>
+    </div>
+    <div class="alert alert-error">
+        <span class="alert-icon">&#x1F6A8;</span>
+        <div>
+            <strong>Sc&eacute;nario :</strong> Sans DNS Proxy, les Network Rules avec des noms FQDN (<code>*.storage.azure.com</code>) ne fonctionnent pas &mdash;
+            elles ne sont &eacute;valu&eacute;es que si le Firewall r&eacute;sout lui-m&ecirc;me le nom. Les VMs r&eacute;solvent les FQDNs via leur propre DNS,
+            les IPs obtenues ne correspondent pas &agrave; ce que le Firewall attendait, et les r&egrave;gles ne correspondent jamais.
+            R&eacute;sultat : certains flux passent <em>en dehors</em> des r&egrave;gles FQDN.
+            <br><br>
+            <strong>Analogie :</strong> Le DNS Proxy est l'<span class="hl">"annuaire centralis&eacute;"</span> du Firewall &mdash;
+            toutes les VMs appellent cet annuaire (le Firewall), qui r&eacute;sout &agrave; leur place et peut ainsi filtrer par FQDN dans les Network Rules.
+        </div>
+    </div>
+
+    <h3>7.1 &mdash; Configuration DNS Proxy</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr>
+            <th>Param&egrave;tre</th>
+            <th>D&eacute;faut Azure</th>
+            <th>&#x26A1; Quick Win</th>
+            <th>&#x1F3AF; Optimal</th>
+            <th>Licence</th>
+        </tr></thead>
+        <tbody>
+            <tr class="row-ko">
+                <td><strong>DNS Proxy (EnableProxy)</strong></td>
+                <td><span class="hl-red">Disabled</span></td>
+                <td><span class="hl-green">Enabled</span></td>
+                <td>Enabled</td>
+                <td><span class="lic lic-azure-std">Standard+</span></td>
+            </tr>
+            <tr class="row-ok">
+                <td><strong>DNS Servers (sur la Policy)</strong></td>
+                <td>Azure Default (168.63.129.16)</td>
+                <td>168.63.129.16 (Azure DNS)</td>
+                <td>DNS priv&eacute; custom (AD DS, Infoblox) + 168.63.129.16 fallback</td>
+                <td><span class="lic lic-azure-std">Standard+</span></td>
+            </tr>
+            <tr class="row-ok">
+                <td><strong>Custom DNS sur VMs (VNet DNS)</strong></td>
+                <td>Azure Default</td>
+                <td>IP priv&eacute;e du Firewall</td>
+                <td>IP priv&eacute;e du Firewall</td>
+                <td><span class="lic lic-azure-free">Inclus</span></td>
+            </tr>
+            <tr class="row-warn">
+                <td><strong>FQDN dans Network Rules</strong></td>
+                <td><span class="hl-red">Non fonctionnel sans DNS Proxy</span></td>
+                <td>Activ&eacute; via DNS Proxy</td>
+                <td>DNS Proxy + r&egrave;gles FQDN Network + Application Rules</td>
+                <td>Sans DNS Proxy, les r&egrave;gles FQDN Network ne matchent jamais</td>
+            </tr>
+            <tr class="row-ok">
+                <td><strong>Private DNS Zones (Private Endpoints)</strong></td>
+                <td>Non r&eacute;solu via Firewall</td>
+                <td>DNS Proxy → 168.63.129.16 → Private Zone</td>
+                <td>DNS Proxy + Private Resolver si split-horizon complexe</td>
+                <td>168.63.129.16 n'est accessible que depuis le VNet Azure</td>
+            </tr>
+        </tbody>
+    </table>
+    </div>
+
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x1F4A1;</span>
+        <div>
+            <strong>Pourquoi le DNS Proxy est critique :</strong><br>
+            &bull; <strong>FQDN dans Network Rules</strong> : sans DNS Proxy, les FQDN dans les Network Rules ne matchent que les IPs r&eacute;solues par le Firewall lui-m&ecirc;me. Si une VM r&eacute;sout <code>api.example.com</code> via un DNS diff&eacute;rent, le match &eacute;choue.<br>
+            &bull; <strong>Private DNS Zones</strong> : les Private Endpoint DNS Zones (<code>privatelink.blob.core.windows.net</code>) n&eacute;cessitent que le DNS Proxy soit la passerelle entre les VMs et Azure DNS (168.63.129.16) &mdash; qui est uniquement accessible depuis le VNet Azure.<br>
+            &bull; <strong>Audit DNS</strong> : le DNS Proxy journalise toutes les requ&ecirc;tes dans la table <code>AZFWDnsQuery</code> &mdash; utile pour d&eacute;tecter des DGA (Domain Generation Algorithms) utilis&eacute;s par les malwares.
+        </div>
+    </div>
+
+    <div class="code-block">
+        <div class="code-header">
+            <span>&#x2601;&#xFE0F; Azure CLI — Activer DNS Proxy + configurer les VMs</span>
+            <button class="copy-btn">Copier</button>
+        </div>
+        <pre><span class="comment"># Activer DNS Proxy sur la Firewall Policy</span>
+az network firewall policy update \
+  --resource-group rg-hub-prod \
+  --name fwpol-hub-prod \
+  --enable-dns-proxy true \
+  --dns-servers 168.63.129.16
+
+<span class="comment"># Obtenir l'IP privée du Firewall (à utiliser comme DNS des VNets Spoke)</span>
+<span class="var">$FW_PRIVATE_IP</span>=$(az network firewall show \
+  -g rg-hub-prod -n fw-hub-prod \
+  --query "ipConfigurations[0].privateIPAddress" -o tsv)
+
+<span class="comment"># Configurer le VNet Spoke pour utiliser le Firewall comme DNS</span>
+az network vnet update \
+  --resource-group rg-hub-prod \
+  --name vnet-spoke1 \
+  --dns-servers <span class="var">$FW_PRIVATE_IP</span>
+
+<span class="comment"># Vérification — résolution DNS via le Firewall (depuis une VM Spoke)</span>
+<span class="comment"># nslookup storage.azure.com $FW_PRIVATE_IP</span>
+
+<span class="comment"># Vérification — logs DNS Proxy dans Log Analytics</span>
+az monitor log-analytics query \
+  --workspace law-hub-prod \
+  --analytics-query "AZFWDnsQuery | take 10" \
+  --output table</pre>
+    </div>
+
+    <h3>7.2 &mdash; Checklist DNS Proxy</h3>
+    <div class="checklist-item"><input type="checkbox"><div>DNS Proxy activ&eacute; sur la Firewall Policy (<code>enableProxy: true</code>)</div></div>
+    <div class="checklist-item"><input type="checkbox"><div>IP priv&eacute;e du Firewall configur&eacute;e comme serveur DNS sur tous les VNets Spoke</div></div>
+    <div class="checklist-item"><input type="checkbox"><div>FQDN dans les Network Rules fonctionnels (tester apr&egrave;s activation)</div></div>
+    <div class="checklist-item"><input type="checkbox"><div>Private Endpoint DNS correctement r&eacute;solu via le DNS Proxy</div></div>
+    <div class="checklist-item"><input type="checkbox"><div>Table <code>AZFWDnsQuery</code> peuple dans Log Analytics</div></div>
+</div>
+
+<!-- ═══════════════════════ S8 — FIREWALL MANAGER ═══════════════════════ -->
+<div class="section" id="s8">
+    <div class="section-header blue">
+        <div class="section-number">8</div>
+        <div>
+            <div class="section-title">Azure Firewall Manager <span class="lic lic-azure-pay">inclus</span></div>
+            <div class="section-desc">Gestion multi-firewalls, Secured Virtual Hub, hi&eacute;rarchie de policies, partenaires NVA (Zscaler, Palo Alto)</div>
+        </div>
+    </div>
+    <div class="alert alert-error">
+        <span class="alert-icon">&#x1F6A8;</span>
+        <div>
+            <strong>Sc&eacute;nario :</strong> Dans une organisation avec 10 subscriptions Azure, chaque &eacute;quipe g&egrave;re son propre Azure Firewall.
+            Quand la s&eacute;curit&eacute; centrale veut imposer un blocage d'urgence (ex : vulnérabilité zero-day sur un FQDN),
+            elle doit modifier manuellement les policies dans 10 subscriptions. Avec Azure Firewall Manager,
+            une modification sur la policy globale parent se propage automatiquement &agrave; tous les firewalls enfants.
+            <br><br>
+            <strong>Analogie :</strong> Azure Firewall Manager est le <span class="hl">"chef de la s&eacute;curit&eacute; group&eacute;"</span> &mdash;
+            il orchestre toutes les policies depuis un plan de contr&ocirc;le centralis&eacute;.
+        </div>
+    </div>
+
+    <h3>8.1 &mdash; Fonctionnalit&eacute;s Azure Firewall Manager</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr><th>Fonctionnalit&eacute;</th><th>Sans Firewall Manager</th><th>Avec Firewall Manager</th></tr></thead>
+        <tbody>
+            <tr class="row-ko"><td><strong>Gestion multi-firewalls</strong></td><td>Portail par portail</td><td>Vue centralis&eacute;e unique</td></tr>
+            <tr class="row-ko"><td><strong>Policy hi&eacute;rarchique</strong></td><td>Pas de hi&eacute;rarchie</td><td>Parent policy → child policies</td></tr>
+            <tr class="row-ok"><td><strong>Secured Virtual Hub (vWAN)</strong></td><td>Non applicable</td><td>Firewall dans Azure Virtual WAN Hub</td></tr>
+            <tr class="row-ok"><td><strong>Partenaires de s&eacute;curit&eacute; (Zscaler, Check Point)</strong></td><td>Non applicable</td><td>Int&eacute;gration native pour trafic Internet</td></tr>
+            <tr class="row-ok"><td><strong>Route Management</strong></td><td>UDRs manuels par Spoke</td><td>Route Management automatis&eacute; (vWAN)</td></tr>
+        </tbody>
+    </table>
+    </div>
+
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x1F4A1;</span>
+        <div>
+            <strong>Quand utiliser Firewall Manager :</strong><br>
+            &bull; <strong>Plusieurs firewalls / subscriptions / r&eacute;gions</strong> : la gestion centralis&eacute;e prend de la valeur quand vous devez r&eacute;pliquer des policies de mani&egrave;re coh&eacute;rente &agrave; grande &eacute;chelle.<br>
+            &bull; <strong>Architecture Virtual WAN (vWAN)</strong> : Firewall Manager est la seule interface pour g&eacute;rer les Secured Virtual Hubs.<br>
+            &bull; <strong>S&eacute;paration des r&ocirc;les</strong> : l'&eacute;quipe s&eacute;curit&eacute; centrale g&egrave;re la parent policy, les &eacute;quipes applicatives g&egrave;rent leurs child policies avec une isolation RBAC stricte.
+        </div>
+    </div>
+
+    <div class="code-block">
+        <div class="code-header">
+            <span>&#x2601;&#xFE0F; Azure CLI — Cr&eacute;er une hi&eacute;rarchie de policies (parent + child)</span>
+            <button class="copy-btn">Copier</button>
+        </div>
+        <pre><span class="comment"># Parent Policy — contrôlée par l'équipe sécurité centrale</span>
+az network firewall policy create \
+  --resource-group rg-security-central \
+  --name fwpol-global-parent \
+  --location westeurope \
+  --sku Standard \
+  --threat-intel-mode Deny
+
+<span class="comment"># Child Policy — hérite du parent (Spoke Production)</span>
+az network firewall policy create \
+  --resource-group rg-spoke-prod \
+  --name fwpol-spoke-prod \
+  --location westeurope \
+  --sku Standard \
+  --base-policy $(az network firewall policy show \
+      -g rg-security-central -n fwpol-global-parent \
+      --query id -o tsv)
+
+<span class="comment"># Assigner la child policy au Firewall de Spoke-Prod</span>
+az network firewall update \
+  --resource-group rg-spoke-prod \
+  --name fw-spoke-prod \
+  --firewall-policy fwpol-spoke-prod
+
+<span class="comment"># Vérification — voir toutes les policies et leur hiérarchie</span>
+az network firewall policy list \
+  --query <span class="string">"[].{Name:name, RG:resourceGroup, Parent:basePolicy.id}"</span> \
+  --output table</pre>
+    </div>
+
+    <h3>8.2 &mdash; Checklist Firewall Manager</h3>
+    <div class="checklist-item"><input type="checkbox"><div>Parent policy cr&eacute;&eacute;e dans la subscription s&eacute;curit&eacute; centrale</div></div>
+    <div class="checklist-item"><input type="checkbox"><div>Child policies referencent la parent policy via <code>--base-policy</code></div></div>
+    <div class="checklist-item"><input type="checkbox"><div>RBAC : &eacute;quipe s&eacute;curit&eacute; = Owner sur parent policy ; &eacute;quipes applicatives = Contributor sur child policies uniquement</div></div>
+    <div class="checklist-item"><input type="checkbox"><div>Modifications sur parent policy valid&eacute;es dans un environnement de test avant application</div></div>
+</div>
+
+<!-- ═══════════════════════ S9 — HA & SCALING ═══════════════════════ -->
+<div class="section" id="s9">
+    <div class="section-header blue">
+        <div class="section-number">9</div>
+        <div>
+            <div class="section-title">Auto-scaling &amp; Haute Disponibilit&eacute; <span class="lic lic-azure-pay">pay-per-hour</span></div>
+            <div class="section-desc">Autoscale par SKU, Availability Zones, r&eacute;silience, capacity planning et maintenance</div>
+        </div>
+    </div>
+    <div class="alert alert-error">
+        <span class="alert-icon">&#x1F6A8;</span>
+        <div>
+            <strong>Sc&eacute;nario :</strong> Sans Zone Redundancy, Azure Firewall est deploy&eacute; dans une seule Availability Zone.
+            Si cette zone subit une panne, votre Firewall tombe &mdash; et avec lui, l'int&eacute;gralit&eacute; du trafic Internet + inter-Spoke de votre infrastructure.
+            R&eacute;sultat : interruption de service totale, pas de RTO acceptable pour la production.
+            <br><br>
+            Azure Firewall s'adapte automatiquement &agrave; la charge dans les limites document&eacute;es du SKU choisi.
+            La borne maximale diff&egrave;re selon le SKU et doit &ecirc;tre valid&eacute;e contre la page de performance / features courante.
+        </div>
+    </div>
+
+    <h3>9.1 &mdash; Configuration HA et Scaling</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr>
+            <th>Param&egrave;tre</th>
+            <th>D&eacute;faut Azure</th>
+            <th>&#x26A1; Quick Win</th>
+            <th>&#x1F3AF; Optimal</th>
+            <th>Impact</th>
+        </tr></thead>
+        <tbody>
+            <tr class="row-ko">
+                <td><strong>Availability Zones</strong></td>
+                <td><span class="hl-red">Aucune (zone unique)</span></td>
+                <td><span class="hl-green">Zones 1, 2, 3</span></td>
+                <td>Zones 1, 2, 3</td>
+                <td>Disponibilit&eacute; accrue ; v&eacute;rifier le SLA courant sur la page Microsoft</td>
+            </tr>
+            <tr class="row-ok">
+                <td><strong>Autoscale</strong></td>
+                <td>Activ&eacute; automatiquement</td>
+                <td>Activ&eacute; (d&eacute;faut)</td>
+                <td>Activ&eacute; + alerte si &gt;20 Gbps soutenu</td>
+                <td>Autoscale selon le SKU et le profil de trafic</td>
+            </tr>
+            <tr class="row-warn">
+                <td><strong>Forced Tunneling</strong></td>
+                <td>Disabled</td>
+                <td>N/A</td>
+                <td>Enabled si on-prem proxy requis + IP management d&eacute;di&eacute;e</td>
+                <td>Chiffrer la Public IP de management via la page pricing r&eacute;seau courante</td>
+            </tr>
+            <tr class="row-ok">
+                <td><strong>Public IP SKU</strong></td>
+                <td>Standard requis</td>
+                <td>Standard + Zones 1,2,3</td>
+                <td>Standard + Zones 1,2,3 + DDoS Protection</td>
+                <td>SLA + r&eacute;silience DDoS</td>
+            </tr>
+            <tr class="row-warn">
+                <td><strong>SNAT / Multiple Public IPs</strong></td>
+                <td>1 IP publique (max ~2 048 ports SNAT)</td>
+                <td>1 IP (suffisant &lt;2 048 conn. concurrentes)</td>
+                <td>&ge;5 IPs publiques si trafic Internet &eacute;lev&eacute;</td>
+                <td>Port exhaustion SNAT = connexions &eacute;chou&eacute;es silencieusement</td>
+            </tr>
+        </tbody>
+    </table>
+    </div>
+
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x1F4A1;</span>
+        <div>
+            <strong>Zone Redundancy : ce qui se passe lors d'une panne de zone :</strong><br>
+            Sans zones : panne datacenter → Firewall hors service → trafic bloqu&eacute; compl&egrave;tement.<br>
+            Avec 3 zones : la r&eacute;silience augmente car le service est r&eacute;parti sur plusieurs zones de disponibilit&eacute;.<br>
+            La documentation Azure Firewall pr&eacute;cise qu'il n'y a pas de surco&ucirc;t sp&eacute;cifique au d&eacute;ploiement multi-zones du firewall lui-m&ecirc;me ; chiffrer s&eacute;par&eacute;ment les ressources r&eacute;seau associ&eacute;es si besoin.
+        </div>
+    </div>
+
+    <div class="code-block">
+        <div class="code-header">
+            <span>&#x2601;&#xFE0F; Azure CLI — V&eacute;rifier Zone Redundancy + m&eacute;triques autoscale</span>
+            <button class="copy-btn">Copier</button>
+        </div>
+        <pre><span class="comment"># Vérifier les zones du Firewall</span>
+az network firewall show \
+  --resource-group rg-hub-prod \
+  --name fw-hub-prod \
+  --query <span class="string">"{name:name, zones:zones, tier:sku.tier, provisioning:provisioningState}"</span> \
+  --output table
+
+<span class="comment"># Vérifier les zones de la Public IP</span>
+az network public-ip show \
+  --resource-group rg-hub-prod \
+  --name pip-fw-hub-prod \
+  --query <span class="string">"{name:name, zones:zones, sku:sku.name, ip:ipAddress}"</span> \
+  --output table
+
+<span class="comment"># Métriques throughput (pour détecter si proche de la limite)</span>
+az monitor metrics list \
+  --resource $(az network firewall show -g rg-hub-prod -n fw-hub-prod --query id -o tsv) \
+  --metric <span class="string">"Throughput"</span> \
+  --interval PT1H \
+  --start-time $(date -u -d <span class="string">"24 hours ago"</span> +%Y-%m-%dT%H:%MZ) \
+  --end-time $(date -u +%Y-%m-%dT%H:%MZ) \
+  --output table</pre>
+    </div>
+
+    <h3>9.2 &mdash; Checklist HA &amp; Scaling</h3>
+    <div class="checklist-item"><input type="checkbox"><div>Azure Firewall d&eacute;ploy&eacute; avec <code>--zones 1 2 3</code></div></div>
+    <div class="checklist-item"><input type="checkbox"><div>Public IP associ&eacute;e aussi d&eacute;ploy&eacute;e avec <code>--zone 1 2 3</code></div></div>
+    <div class="checklist-item"><input type="checkbox"><div>SLA Azure Firewall v&eacute;rifi&eacute; sur la page Microsoft courante et align&eacute; avec le design retenu</div></div>
+    <div class="checklist-item"><input type="checkbox"><div>Alerte Azure Monitor sur m&eacute;trique <code>Throughput</code> si &gt; 20 Gbps soutenu</div></div>
+    <div class="checklist-item"><input type="checkbox"><div>DDoS Protection Standard activ&eacute; sur le Hub VNet (recommand&eacute; pour prod)</div></div>
+</div>
+
+<!-- ═══════════════════════ S10 — CONFORMITÉ ═══════════════════════ -->
+<div class="section" id="s10">
+    <div class="section-header green">
+        <div class="section-number green">10</div>
+        <div>
+            <div class="section-title">Conformit&eacute; &amp; S&eacute;curit&eacute; Baseline <span class="lic lic-azure-std">MDC</span></div>
+            <div class="section-desc">CIS Azure Benchmark, Microsoft Defender for Cloud, Azure Policy, Zero Trust, RBAC, scoring s&eacute;curit&eacute;</div>
+        </div>
+    </div>
+    <div class="alert alert-error">
+        <span class="alert-icon">&#x1F6A8;</span>
+        <div>
+            <strong>Sc&eacute;nario :</strong> Un auditeur demande de prouver que le trafic sensible vers Internet est filtr&eacute;,
+            que la journalisation est activ&eacute;e selon votre politique de conservation, et que les r&egrave;gles "default deny" sont effectives.
+            Sans baseline document&eacute;e, impossible de r&eacute;pondre rapidement aux contr&ocirc;les demand&eacute;s ni d'expliquer les choix de SKU, de logs et de gouvernance.
+        </div>
+    </div>
+
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x1F4A1;</span>
+        <div>
+            <strong>Quels contr&ocirc;les Azure Firewall apporte &agrave; une baseline s&eacute;curit&eacute; :</strong><br>
+            &bull; <strong>Journalisation exploitable</strong> : les resource logs peuvent &ecirc;tre envoy&eacute;s vers Log Analytics, un compte de stockage ou Event Hubs pour investigation et audit.<br>
+            &bull; <strong>Segmentation r&eacute;seau</strong> : Azure Firewall aide &agrave; &eacute;tablir des fronti&egrave;res de segmentation et &agrave; documenter les flux autoris&eacute;s / refus&eacute;s.<br>
+            &bull; <strong>Gouvernance</strong> : Azure Policy et Microsoft Defender for Cloud peuvent auditer les configurations Azure Firewall pertinentes dans votre baseline interne.
+        </div>
+    </div>
+
+    <h3>10.1 &mdash; Correspondance frameworks r&eacute;glementaires</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr>
+            <th>Framework</th>
+            <th>Exigence cl&eacute;</th>
+            <th>Contr&ocirc;les Azure Firewall possibles</th>
+            <th>Orientation SKU</th>
+        </tr></thead>
+        <tbody>
+            <tr class="row-ok"><td><strong>PCI-DSS v4.0</strong></td><td>Segmentation et filtrage entre p&eacute;rim&egrave;tres sensibles et Internet</td><td>Firewall actif, r&egrave;gles document&eacute;es, logs activ&eacute;s ; valider la conservation et les preuves avec l'&eacute;quipe compliance</td><td><span class="lic lic-azure-std">Standard/Premium selon inspection requise</span></td></tr>
+            <tr class="row-ok"><td><strong>PCI-DSS v4.0</strong></td><td>Audit trail exploitable</td><td>Diagnostic Settings, destination de logs, politique de r&eacute;tention d&eacute;finie hors produit</td><td><span class="lic lic-azure-std">Tous SKUs</span></td></tr>
+            <tr class="row-warn"><td><strong>HDS (France)</strong></td><td>Segmentation et tra&ccedil;abilit&eacute; r&eacute;seau</td><td>R&egrave;gles strictes, logs, revue d'architecture ; Premium si TLS inspection / IDPS font partie des contr&ocirc;les retenus</td><td><span class="lic lic-azure-prem">Selon besoin d'inspection</span></td></tr>
+            <tr class="row-warn"><td><strong>NIS2</strong></td><td>Mesures de s&eacute;curit&eacute; r&eacute;seau proportionn&eacute;es</td><td>Journalisation, revue de policy, Threat Intel ; Premium si l'organisation exige IDPS / TLS inspection</td><td><span class="lic lic-azure-prem">Selon besoin d'inspection</span></td></tr>
+            <tr class="row-ok"><td><strong>ISO 27001</strong></td><td>A.13 S&eacute;curit&eacute; des communications</td><td>Default Deny, r&egrave;gles document&eacute;es, revue r&eacute;guli&egrave;re et gouvernance RBAC</td><td><span class="lic lic-azure-std">Standard</span></td></tr>
+            <tr class="row-ok"><td><strong>CIS Azure Foundations</strong></td><td>Contr&ocirc;les r&eacute;seau et gouvernance Azure</td><td>Azure Firewall, Azure Policy et surveillance des d&eacute;viations selon la baseline interne</td><td><span class="lic lic-azure-std">Standard</span></td></tr>
+        </tbody>
+    </table>
+    </div>
+
+    <h3>10.2 &mdash; Baseline de conformit&eacute; Azure Firewall</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr><th>Contr&ocirc;le</th><th>Attendu</th><th>V&eacute;rification</th></tr></thead>
+        <tbody>
+            <tr class="row-ok"><td>Default Deny implicite</td><td>Tout trafic non match&eacute; est bloqu&eacute;</td><td>Test connexion sans r&egrave;gle → doit &ecirc;tre bloqu&eacute;</td></tr>
+            <tr class="row-ok"><td>Logs actifs</td><td>Diagnostic Settings activ&eacute;s</td><td><code>az monitor diagnostic-settings list --resource $FW_ID</code></td></tr>
+            <tr class="row-ok"><td>R&eacute;tention logs d&eacute;finie</td><td>LAW retention align&eacute;e sur la politique interne</td><td>LAW Properties → Retention in days</td></tr>
+            <tr class="row-warn"><td>Threat Intelligence document&eacute;</td><td>Mode align&eacute; sur la politique de blocage retenue</td><td><code>az network firewall policy show --query threatIntelMode</code></td></tr>
+            <tr class="row-warn"><td>Zones document&eacute;es</td><td>Align&eacute;es sur l'architecture cible (mono-zone ou multi-zones)</td><td><code>az network firewall show --query zones</code></td></tr>
+            <tr class="row-ok"><td>R&egrave;gles document&eacute;es</td><td>Chaque r&egrave;gle a une justification m&eacute;tier</td><td>Revue manuelle trimestrielle des Rule Collections</td></tr>
+        </tbody>
+    </table>
+    </div>
+
+    <div class="code-block">
+        <div class="code-header">
+            <span>&#x2601;&#xFE0F; Azure CLI — Audit conformit&eacute; automatis&eacute;</span>
+            <button class="copy-btn">Copier</button>
+        </div>
+        <pre><span class="var">$RG</span>  = <span class="string">"rg-hub-prod"</span>
+<span class="var">$FW</span>  = <span class="string">"fw-hub-prod"</span>
+<span class="var">$POL</span> = <span class="string">"fwpol-hub-prod"</span>
+
+echo <span class="string">"=== [1] Zones (comparer &agrave; l'architecture cible) ==="</span>
+az network firewall show -g <span class="var">$RG</span> -n <span class="var">$FW</span> --query zones -o tsv
+
+echo <span class="string">"=== [2] Threat Intel Mode (revue: Alert / Deny selon baseline) ==="</span>
+az network firewall policy show -g <span class="var">$RG</span> -n <span class="var">$POL</span> \
+  --query threatIntelMode -o tsv
+
+echo <span class="string">"=== [3] DNS Proxy (attendu si FQDN en Network Rules / design DNS central) ==="</span>
+az network firewall policy show -g <span class="var">$RG</span> -n <span class="var">$POL</span> \
+  --query "dnsSettings.enableProxy" -o tsv
+
+echo <span class="string">"=== [4] Diagnostic Settings (attendu: &gt;0 settings) ==="</span>
+<span class="var">$FW_ID</span>=$(az network firewall show -g <span class="var">$RG</span> -n <span class="var">$FW</span> --query id -o tsv)
+az monitor diagnostic-settings list --resource <span class="var">$FW_ID</span> \
+  --query "length(value)" -o tsv
+
+echo <span class="string">"=== [5] Nombre de Rule Collections ==="</span>
+az network firewall policy rule-collection-group list \
+  -g <span class="var">$RG</span> --policy-name <span class="var">$POL</span> --query "length(@)" -o tsv</pre>
+    </div>
+
+    <h3>10.3 &mdash; Checklist conformit&eacute;</h3>
+    <div class="checklist-item"><input type="checkbox"><div>Audit de conformit&eacute; automatis&eacute; ex&eacute;cut&eacute; mensuellement</div></div>
+    <div class="checklist-item"><input type="checkbox"><div>Azure Policy / Defender for Cloud utilis&eacute;s pour auditer les &eacute;carts de configuration pertinents</div></div>
+    <div class="checklist-item"><input type="checkbox"><div>Besoins Premium (TLS inspection, IDPS, URL filtering avanc&eacute;) document&eacute;s dans la baseline interne</div></div>
+    <div class="checklist-item"><input type="checkbox"><div>Revue trimestrielle des r&egrave;gles via Policy Analytics ou tables d'agr&eacute;gation avant suppression des r&egrave;gles peu utilis&eacute;es</div></div>
+    <div class="checklist-item"><input type="checkbox"><div>Documentation des d&eacute;rogations (r&egrave;gles "any") avec justification m&eacute;tier et date de revue</div></div>
+</div>
+
+<!-- ═══════════════════════ MATRICE D'INTERACTIONS ═══════════════════════ -->
+<div class="section" id="matrice">
+    <div class="section-header blue">
+        <div class="section-number">&#x1F5FA;&#xFE0F;</div>
+        <div>
+            <div class="section-title">Matrice d'interactions entre sections</div>
+            <div class="section-desc">D&eacute;pendances, flux et impacts crois&eacute;s entre composants Azure Firewall</div>
+        </div>
+    </div>
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x1F4A1;</span>
+        <div>
+            Cette matrice repr&eacute;sente les d&eacute;pendances entre composants Azure Firewall. Une fl&egrave;che indique que le composant source
+            <em>d&eacute;pend de</em> ou <em>envoie vers</em> le composant cible.
+        </div>
+    </div>
+
+    <div class="diagram-block">
+        <div class="diagram-label">Matrice d'interactions des composants Azure Firewall</div>
+        <pre style="text-align:left; font-size:0.8rem; line-height:1.8;">
+  ╔══════════════════╗     ┌─────────────────────┐     ┌──────────────────────┐
+  ║  Firewall Policy ║────▶│  Rule Collections   │────▶│  DNAT / Net / App    │
+  ║  (Parent/Child)  ║     │  (Priority Groups)  │     │  Rules               │
+  ╚══════════════════╝     └─────────────────────┘     └──────────────────────┘
+           │                                                      │
+           │ configure                                     match / deny
+           ▼                                                      ▼
+  ┌──────────────────┐     ┌─────────────────────┐     ┌──────────────────────┐
+  │  DNS Proxy       │────▶│  Azure Firewall      │────▶│  Log Analytics       │
+  │  (FQDN résol.)   │     │  (Hub VNet)          │     │  (AzureDiagnostics)  │
+  └──────────────────┘     └─────────────────────┘     └──────────────────────┘
+           │                        │      │                      │
+           │ forward DNS            │      │ threat intel         │ KQL queries
+           ▼                        ▼      ▼                      ▼
+  ┌──────────────────┐     ┌──────────┐  ┌────────────┐  ┌──────────────────────┐
+  │  Azure DNS       │     │  IDPS    │  │ TLS Insp.  │  │  Azure Monitor /     │
+  │  (168.63.129.16) │     │(Premium) │  │(Premium)   │  │  Sentinel / Workbook │
+  └──────────────────┘     └──────────┘  └────────────┘  └──────────────────────┘
+                                   │
+           Spoke VNets ────────────┘ (via UDR → Firewall IP)
+           On-Premises  ──────────── (via VPN GW / ExpressRoute → Firewall)
+        </pre>
+    </div>
+
+    <h3>Tableau des d&eacute;pendances</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr><th>Composant</th><th>D&eacute;pend de</th><th>Impact si absent</th></tr></thead>
+        <tbody>
+            <tr><td><strong>FQDN Rules (App Rules)</strong></td><td>DNS Proxy activ&eacute;</td><td>R&egrave;gles FQDN non r&eacute;solues → blocage syst&eacute;matique</td></tr>
+            <tr><td><strong>TLS Inspection (Premium)</strong></td><td>Key Vault + CA Cert</td><td>TLS non inspecté → IDPS aveugle sur HTTPS</td></tr>
+            <tr><td><strong>IDPS (Premium)</strong></td><td>TLS Inspection (pour HTTPS)</td><td>Signatures IDS ne voient que le trafic HTTP clair</td></tr>
+            <tr><td><strong>Firewall Manager</strong></td><td>Policy hiérarchie parent/child</td><td>Surcharge locale par &eacute;quipe sans h&eacute;ritage baseline</td></tr>
+            <tr><td><strong>KQL Queries / Workbooks</strong></td><td>Diagnostic Settings activ&eacute;s</td><td>Tables AZFWApplicationRule/NetworkRule absentes</td></tr>
+            <tr><td><strong>Zone Redundancy</strong></td><td>R&eacute;gion avec 3 AZ</td><td>Disponibilit&eacute; renforc&eacute;e ; v&eacute;rifier le SLA courant sur la page Microsoft</td></tr>
+            <tr><td><strong>SNAT (nombreuses connexions)</strong></td><td>Plusieurs Public IPs</td><td>Port exhaustion SNAT si &gt;2048 connexions concurrentes/IP</td></tr>
+        </tbody>
+    </table>
+    </div>
+</div>
+
+<!-- ═══════════════════════ SCORES ═══════════════════════ -->
+<div class="section" id="scores">
+    <div class="section-header blue">
+        <div class="section-number">&#x1F4CA;</div>
+        <div>
+            <div class="section-title">Scoring — &Eacute;valuation de maturit&eacute;</div>
+            <div class="section-desc">Score /100 — D&eacute;faut ~25 | Quick Win +30 | Avanc&eacute; +25 | Optimal +20</div>
+        </div>
+    </div>
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x1F4A1;</span>
+        <div>
+            Score de d&eacute;part &agrave; l'installation d'Azure Firewall (config d&eacute;faut) : <strong>~25/100</strong>.
+            Les <span style="color:#f0a500;font-weight:700;">&#x26A1; Quick Wins</span> permettent d'atteindre <strong>55+/100 en &lt;15 minutes</strong>.
+        </div>
+    </div>
+
+    <div class="table-container">
+    <table>
+        <thead><tr>
+            <th>Section</th>
+            <th>Th&eacute;matique</th>
+            <th>Points max</th>
+            <th>D&eacute;faut Azure</th>
+            <th>&#x26A1; Quick Win (+points)</th>
+            <th>&#x1F3AF; Optimal</th>
+        </tr></thead>
+        <tbody>
+            <tr class="row-warn">
+                <td><a href="#s1"><strong>S1 &mdash; SKU</strong></a></td>
+                <td>Choix Standard vs Premium</td>
+                <td><strong>10</strong></td>
+                <td>3 (Standard sans IDPS)</td>
+                <td>+7 → Premium activ&eacute; si r&eacute;glement&eacute;</td>
+                <td>Premium + IDPS Alert/Deny = 10/10</td>
+            </tr>
+            <tr class="row-warn">
+                <td><a href="#s2"><strong>S2 &mdash; Policy</strong></a></td>
+                <td>Firewall Policy hi&eacute;rarchie</td>
+                <td><strong>10</strong></td>
+                <td>2 (pas de Policy, r&egrave;gles legacy)</td>
+                <td>+8 → Policy cr&eacute;&eacute;e + Threat Intel Deny</td>
+                <td>Policy parent/child + Threat Intel Deny = 10/10</td>
+            </tr>
+            <tr class="row-warn">
+                <td><a href="#s3"><strong>S3 &mdash; R&egrave;gles</strong></a></td>
+                <td>DNAT / Network / Application</td>
+                <td><strong>15</strong></td>
+                <td>3 (pas de r&egrave;gles = tout bloqu&eacute;)</td>
+                <td>+7 → Default Deny + 1 App Rule FQDN</td>
+                <td>DNAT+Net+App structur&eacute;s + Default Deny = 15/15</td>
+            </tr>
+            <tr class="row-warn">
+                <td><a href="#s4"><strong>S4 &mdash; TLS/IDPS</strong></a></td>
+                <td>Inspection Premium</td>
+                <td><strong>15</strong></td>
+                <td>0 (non activ&eacute;)</td>
+                <td>+10 → IDPS en mode Alert + TLS Inspection</td>
+                <td>IDPS Deny + TLS + signatures custom = 15/15</td>
+            </tr>
+            <tr class="row-ok">
+                <td><a href="#s5"><strong>S5 &mdash; Hub-Spoke</strong></a></td>
+                <td>Topologie r&eacute;seau</td>
+                <td><strong>15</strong></td>
+                <td>5 (Firewall seul, pas de Spoke)</td>
+                <td>+5 → 1 Spoke + UDR + Peering</td>
+                <td>Hub multi-spoke + UDR toutes Spokes = 15/15</td>
+            </tr>
+            <tr class="row-warn">
+                <td><a href="#s6"><strong>S6 &mdash; Logging</strong></a></td>
+                <td>Logs + KQL</td>
+                <td><strong>10</strong></td>
+                <td>0 (Diagnostic Settings d&eacute;sactiv&eacute;s)</td>
+                <td>+8 → Diagnostic Settings → LAW activ&eacute;s</td>
+                <td>+Workbook + alertes automatiques = 10/10</td>
+            </tr>
+            <tr class="row-warn">
+                <td><a href="#s7"><strong>S7 &mdash; DNS Proxy</strong></a></td>
+                <td>R&eacute;solution FQDN</td>
+                <td><strong>8</strong></td>
+                <td>0 (d&eacute;sactiv&eacute;)</td>
+                <td>+8 → DNS Proxy activ&eacute; + VMs pointent Firewall</td>
+                <td>DNS Proxy + Private DNS zones = 8/8</td>
+            </tr>
+            <tr class="row-ok">
+                <td><a href="#s8"><strong>S8 &mdash; Manager</strong></a></td>
+                <td>Firewall Manager multi-sub</td>
+                <td><strong>5</strong></td>
+                <td>2 (Firewall isol&eacute;)</td>
+                <td>+3 → Policy parent centralis&eacute;e</td>
+                <td>Manager + Policy hi&eacute;rarchie = 5/5</td>
+            </tr>
+            <tr class="row-warn">
+                <td><a href="#s9"><strong>S9 &mdash; HA/Scaling</strong></a></td>
+                <td>Zone Redundancy + Autoscale</td>
+                <td><strong>7</strong></td>
+                <td>0 (zone unique)</td>
+                <td>+7 → Zones 1,2,3 + Public IP zones</td>
+                <td>Zones + DDoS Protection = 7/7</td>
+            </tr>
+            <tr class="row-warn">
+                <td><a href="#s10"><strong>S10 &mdash; Conformit&eacute;</strong></a></td>
+                <td>Baseline r&eacute;glementaire</td>
+                <td><strong>5</strong></td>
+                <td>0 (aucun audit)</td>
+                <td>+3 → Audit automatis&eacute; mensuel</td>
+                <td>Audit + Azure Policy + revue trimestrielle = 5/5</td>
+            </tr>
+            <tr style="background:#1a2535;font-weight:700;">
+                <td colspan="2">&#x1F3C6; <strong>TOTAL</strong></td>
+                <td><strong>100</strong></td>
+                <td><span class="hl-red">25/100</span></td>
+                <td><span style="color:#f0a500;">55+/100</span></td>
+                <td><span class="hl-green">100/100</span></td>
+            </tr>
+        </tbody>
+    </table>
+    </div>
+</div>
+
+<!-- ═══════════════════════ SCRIPT ALL-IN-ONE ═══════════════════════ -->
+<div class="section" id="script">
+    <div class="section-header blue">
+        <div class="section-number">&#x1F4DC;</div>
+        <div>
+            <div class="section-title">Script All-in-One — Azure CLI</div>
+            <div class="section-desc">D&eacute;ploiement complet Azure Firewall Standard + Policy + r&egrave;gles de base + logging</div>
+        </div>
+    </div>
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x1F4A1;</span>
+        <div>
+            Ce script reprend les commandes <strong>Quick Win</strong> de toutes les sections. Il d&eacute;ploie un Azure Firewall Premium zone-redondant
+            avec Policy, DNS Proxy, Threat Intel Deny, Diagnostic Settings et une UDR Spoke de base.
+            <strong>Adapter les variables en haut du script avant ex&eacute;cution.</strong>
+        </div>
+    </div>
+
+    <div class="code-block">
+        <div class="code-header">
+            <span>&#x2601;&#xFE0F; Azure CLI — Script All-in-One (Quick Win complet)</span>
+            <button class="copy-btn">Copier</button>
+        </div>
+        <pre><span class="comment">#!/bin/bash
+# ================================================================
+# AZURE FIREWALL — SCRIPT ALL-IN-ONE (Quick Wins)
+# Adapter les variables ci-dessous avant exécution
+# ================================================================</span>
+
+<span class="comment"># === Variables ===</span>
+<span class="var">RG</span>=<span class="string">"rg-hub-prod"</span>
+<span class="var">LOCATION</span>=<span class="string">"francecentral"</span>
+<span class="var">VNET_HUB</span>=<span class="string">"vnet-hub-prod"</span>
+<span class="var">FW_NAME</span>=<span class="string">"fw-hub-prod"</span>
+<span class="var">POL_NAME</span>=<span class="string">"fwpol-hub-prod"</span>
+<span class="var">PIP_NAME</span>=<span class="string">"pip-fw-hub-prod"</span>
+<span class="var">LAW_NAME</span>=<span class="string">"law-fw-hub-prod"</span>
+<span class="var">RCG_NAME</span>=<span class="string">"rcg-baseline"</span>
+
+<span class="comment"># === [S1] Déployer Azure Firewall Premium avec Zones ===</span>
+az network public-ip create \
+  --resource-group <span class="var">$RG</span> --name <span class="var">$PIP_NAME</span> \
+  --sku Standard --zone 1 2 3 --location <span class="var">$LOCATION</span>
+
+az network firewall policy create \
+  --resource-group <span class="var">$RG</span> --name <span class="var">$POL_NAME</span> \
+  --sku Premium --location <span class="var">$LOCATION</span> \
+  --threat-intel-mode Deny \
+  --enable-dns-proxy true \
+  --dns-servers 168.63.129.16
+
+az network firewall create \
+  --resource-group <span class="var">$RG</span> --name <span class="var">$FW_NAME</span> \
+  --location <span class="var">$LOCATION</span> \
+  --sku AZFW_VNet --tier Premium \
+  --vnet-name <span class="var">$VNET_HUB</span> \
+  --public-ip <span class="var">$PIP_NAME</span> \
+  --firewall-policy <span class="var">$POL_NAME</span> \
+  --zones 1 2 3
+
+<span class="comment"># === [S3] Rule Collection Group + App Rule FQDN (Quick Win) ===</span>
+az network firewall policy rule-collection-group create \
+  --resource-group <span class="var">$RG</span> --policy-name <span class="var">$POL_NAME</span> \
+  --name <span class="var">$RCG_NAME</span> --priority 300
+
+az network firewall policy rule-collection-group collection add-filter-collection \
+  --resource-group <span class="var">$RG</span> --policy-name <span class="var">$POL_NAME</span> \
+  --rule-collection-group-name <span class="var">$RCG_NAME</span> \
+  --name allow-internet-outbound --priority 300 \
+  --action Allow --rule-type ApplicationRule \
+  --rule-name allow-windows-update \
+  --protocols Http=80 Https=443 \
+  --source-addresses 10.0.0.0/8 \
+  --target-fqdns "*.windowsupdate.microsoft.com" "*.update.microsoft.com"
+
+<span class="comment"># === [S6] Activer Diagnostic Settings vers Log Analytics ===</span>
+<span class="comment"># Exemple de r&eacute;tention ; adaptez la valeur &agrave; votre politique de conservation</span>
+az monitor log-analytics workspace create \
+  --resource-group <span class="var">$RG</span> --workspace-name <span class="var">$LAW_NAME</span> \
+  --location <span class="var">$LOCATION</span> --retention-time 90
+
+FW_ID=$(az network firewall show -g <span class="var">$RG</span> -n <span class="var">$FW_NAME</span> --query id -o tsv)
+LAW_ID=$(az monitor log-analytics workspace show -g <span class="var">$RG</span> -n <span class="var">$LAW_NAME</span> --query id -o tsv)
+
+az monitor diagnostic-settings create \
+  --resource "$FW_ID" \
+  --name "diag-fw-law" \
+  --workspace "$LAW_ID" \
+  --export-to-resource-specific true \
+  --logs '[
+    {"category":"AZFWApplicationRule","enabled":true},
+    {"category":"AZFWNetworkRule","enabled":true},
+    {"category":"AZFWNatRule","enabled":true},
+    {"category":"AZFWThreatIntel","enabled":true},
+    {"category":"AZFWIdpsSignature","enabled":true},
+    {"category":"AZFWDnsQuery","enabled":true}
+  ]' \
+  --metrics '[{"category":"AllMetrics","enabled":true}]'
+
+<span class="comment"># === [S9] Vérification finale ===</span>
+echo "=== Vérification Zones ==="
+az network firewall show -g <span class="var">$RG</span> -n <span class="var">$FW_NAME</span> --query zones -o tsv
+echo "=== Vérification Tier ==="
+az network firewall show -g <span class="var">$RG</span> -n <span class="var">$FW_NAME</span> --query sku.tier -o tsv
+echo "=== Vérification Threat Intel ==="
+az network firewall policy show -g <span class="var">$RG</span> -n <span class="var">$POL_NAME</span> --query threatIntelMode -o tsv
+echo "=== Vérification DNS Proxy ==="
+az network firewall policy show -g <span class="var">$RG</span> -n <span class="var">$POL_NAME</span> --query "dnsSettings.enableProxy" -o tsv
+echo "=== Diagnostic Settings actifs ==="
+az monitor diagnostic-settings list --resource "$FW_ID" --query "length(value)" -o tsv</pre>
+    </div>
+</div>
+
+<!-- ═══════════════════════ CHECKLIST ═══════════════════════ -->
+<div class="section" id="checklist">
+    <div class="section-header green">
+        <div class="section-number green">&#x2705;</div>
+        <div>
+            <div class="section-title">Checklist de D&eacute;ploiement</div>
+            <div class="section-desc">Phase 1 Quick Win → Phase finale V&eacute;rification — items cochables</div>
+        </div>
+    </div>
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x1F4A1;</span>
+        <div>
+            Synth&egrave;se de toutes les checklists des sections. Cochez au fur et &agrave; mesure de votre d&eacute;ploiement.
+            Les items <span style="color:#f0a500;">&#x26A1;</span> sont des Quick Wins (impact &eacute;lev&eacute;, &lt;15 min).
+        </div>
+    </div>
+
+    <h3>SKU &amp; D&eacute;ploiement</h3>
+    <div class="checklist-item"><input type="checkbox"><div>&#x26A1; SKU choisi selon usage r&eacute;el (Basic si simple NAT, Standard si FQDN, Premium si IDPS/TLS)</div></div>
+    <div class="checklist-item"><input type="checkbox"><div>&#x26A1; Azure Firewall d&eacute;ploy&eacute; avec <code>--zones 1 2 3</code></div></div>
+    <div class="checklist-item"><input type="checkbox"><div>Public IP d&eacute;ploy&eacute;e avec <code>--zone 1 2 3</code></div></div>
+    <div class="checklist-item"><input type="checkbox"><div>SKU Public IP = Standard (requis pour Azure Firewall)</div></div>
+
+    <h3>Firewall Policy</h3>
+    <div class="checklist-item"><input type="checkbox"><div>&#x26A1; Firewall Policy (non r&egrave;gles legacy) utilis&eacute;e</div></div>
+    <div class="checklist-item"><input type="checkbox"><div>&#x26A1; Threat Intel Mode = <code>Deny</code> (pas Alert)</div></div>
+    <div class="checklist-item"><input type="checkbox"><div>Hi&eacute;rarchie parent/child utilis&eacute;e si multi-teams ou multi-subscriptions</div></div>
+    <div class="checklist-item"><input type="checkbox"><div>Priorit&eacute;s des Rule Collection Groups document&eacute;es (100=haute priorit&eacute;, 65000=basse)</div></div>
+
+    <h3>R&egrave;gles</h3>
+    <div class="checklist-item"><input type="checkbox"><div>&#x26A1; Default Deny implicite v&eacute;rifi&eacute; (test de connexion non autoris&eacute;e)</div></div>
+    <div class="checklist-item"><input type="checkbox"><div>R&egrave;gles DNAT document&eacute;es avec justification m&eacute;tier</div></div>
+    <div class="checklist-item"><input type="checkbox"><div>Network Rules utilis&eacute;es pour trafic IP/Port sans FQDN</div></div>
+    <div class="checklist-item"><input type="checkbox"><div>Application Rules utilis&eacute;es pour contr&ocirc;le FQDN (n&eacute;cessite DNS Proxy)</div></div>
+    <div class="checklist-item"><input type="checkbox"><div>Pas de r&egrave;gle "Allow Any to Any" (sauf si justifi&eacute;e avec date de revue)</div></div>
+
+    <h3>Premium (si applicable)</h3>
+    <div class="checklist-item"><input type="checkbox"><div>IDPS Mode = <code>Alert</code> minimum → <code>Deny</code> apr&egrave;s phase test</div></div>
+    <div class="checklist-item"><input type="checkbox"><div>TLS Inspection activ&eacute;e + CA certificate dans Key Vault</div></div>
+    <div class="checklist-item"><input type="checkbox"><div>URL Filtering activ&eacute; sur Application Rules Premium</div></div>
+
+    <h3>DNS Proxy</h3>
+    <div class="checklist-item"><input type="checkbox"><div>&#x26A1; DNS Proxy activ&eacute; sur Firewall Policy si des Application Rules FQDN existent</div></div>
+    <div class="checklist-item"><input type="checkbox"><div>&#x26A1; VMs / Subnets configur&eacute;s pour utiliser l'IP du Firewall comme DNS</div></div>
+
+    <h3>Logging</h3>
+    <div class="checklist-item"><input type="checkbox"><div>&#x26A1; Diagnostic Settings activ&eacute;s vers Log Analytics Workspace</div></div>
+    <div class="checklist-item"><input type="checkbox"><div>R&eacute;tention LAW align&eacute;e sur la politique interne et les obligations applicables</div></div>
+    <div class="checklist-item"><input type="checkbox"><div>6 cat&eacute;gories de logs activ&eacute;es (ApplicationRule, NetworkRule, NatRule, ThreatIntel, IdpsSignature, DnsQuery)</div></div>
+    <div class="checklist-item"><input type="checkbox"><div>Alerte Azure Monitor sur Threat Intel hits &gt;0</div></div>
+
+    <h3>Hub-Spoke</h3>
+    <div class="checklist-item"><input type="checkbox"><div>AzureFirewallSubnet = /26 minimum</div></div>
+    <div class="checklist-item"><input type="checkbox"><div>UDR sur chaque Spoke Subnet → <code>0.0.0.0/0</code> vers IP Firewall</div></div>
+    <div class="checklist-item"><input type="checkbox"><div>IP Forwarding d&eacute;sactiv&eacute; sur les NICs des VMs (Firewall g&egrave;re le routage)</div></div>
+
+    <h3>Conformit&eacute;</h3>
+    <div class="checklist-item"><input type="checkbox"><div>Azure Policy / Defender for Cloud utilis&eacute;s pour auditer les &eacute;carts de configuration pertinents</div></div>
+    <div class="checklist-item"><input type="checkbox"><div>Revue trimestrielle des r&egrave;gles via Policy Analytics ou tables d'agr&eacute;gation avant suppression des r&egrave;gles peu utilis&eacute;es</div></div>
+    <div class="checklist-item"><input type="checkbox"><div>Audit de conformit&eacute; script&eacute; et planifi&eacute; mensuellement</div></div>
+</div>
+
+<!-- ═══════════════════════ GLOSSAIRE ═══════════════════════ -->
+<div class="section" id="glossaire">
+    <div class="section-header blue">
+        <div class="section-number">&#x1F4D8;</div>
+        <div>
+            <div class="section-title">Glossaire</div>
+            <div class="section-desc">D&eacute;finitions des acronymes et termes techniques Azure Firewall</div>
+        </div>
+    </div>
+    <div class="table-container">
+    <table>
+        <thead><tr><th>Acronyme</th><th>D&eacute;veloppement</th><th>D&eacute;finition courte</th></tr></thead>
+        <tbody>
+            <tr><td><strong>AZ</strong></td><td>Availability Zone</td><td>Datacenter isol&eacute; dans une r&eacute;gion Azure. Le d&eacute;ploiement multi-zones am&eacute;liore la r&eacute;silience ; consulter la page SLA pour le niveau exact.</td></tr>
+            <tr><td><strong>AZFW</strong></td><td>Azure Firewall</td><td>Pare-feu cloud natif g&eacute;r&eacute; par Microsoft</td></tr>
+            <tr><td><strong>BGP</strong></td><td>Border Gateway Protocol</td><td>Protocole de routage dynamique, utilis&eacute; avec ExpressRoute/VPN</td></tr>
+            <tr><td><strong>CA</strong></td><td>Certificate Authority</td><td>Autorit&eacute; de certification, requise pour TLS Inspection</td></tr>
+            <tr><td><strong>CDE</strong></td><td>Cardholder Data Environment</td><td>Environnement de donn&eacute;es titulaires de carte (PCI-DSS)</td></tr>
+            <tr><td><strong>DGA</strong></td><td>Domain Generation Algorithm</td><td>Algorithme g&eacute;n&eacute;rant des domaines al&eacute;atoires pour C2 malware</td></tr>
+            <tr><td><strong>DNAT</strong></td><td>Destination Network Address Translation</td><td>Redirection de port entrant vers IP/port interne</td></tr>
+            <tr><td><strong>FQDN</strong></td><td>Fully Qualified Domain Name</td><td>Nom de domaine complet ex : *.windowsupdate.microsoft.com</td></tr>
+            <tr><td><strong>HDS</strong></td><td>H&eacute;bergement de Donn&eacute;es de Sant&eacute;</td><td>Certification fran&ccedil;aise pour l'h&eacute;bergement de donn&eacute;es de sant&eacute;</td></tr>
+            <tr><td><strong>IDPS</strong></td><td>Intrusion Detection and Prevention System</td><td>Syst&egrave;me de d&eacute;tection/pr&eacute;vention des intrusions (Firewall Premium)</td></tr>
+            <tr><td><strong>KV</strong></td><td>Key Vault</td><td>Azure Key Vault : stockage de secrets, cl&eacute;s et certificats</td></tr>
+            <tr><td><strong>LAW</strong></td><td>Log Analytics Workspace</td><td>Espace de travail pour centraliser et interroger les logs</td></tr>
+            <tr><td><strong>MSTIC</strong></td><td>Microsoft Threat Intelligence Center</td><td>Flux de renseignements sur les menaces int&eacute;gr&eacute; dans Azure Firewall</td></tr>
+            <tr><td><strong>NIS2</strong></td><td>Network and Information Security Directive 2</td><td>Directive europ&eacute;enne sur la s&eacute;curit&eacute; des r&eacute;seaux et syst&egrave;mes d'information</td></tr>
+            <tr><td><strong>NVA</strong></td><td>Network Virtual Appliance</td><td>Appliance r&eacute;seau virtuelle tierce (alternative &agrave; Azure Firewall)</td></tr>
+            <tr><td><strong>PCI-DSS</strong></td><td>Payment Card Industry Data Security Standard</td><td>Standard de s&eacute;curit&eacute; pour les environnements de paiement par carte</td></tr>
+            <tr><td><strong>PIP</strong></td><td>Public IP (address)</td><td>Adresse IP publique Azure (SKU Standard requis)</td></tr>
+            <tr><td><strong>RCG</strong></td><td>Rule Collection Group</td><td>Groupement de Rule Collections dans une Firewall Policy</td></tr>
+            <tr><td><strong>SNAT</strong></td><td>Source Network Address Translation</td><td>Traduction IP source : VMs internes → IP publique Firewall</td></tr>
+            <tr><td><strong>TLS</strong></td><td>Transport Layer Security</td><td>Protocole de chiffrement HTTPS. Inspection = d&eacute;chiffrement + r&eacute;-chiffrement</td></tr>
+            <tr><td><strong>UDR</strong></td><td>User Defined Route</td><td>Route statique forçant le trafic Spoke → Azure Firewall</td></tr>
+            <tr><td><strong>vWAN</strong></td><td>Virtual WAN</td><td>Topologie Azure Secured Hub (alternative &agrave; Hub-Spoke classique)</td></tr>
+            <tr><td><strong>WAF</strong></td><td>Web Application Firewall</td><td>Pare-feu applicatif (compl&eacute;mentaire &agrave; Azure Firewall, sur couche 7 HTTP)</td></tr>
+        </tbody>
+    </table>
+    </div>
+</div>
+
+</div><!-- /container -->
+
+<footer>
+    <strong>Azure Firewall &mdash; Filtrage R&eacute;seau L4/L7, IDPS &amp; Protection des Workloads</strong><br>
+    Version 1.1 &mdash; Mai 2026 &mdash; Portail : portal.azure.com &gt; Azure Firewall<br>
+    R&eacute;f. : <a href="https://learn.microsoft.com/azure/firewall/" target="_blank">learn.microsoft.com/azure/firewall</a> &mdash;
+    <a href="azure-networking.html">azure_networking_guide</a> &mdash;
+    <a href="azure-waf.html">azure_waf_guide</a> &mdash;
+    <a href="azure-monitor.html">azure_monitor_guide</a>
+</footer>
+
+<script>
+document.querySelectorAll('.copy-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const pre = this.closest('.code-block').querySelector('pre');
+        navigator.clipboard.writeText(pre.innerText).then(() => {
+            const orig = this.textContent;
+            this.textContent = '✓ Copié';
+            setTimeout(() => this.textContent = orig, 1500);
+        });
+    });
+});
+</script>
+<script id="v1a-script">
+(function(){
+  const sidebar = document.querySelector('.v1a-sidebar');
+  if(!sidebar) return;
+  const accs = [...sidebar.querySelectorAll('details.acc')];
+  accs.forEach(a => a.addEventListener('toggle', () => {
+    if(a.open) accs.forEach(o => { if(o!==a) o.open = false; });
+  }));
+  const links = [...sidebar.querySelectorAll('.acc-body a[href^="#"]')];
+  const map = new Map(links.map(a => [a.getAttribute('href').slice(1), a]));
+  const sections = [...document.querySelectorAll('.section[id], section[id]')];
+  function onScroll(){
+    const y = window.scrollY + 120;
+    let cur = null;
+    for(const s of sections){ if(s.offsetTop <= y) cur = s; else break; }
+    links.forEach(a => a.classList.remove('active'));
+    if(cur){
+      const a = map.get(cur.id);
+      if(a){
+        a.classList.add('active');
+        const det = a.closest('details.acc');
+        if(det && !det.open){ accs.forEach(o=>o.open=false); det.open = true; }
+      }
+    }
+  }
+  document.addEventListener('scroll', onScroll, {passive:true});
+  onScroll();
+})();
+</script>
+</main>
+</div>
+</body>
+</html>

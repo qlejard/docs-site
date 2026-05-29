@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Microsoft Defender for Office 365 - Protection Email, Anti-Phishing &amp; Simulation d'Attaques - Guide de Configuration &amp; Audit</title>
+    <style>
+        :root {
+            --azure-blue: #0078d4;
+            --azure-dark: #004578;
+            --azure-light: #deecf9;
+            --success-green: #107c10;
+            --warning-orange: #ff8c00;
+            --danger-red: #d13438;
+            --neutral-bg: #f3f2f1;
+            --neutral-dark: #323130;
+            --neutral-medium: #605e5c;
+            --white: #ffffff;
+            --shadow: 0 2px 8px rgba(0,0,0,0.12);
+            --radius: 8px;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--neutral-bg); color: var(--neutral-dark); line-height: 1.6; }
+        a { color: var(--azure-blue); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        code { font-family: 'Cascadia Code', Consolas, 'Courier New', monospace; font-size: 0.88em; background: #e8e6e4; padding: 1px 6px; border-radius: 3px; }
+        .hero { background: var(--white); border-bottom: 3px solid var(--azure-blue); padding: 34px 32px 26px; text-align: center; max-width: 1400px; margin: 0 auto; }
+        .hero h1 { font-size: 1.55em; color: var(--azure-dark); margin-bottom: 8px; }
+        .hero .subtitle { color: var(--neutral-medium); max-width: 980px; margin: 0 auto; }
+        .hero .badge-row { margin-top: 14px; display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; }
+        .hero .badge { background: var(--neutral-bg); border: 1px solid #e1dfdd; color: var(--neutral-dark); padding: 4px 12px; border-radius: 4px; font-size: 0.78em; }
+        .hero .meta-row { margin-top: 14px; display: flex; justify-content: center; gap: 18px; flex-wrap: wrap; font-size: 0.8em; color: var(--neutral-medium); }
+        .nav-container { max-width: 1400px; margin: 0 auto; border-bottom: 1px solid #e1dfdd; position: sticky; top: 0; z-index: 100; background: var(--neutral-bg); }
+        .nav-container nav { display: flex; justify-content: center; overflow-x: auto; }
+        .nav-container nav a { color: var(--neutral-medium); padding: 10px 12px; font-size: 0.8em; font-weight: 500; white-space: nowrap; border-bottom: 2px solid transparent; }
+        .nav-container nav a:hover { color: var(--azure-blue); border-bottom-color: var(--azure-blue); text-decoration: none; }
+        .container { max-width: 1400px; margin: 0 auto; padding: 28px 32px; }
+        .section { background: var(--white); border-radius: var(--radius); box-shadow: var(--shadow); padding: 24px 26px; margin-bottom: 24px; }
+        .section-header { display: flex; gap: 14px; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 2px solid var(--neutral-bg); align-items: center; }
+        .section-header.blue { border-bottom-color: var(--azure-blue); }
+        .section-header.red { border-bottom-color: var(--danger-red); }
+        .section-header.orange { border-bottom-color: var(--warning-orange); }
+        .section-header.green { border-bottom-color: var(--success-green); }
+        .section-number { background: var(--azure-blue); color: white; width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0; }
+        .section-number.red { background: var(--danger-red); }
+        .section-number.orange { background: var(--warning-orange); }
+        .section-number.green { background: var(--success-green); }
+        .section-title { font-size: 1.25em; color: var(--azure-dark); font-weight: 700; }
+        .section-desc { font-size: 0.9em; color: var(--neutral-medium); }
+        h3 { font-size: 1.02em; margin: 20px 0 10px 0; border-left: 3px solid var(--azure-blue); padding-left: 10px; }
+        .badge-sm { font-size: 0.7em; padding: 2px 8px; border-radius: 3px; font-weight: 600; }
+        .badge-critical { background: #fde7e9; color: var(--danger-red); }
+        .badge-high { background: #fff0e0; color: #d83b01; }
+        .badge-medium { background: #fff8e1; color: #6d4c00; }
+        .badge-low { background: #e8f5e9; color: var(--success-green); }
+        .lic { display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 0.72em; font-weight: 600; vertical-align: middle; margin-left: 4px; }
+        .lic-m365-e3 { background: #e8e6e4; color: #605e5c; }
+        .lic-m365-e5 { background: #e8d4f0; color: #6b2fa0; }
+        .lic-addon { background: #fff3cd; color: #6d4c00; }
+        .alert { border-radius: var(--radius); padding: 14px 16px; margin: 12px 0; font-size: 0.92em; display: flex; gap: 10px; align-items: flex-start; }
+        .alert-icon { font-size: 1.1em; flex-shrink: 0; }
+        .alert-info { background: #e6f2ff; border: 1px solid #b3d7ff; color: #004578; }
+        .alert-warn { background: #fff8e1; border: 1px solid #ffe082; color: #6d4c00; }
+        .alert-error { background: #fde7e9; border: 1px solid #f5c6cb; color: #721c24; }
+        .table-container { overflow-x: auto; border-radius: var(--radius); box-shadow: 0 1px 4px rgba(0,0,0,0.08); margin: 10px 0 16px 0; }
+        table { width: 100%; border-collapse: collapse; background: var(--white); font-size: 0.88em; }
+        thead th { background: var(--azure-dark); color: white; padding: 11px 12px; text-align: left; font-weight: 600; font-size: 0.8em; text-transform: uppercase; }
+        tbody td { padding: 9px 12px; border-bottom: 1px solid #edebe9; vertical-align: top; }
+        tbody tr:last-child td { border-bottom: none; }
+        tr.row-ok { background: #f0fff0; }
+        tr.row-ko { background: #fff5f5; }
+        tr.row-warn { background: #fffdf0; }
+        .hl-red { background: #fde7e9; padding: 1px 6px; border-radius: 3px; font-weight: 600; color: var(--danger-red); }
+        .hl-green { background: #dff6dd; padding: 1px 6px; border-radius: 3px; font-weight: 600; color: var(--success-green); }
+        .hl-blue { background: var(--azure-light); padding: 1px 6px; border-radius: 3px; font-weight: 600; color: var(--azure-dark); }
+        .code-block { background: #1e1e1e; border-radius: var(--radius); overflow: hidden; margin: 10px 0 16px 0; }
+        .code-header { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: #2d2d2d; font-size: 0.78em; color: #a0a0a0; }
+        .copy-btn { background: var(--azure-blue); color: white; border: none; padding: 3px 10px; border-radius: 4px; cursor: pointer; font-size: 0.82em; }
+        .code-block pre { padding: 14px 16px; color: #d4d4d4; font-family: 'Cascadia Code', Consolas, monospace; font-size: 0.82em; overflow-x: auto; white-space: pre; line-height: 1.5; }
+        .code-block pre .comment { color: #6a9955; }
+        .code-block pre .keyword { color: #569cd6; }
+        .code-block pre .string { color: #ce9178; }
+        .code-block pre .param { color: #9cdcfe; }
+        .code-block pre .var { color: #4ec9b0; }
+        .step { display: flex; gap: 10px; margin-bottom: 8px; padding: 10px 12px; background: #faf9f8; border-radius: var(--radius); border-left: 3px solid var(--azure-blue); font-size: 0.92em; }
+        .step-n { min-width: 24px; height: 24px; border-radius: 50%; background: var(--azure-blue); color: white; display: flex; align-items: center; justify-content: center; font-size: 0.76em; font-weight: 700; }
+        .step-n.red { background: var(--danger-red); }
+        .step-n.orange { background: var(--warning-orange); }
+        .step-n.green { background: var(--success-green); }
+        .checklist-item { display: flex; align-items: flex-start; gap: 9px; padding: 7px 0; border-bottom: 1px solid #f3f2f1; }
+        .checklist-item:last-child { border-bottom: none; }
+        .checklist-item input[type="checkbox"] { width: 15px; height: 15px; accent-color: var(--azure-blue); flex-shrink: 0; margin-top: 3px; }
+        .level-comparison { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 14px 0; }
+        .level-card { border-radius: var(--radius); padding: 14px; text-align: center; }
+        .level-card.default { background: #f3f2f1; border: 2px solid #e1dfdd; }
+        .level-card.quick { background: #e6f2ff; border: 2px solid #b3d7ff; }
+        .level-card.advanced { background: #fff8e1; border: 2px solid #ffe082; }
+        .level-card.optimal { background: #e8f5e9; border: 2px solid #a5d6a7; }
+        .level-score { font-size: 2em; font-weight: 700; }
+        footer { background: #faf9f8; color: var(--neutral-medium); text-align: center; padding: 22px; margin-top: 28px; font-size: 0.8em; border-top: 1px solid #e1dfdd; }
+        @media (max-width: 768px) {
+            .hero { padding: 22px 14px 18px; }
+            .container { padding: 14px; }
+            .section { padding: 18px; }
+            .level-comparison { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+<style id="v1a-overlay">
+:root{--c:#0078d4;--azure-dark:#004578;--light:#deecf9;--bg:#f8f9fb;--surface:#fff;--border:#e3e6ec;--muted:#5b6478;--radius:14px}
+.nav-container,.back-to-index{display:none!important}
+body{background:var(--bg)}
+.v1a-layout{display:grid;grid-template-columns:280px 1fr;gap:0;align-items:start}
+.v1a-sidebar{position:sticky;top:0;height:100vh;overflow-y:auto;padding:18px 14px 24px;background:#fff;border-right:1px solid var(--border)}
+.v1a-main{min-width:0}
+.v1a-main .hero{max-width:none;margin:0;border-radius:0}
+.v1a-main .container{max-width:1200px}
+.back-index{display:inline-flex;align-items:center;gap:6px;margin:0 0 16px;padding:6px 10px;background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--muted);font-size:.78em;font-weight:500;text-decoration:none;transition:all .15s}
+.back-index:hover{background:transparent;border-color:var(--c);color:var(--azure-dark);text-decoration:none}
+.back-index .arr{font-size:1em;line-height:1;opacity:.85}
+.side-head{display:flex;align-items:center;gap:10px;padding:6px 6px 14px;border-bottom:1px solid var(--border);margin-bottom:12px}
+.side-head .ico{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--c),#50a4f0);display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.1em;flex-shrink:0}
+.side-head .t{font-weight:700;color:var(--azure-dark);font-size:.95em;line-height:1.15}
+.side-head .s{font-size:.72em;color:var(--muted);margin-top:2px;line-height:1.3}
+.acc{margin-bottom:6px;border-radius:10px;overflow:hidden}
+.acc>summary{list-style:none;cursor:pointer;padding:8px 10px;display:flex;align-items:center;gap:8px;color:var(--azure-dark);font-weight:600;font-size:.82em;border-radius:8px;user-select:none}
+.acc>summary::-webkit-details-marker{display:none}
+.acc>summary:hover{background:var(--bg)}
+.acc>summary .chev{margin-left:auto;font-size:.7em;transition:transform .15s;color:var(--muted)}
+.acc[open]>summary{background:var(--light);color:var(--c)}
+.acc[open]>summary .chev{transform:rotate(90deg)}
+.acc-body{padding:4px 0 6px 6px;display:flex;flex-direction:column;gap:2px}
+.acc-body a{display:flex;align-items:center;gap:8px;padding:6px 10px 6px 18px;border-radius:6px;font-size:.8em;color:var(--muted);text-decoration:none;border-left:2px solid transparent;transition:all .12s}
+.acc-body a:hover{color:var(--c);background:var(--bg);text-decoration:none}
+.acc-body a.active{color:var(--c);background:var(--light);border-left-color:var(--c);font-weight:600}
+.acc-body a .num{font-size:.7em;color:#9aa2b1;font-variant-numeric:tabular-nums;min-width:22px}
+.acc-body a.active .num{color:var(--c)}
+.side-foot{margin-top:14px;padding-top:12px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:4px}
+.side-foot a{display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:6px;font-size:.78em;color:var(--muted);text-decoration:none}
+.side-foot a:hover{color:var(--c);background:var(--bg);text-decoration:none}
+@media (max-width:900px){
+  .v1a-layout{grid-template-columns:1fr}
+  .v1a-sidebar{position:static;height:auto;border-right:none;border-bottom:1px solid var(--border)}
+}
+</style>
+<style id="theme-overlay" data-cat="defender">
+:root {
+  --azure-blue: #d13438;
+  --azure-dark: #8b1a1d;
+  --azure-light: #fde7e9;
+  --c: #d13438;
+}
+.v1a-topbar { background: linear-gradient(90deg, #d13438, #d13438) !important; }
+.v1a-side { --c: #d13438 !important; }
+</style>
+</head>
+<body>
+<div class="v1a-layout">
+<aside class="v1a-sidebar">
+  <a href="../index.html" class="back-index" title="Revenir à l'index"><span class="arr" aria-hidden="true">&#127968;</span> Index</a>
+  <div class="side-head">
+    <div class="ico">&#x1F4D8;</div>
+    <div>
+      <div class="t">Microsoft Defender for Office 365 - Protection Email, Anti-Phishing &amp; Simulation d'Attaques</div>
+      <div class="s">Guide de configuration et d'audit MDO pour durcir le portail security.microsoft.com (Em&hellip;</div>
+    </div>
+  </div>
+  <details class="acc" open>
+    <summary>Introduction <span class="chev">&rsaquo;</span></summary>
+    <div class="acc-body">
+      <a href="#guide"><span class="num">&bull;</span> Mode d'emploi</a>
+      <a href="#licences"><span class="num">&bull;</span> Licences</a>
+    </div>
+  </details>
+  <details class="acc">
+    <summary>Sections <span class="chev">&rsaquo;</span></summary>
+    <div class="acc-body">
+      <a href="#s1"><span class="num">S1</span> S1</a>
+      <a href="#s2"><span class="num">S2</span> S2</a>
+      <a href="#s3"><span class="num">S3</span> S3</a>
+      <a href="#s4"><span class="num">S4</span> S4</a>
+      <a href="#s5"><span class="num">S5</span> S5</a>
+      <a href="#s6"><span class="num">S6</span> S6</a>
+      <a href="#s7"><span class="num">S7</span> S7</a>
+      <a href="#s8"><span class="num">S8</span> S8</a>
+      <a href="#s9"><span class="num">S9</span> S9</a>
+      <a href="#s10"><span class="num">S10</span> S10</a>
+    </div>
+  </details>
+  <details class="acc">
+    <summary>Annexes <span class="chev">&rsaquo;</span></summary>
+    <div class="acc-body">
+      <a href="#scores"><span class="num">&bull;</span> Scores</a>
+      <a href="#script"><span class="num">&bull;</span> Script</a>
+      <a href="#checklist"><span class="num">&bull;</span> Checklist</a>
+    </div>
+  </details>
+  <div class="side-foot">
+    <a href="#top">&uarr; Retour en haut</a>
+    <a href="#" onclick="window.print();return false;">&#x2B07; Imprimer / PDF</a>
+    <a href="#" onclick="navigator.clipboard.writeText(location.href);this.textContent='&#x2713; Lien copié';return false;">&#x2398; Copier le lien</a>
+  </div>
+</aside>
+<main class="v1a-main">
+
+
+<!-- ═══════════════════════ BACK TO INDEX ═══════════════════════ -->
+<a href="../index.html" class="back-to-index" style="position:fixed;top:16px;left:16px;z-index:1000;display:inline-flex;align-items:center;gap:6px;padding:8px 14px;background:#0078d4;color:#fff;text-decoration:none;border-radius:8px;font:600 14px/1 'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;box-shadow:0 2px 8px rgba(0,0,0,0.15);transition:background .2s" onmouseover="this.style.background='#004578'" onmouseout="this.style.background='#0078d4'" aria-label="Retour à l'index">&larr;&nbsp;Index</a>
+<header class="hero">
+    <h1>Microsoft Defender for Office 365 - Protection Email, Anti-Phishing &amp; Simulation d'Attaques</h1>
+    <p class="subtitle">Guide de configuration et d'audit MDO pour durcir le portail security.microsoft.com (Email &amp; collaboration), rehausser la protection anti-phishing et structurer l'entrainement des utilisateurs.</p>
+    <div class="badge-row">
+        <span class="badge">security.microsoft.com</span>
+        <span class="badge">ExchangeOnlineManagement</span>
+        <span class="badge">Microsoft Graph API</span>
+        <span class="badge">MDO Plan 1 / Plan 2</span>
+    </div>
+    <div class="meta-row">
+        <span>Version : <strong>1.0</strong></span>
+        <span>Derniere MAJ : <strong>Avril 2026</strong></span>
+        <span>Reference : <a href="https://learn.microsoft.com/microsoft-365/security/office-365-security/mdo-about" target="_blank">Microsoft Defender for Office 365</a></span>
+    </div>
+</header>
+
+<div class="nav-container">
+    <nav>
+        <a href="#guide">Mode d'emploi</a>
+        <a href="#licences">Licences</a>
+        <a href="#s1">S1</a>
+        <a href="#s2">S2</a>
+        <a href="#s3">S3</a>
+        <a href="#s4">S4</a>
+        <a href="#s5">S5</a>
+        <a href="#s6">S6</a>
+        <a href="#s7">S7</a>
+        <a href="#s8">S8</a>
+        <a href="#s9">S9</a>
+        <a href="#s10">S10</a>
+        <a href="#scores">Scores</a>
+        <a href="#script">Script</a>
+        <a href="#checklist">Checklist</a>
+    </nav>
+</div>
+
+<div class="container">
+
+<div class="section" id="guide">
+    <div class="section-header blue">
+        <div class="section-number">&#x1F4D6;</div>
+        <div>
+            <div class="section-title">Mode d'emploi de ce guide</div>
+            <div class="section-desc">Perimetre, hors-perimetre et methode de deploiement incremental</div>
+        </div>
+    </div>
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x2139;&#xFE0F;</span>
+        <div>
+            Ce guide couvre strictement MDO : authentification email (SPF, DKIM, DMARC), EOP, Safe Attachments, Safe Links, anti-phishing, Attack Simulation Training, investigation, quarantaine, integration Defender XDR et reporting. Hors perimetre : administration Exchange generaliste, Purview DLP, securite Teams hors flux email, gouvernance Entra ID.
+        </div>
+    </div>
+    <h3>Strategie de deploiement recommandee</h3>
+    <div class="step"><div class="step-n green">1</div><div>Quick Win (<=15 min) : presets Standard + activation Safe Links/Safe Attachments + quarantaine admin.</div></div>
+    <div class="step"><div class="step-n">2</div><div>Durcissement MDO : impersonation, mailbox intelligence, protection URL avancee, TABL.</div></div>
+    <div class="step"><div class="step-n">3</div><div>Maturite P2 : Attack Simulation Training, Threat Explorer, AIR et correlation XDR.</div></div>
+    <div class="step"><div class="step-n">4</div><div>Pilotage continu : Configuration Analyzer, rapports CISO, routines hebdo/mensuelles.</div></div>
+    <div class="alert alert-warn">
+        <span class="alert-icon">&#x26A0;&#xFE0F;</span>
+        <div>
+            Solutions ecartees : produit tiers SEG comme controle principal. Raisons : duplication de policy, perte de telemetrie native MDO/XDR, hausse de cout et complexite d'escalade.
+        </div>
+    </div>
+</div>
+
+<div class="section" id="licences">
+    <div class="section-header blue">
+        <div class="section-number">&#x1F4B3;</div>
+        <div>
+            <div class="section-title">Matrice des licences MDO</div>
+            <div class="section-desc">Alignement EOP / Plan 1 / Plan 2 et cout indicatif</div>
+        </div>
+    </div>
+    <div class="table-container">
+    <table>
+        <thead><tr><th>Fonctionnalite</th><th>M365 E3 (EOP)</th><th>MDO Plan 1</th><th>MDO Plan 2</th></tr></thead>
+        <tbody>
+            <tr class="row-ok"><td>EOP anti-spam / anti-malware</td><td>&#x2705;</td><td>&#x2705;</td><td>&#x2705;</td></tr>
+            <tr class="row-ko"><td>Safe Attachments</td><td>&#x274C;</td><td>&#x2705;</td><td>&#x2705;</td></tr>
+            <tr class="row-ko"><td>Safe Links (Time-of-click)</td><td>&#x274C;</td><td>&#x2705;</td><td>&#x2705;</td></tr>
+            <tr class="row-warn"><td>Threat Explorer complet</td><td>&#x274C;</td><td>Detections temps reel</td><td>&#x2705;</td></tr>
+            <tr class="row-ko"><td>Attack Simulation Training</td><td>&#x274C;</td><td>&#x274C;</td><td>&#x2705;</td></tr>
+            <tr class="row-ko"><td>AIR (Automated Investigation and Response)</td><td>&#x274C;</td><td>&#x274C;</td><td>&#x2705;</td></tr>
+        </tbody>
+    </table>
+    </div>
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x1F4A1;</span>
+        <div>
+            Badge usage : <span class="lic lic-m365-e3">E3 / EOP</span> inclus de base, <span class="lic lic-addon">P1 add-on</span> ~2 EUR/user/mois, <span class="lic lic-m365-e5">Plan 2 / E5</span> ~5.20 EUR/user/mois.
+        </div>
+    </div>
+</div>
+
+<div class="section" id="s1">
+    <div class="section-header red">
+        <div class="section-number red">1</div>
+        <div>
+            <div class="section-title">Email Authentication (SPF, DKIM, DMARC, ARC, BIMI) <span class="lic lic-m365-e3">EOP</span> <span class="lic lic-addon">MDO P1+</span></div>
+            <div class="section-desc">S1 - Criticite &#x1F534; : prouver l'identite de l'expediteur (cachet et signature officielle)</div>
+        </div>
+    </div>
+    <div class="alert alert-error"><span class="alert-icon">&#x1F6A8;</span><div>Sans SPF/DKIM/DMARC, un attaquant peut usurper votre domaine et envoyer un faux ordre de virement. Analogie : cachet et signature officielle absents, la lettre parait legitime mais personne ne peut verifier l'emetteur.</div></div>
+    <div class="table-container">
+    <table>
+        <thead><tr><th>Parametre</th><th>Defaut</th><th>&#x26A1; Quick Win</th><th>&#x1F512; Avance</th><th>&#x1F3AF; Optimal</th><th>Licence</th></tr></thead>
+        <tbody>
+            <tr class="row-ko"><td><strong>SPF TXT</strong></td><td><span class="hl-red">Absent ou ~all permissif</span></td><td><span class="hl-green">v=spf1 include:spf.protection.outlook.com ~all</span></td><td><span class="hl-green">Inventaire expditeurs tiers</span></td><td><span class="hl-green">-all apres stabilisation</span></td><td><span class="lic lic-m365-e3">EOP</span></td></tr>
+            <tr class="row-ko"><td><strong>DKIM Signing</strong></td><td><span class="hl-red">Desactive</span></td><td><span class="hl-green">Enable DKIM</span></td><td><span class="hl-green">Rotation semestrielle</span></td><td><span class="hl-green">Rotation + monitoring fail</span></td><td><span class="lic lic-m365-e3">EOP</span></td></tr>
+            <tr class="row-ko"><td><strong>DMARC Policy</strong></td><td><span class="hl-red">Absente</span></td><td><span class="hl-blue">p=none</span></td><td><span class="hl-blue">p=quarantine; pct=50</span></td><td><span class="hl-green">p=reject; pct=100</span></td><td><span class="lic lic-m365-e3">EOP</span></td></tr>
+            <tr class="row-warn"><td><strong>DMARC RUA/RUF</strong></td><td>Aucun reporting</td><td>RUA active</td><td>RUA+RUF active</td><td>Feed SIEM + revue mensuelle</td><td><span class="lic lic-addon">Externe</span></td></tr>
+            <tr class="row-warn"><td><strong>ARC / BIMI</strong></td><td>Non exploite</td><td>Evaluation ARC</td><td>ARC trust chain</td><td>BIMI + logo valide</td><td><span class="lic lic-addon">DNS/Branding</span></td></tr>
+        </tbody>
+    </table>
+    </div>
+    <div class="alert alert-info"><span class="alert-icon">&#x1F4A1;</span><div><strong>Pourquoi chaque parametre :</strong> SPF reduit spoofing basique, DKIM signe cryptographiquement les messages, DMARC impose la politique d'action et fournit la visibilite RUA/RUF, ARC preserve la confiance en forward, BIMI ajoute un signal de marque mais ne remplace pas DMARC.</div></div>
+    <div class="alert alert-warn"><span class="alert-icon">&#x26A0;&#xFE0F;</span><div>Piege courant : passer directement a <code>p=reject</code> sans phase <code>p=none</code> puis <code>p=quarantine</code> casse des flux legitimes (CRM, ticketing, MFP).</div></div>
+    <h3>Configuration step-by-step (PowerShell + DNS)</h3>
+    <div class="step"><div class="step-n red">1</div><div>Portail : security.microsoft.com &gt; Email &amp; collaboration &gt; Policies &amp; rules &gt; Threat policies.</div></div>
+    <div class="step"><div class="step-n red">2</div><div>PowerShell : connexion Exchange Online puis activation DKIM sur chaque domaine accepte.</div></div>
+    <div class="step"><div class="step-n red">3</div><div>DNS : publier SPF puis DMARC (p=none), monitorer 2-4 semaines, migrer vers quarantine puis reject.</div></div>
+    <div class="code-block"><div class="code-header"><span>PowerShell - SPF/DKIM/DMARC (Exchange Online)</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div><pre># prerequis
+<span class="keyword">Install-Module</span> ExchangeOnlineManagement <span class="param">-Scope</span> CurrentUser
+<span class="keyword">Connect-ExchangeOnline</span>
+
+# 1) DKIM - creer puis activer (remplacer contoso.com)
+<span class="keyword">New-DkimSigningConfig</span> <span class="param">-DomainName</span> contoso.com <span class="param">-Enabled</span> <span class="var">$false</span>
+<span class="keyword">Set-DkimSigningConfig</span> <span class="param">-Identity</span> contoso.com <span class="param">-Enabled</span> <span class="var">$true</span>
+
+# 2) Recuperer les CNAME DKIM a publier
+<span class="keyword">Get-DkimSigningConfig</span> <span class="param">-Identity</span> contoso.com | <span class="keyword">Format-List</span> Domain,Selector1CNAME,Selector2CNAME,Enabled
+
+# 3) SPF (DNS TXT)
+# Host: @
+# Value: v=spf1 include:spf.protection.outlook.com ~all
+
+# 4) DMARC (DNS TXT)
+# Host: _dmarc
+# Value phase 1: v=DMARC1; p=none; rua=mailto:dmarc-rua@contoso.com; ruf=mailto:dmarc-ruf@contoso.com; pct=100; adkim=s; aspf=s
+# Value phase 2: v=DMARC1; p=quarantine; rua=mailto:dmarc-rua@contoso.com; pct=100
+# Value phase 3: v=DMARC1; p=reject; rua=mailto:dmarc-rua@contoso.com; pct=100</pre></div>
+    <h3>Verification</h3>
+    <div class="code-block"><div class="code-header"><span>Verification DKIM + suivi DMARC</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div><pre><span class="keyword">Get-DkimSigningConfig</span> | <span class="keyword">Select-Object</span> Domain,Enabled,Status
+<span class="keyword">Resolve-DnsName</span> <span class="param">-Type</span> TXT contoso.com
+<span class="keyword">Resolve-DnsName</span> <span class="param">-Type</span> TXT _dmarc.contoso.com
+
+# Controle attendu
+# SPF present avec include:spf.protection.outlook.com
+# DKIM Enabled=True
+# DMARC present avec p=none/quarantine/reject selon phase</pre></div>
+    <h3>Etat des lieux</h3>
+    <div class="checklist-item"><input type="checkbox"><label>SPF unique publie, sans mecanismes obsoletes</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>DKIM active sur tous les domaines de messagerie sortante</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>DMARC actif avec RUA/RUF et feuille de route vers reject</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Revue mensuelle des rapports d'alignement DMARC</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Exceptions expditeurs tiers documentees et validees</label></div>
+</div>
+
+<div class="section" id="s2">
+    <div class="section-header red"><div class="section-number red">2</div><div><div class="section-title">Exchange Online Protection (EOP) Baseline <span class="lic lic-m365-e3">EOP</span></div><div class="section-desc">S2 - Criticite &#x1F534; : socle anti-spam/anti-malware tenant</div></div></div>
+    <div class="alert alert-error"><span class="alert-icon">&#x1F6A8;</span><div>Une baseline EOP faible laisse passer spam, spoof et malware commodity. Analogie : filtre de douane regle en mode permissif.</div></div>
+    <div class="table-container"><table><thead><tr><th>Parametre</th><th>Defaut</th><th>&#x26A1;</th><th>&#x1F512;</th><th>&#x1F3AF;</th><th>Licence</th></tr></thead><tbody>
+        <tr class="row-ko"><td><strong>BulkThreshold</strong></td><td><span class="hl-red">7</span></td><td><span class="hl-green">6</span></td><td><span class="hl-green">5</span></td><td><span class="hl-green">4</span></td><td><span class="lic lic-m365-e3">EOP</span></td></tr>
+        <tr class="row-ko"><td><strong>SpamAction</strong></td><td>MoveToJMF</td><td>Quarantine</td><td>Quarantine</td><td>Quarantine + notif admin</td><td><span class="lic lic-m365-e3">EOP</span></td></tr>
+        <tr class="row-warn"><td><strong>ZAP</strong></td><td>Actif mais peu pilote</td><td>Conserver</td><td>Conserver + suivi</td><td>Conserver + runbook incident</td><td><span class="lic lic-m365-e3">EOP</span></td></tr>
+        <tr class="row-ko"><td><strong>OutboundSpamNotifications</strong></td><td><span class="hl-red">Off</span></td><td>On</td><td>On + SOC mailbox</td><td>On + SIEM</td><td><span class="lic lic-m365-e3">EOP</span></td></tr>
+        <tr class="row-ko"><td><strong>Spoof Intelligence</strong></td><td>Auto</td><td>Review mensuelle</td><td>Review hebdo</td><td>Review + blocage explicite</td><td><span class="lic lic-m365-e3">EOP</span></td></tr>
+    </tbody></table></div>
+    <div class="alert alert-info"><span class="alert-icon">&#x1F4A1;</span><div>Les actions de quarantaine protgent mieux que la boite indirable, le seuil bulk conditionne le bruit utilisateur, et la revue Spoof Intelligence evite les faux positifs persistants.</div></div>
+    <div class="alert alert-warn"><span class="alert-icon">&#x26A0;&#xFE0F;</span><div>Preset Standard ne couvre pas toujours les besoins metier sensibles (finance, direction). Prevoir policy ciblee stricte par groupe.</div></div>
+    <h3>Configuration</h3>
+    <div class="code-block"><div class="code-header"><span>PowerShell - EOP baseline</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div><pre><span class="keyword">Connect-ExchangeOnline</span>
+
+<span class="keyword">Set-HostedContentFilterPolicy</span> <span class="param">-Identity</span> <span class="string">"Default"</span> <span class="param">-BulkThreshold</span> 5 <span class="param">-SpamAction</span> Quarantine <span class="param">-HighConfidenceSpamAction</span> Quarantine
+<span class="keyword">Set-HostedMalwareFilterPolicy</span> <span class="param">-Identity</span> <span class="string">"Default"</span> <span class="param">-EnableInternalSenderAdminNotifications</span> <span class="var">$true</span> <span class="param">-InternalSenderAdminAddress</span> soc@contoso.com
+<span class="keyword">Set-HostedOutboundSpamFilterPolicy</span> <span class="param">-Identity</span> <span class="string">"Default"</span> <span class="param">-NotifyOutboundSpam</span> <span class="var">$true</span> <span class="param">-NotifyOutboundSpamRecipients</span> <span class="string">"soc@contoso.com"</span>
+
+# Quarantine policy
+<span class="keyword">Set-QuarantinePolicy</span> <span class="param">-Identity</span> <span class="string">"DefaultFullAccessPolicy"</span> <span class="param">-EndUserSpamNotificationFrequency</span> 1</pre></div>
+    <h3>Verification</h3>
+    <div class="code-block"><div class="code-header"><span>Verification EOP</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div><pre><span class="keyword">Get-HostedContentFilterPolicy</span> <span class="param">-Identity</span> <span class="string">"Default"</span> | <span class="keyword">Format-List</span> Name,BulkThreshold,SpamAction,HighConfidenceSpamAction
+<span class="keyword">Get-HostedOutboundSpamFilterPolicy</span> <span class="param">-Identity</span> <span class="string">"Default"</span> | <span class="keyword">Format-List</span> Name,NotifyOutboundSpam,NotifyOutboundSpamRecipients
+<span class="keyword">Get-QuarantinePolicy</span> | <span class="keyword">Select-Object</span> Name,EndUserSpamNotificationFrequency</pre></div>
+    <h3>Etat des lieux</h3>
+    <div class="checklist-item"><input type="checkbox"><label>Bulk threshold <=5 pour populations a risque</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Spam et high confidence spam en quarantaine</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Notifications spam sortant activees pour SOC</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Politique quarantaine adaptee (admin/user)</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Runbook ZAP documente</label></div>
+</div>
+
+<div class="section" id="s3">
+    <div class="section-header red"><div class="section-number red">3</div><div><div class="section-title">Safe Attachments <span class="lic lic-addon">MDO Plan 1+</span></div><div class="section-desc">S3 - Criticite &#x1F534; : sas de decontamination pour les pieces jointes</div></div></div>
+    <div class="alert alert-error"><span class="alert-icon">&#x1F6A8;</span><div>Sans Safe Attachments, une piece jointe zero-day peut atteindre l'utilisateur avant detection endpoint. Analogie : sas de decontamination absent a l'entree.</div></div>
+    <div class="table-container"><table><thead><tr><th>Parametre</th><th>Defaut</th><th>&#x26A1;</th><th>&#x1F512;</th><th>&#x1F3AF;</th><th>Licence</th></tr></thead><tbody>
+        <tr class="row-ko"><td><strong>EnableSafeAttachments</strong></td><td><span class="hl-red">Off</span></td><td><span class="hl-green">On</span></td><td>On</td><td>On global</td><td><span class="lic lic-addon">P1+</span></td></tr>
+        <tr class="row-ko"><td><strong>Action</strong></td><td>Monitor</td><td>Block</td><td>DynamicDelivery</td><td>DynamicDelivery + Block haut risque</td><td><span class="lic lic-addon">P1+</span></td></tr>
+        <tr class="row-warn"><td><strong>EnableForSPOTeamsODB</strong></td><td>Partiel</td><td>On</td><td>On</td><td>On + monitoring verdict</td><td><span class="lic lic-addon">P1+</span></td></tr>
+        <tr class="row-ko"><td><strong>ExcludeSenders</strong></td><td>Large</td><td>Minimise</td><td>Minimise</td><td>Zero trust (liste vide)</td><td><span class="lic lic-addon">P1+</span></td></tr>
+        <tr class="row-warn"><td><strong>Notifications</strong></td><td>Faible</td><td>Admin alert</td><td>Admin+SOC</td><td>Admin+SOC+KQL trend</td><td><span class="lic lic-addon">P2 conseillé</span></td></tr>
+    </tbody></table></div>
+    <div class="alert alert-info"><span class="alert-icon">&#x1F4A1;</span><div>Dynamic Delivery maintient l'experience utilisateur tout en scannant en bac a sable. Les exclusions doivent rester exceptionnelles et justifiees.</div></div>
+    <div class="alert alert-warn"><span class="alert-icon">&#x26A0;&#xFE0F;</span><div>Ne pas confondre monitor et block : monitor collecte uniquement, ne bloque pas l'attaque.</div></div>
+    <h3>Configuration</h3>
+    <div class="code-block"><div class="code-header"><span>PowerShell - Safe Attachments</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div><pre><span class="keyword">Connect-ExchangeOnline</span>
+
+<span class="keyword">New-SafeAttachmentPolicy</span> <span class="param">-Name</span> <span class="string">"MDO-SA-Strict"</span> <span class="param">-Enable</span> <span class="var">$true</span> <span class="param">-Action</span> DynamicDelivery
+<span class="keyword">New-SafeAttachmentRule</span> <span class="param">-Name</span> <span class="string">"MDO-SA-Strict-Rule"</span> <span class="param">-SafeAttachmentPolicy</span> <span class="string">"MDO-SA-Strict"</span> <span class="param">-RecipientDomainIs</span> contoso.com
+
+Set-AtpPolicyForO365 <span class="param">-EnableATPForSPOTeamsODB</span> <span class="var">$true</span> <span class="param">-EnableSafeDocs</span> <span class="var">$true</span></pre></div>
+    <h3>Verification</h3>
+    <div class="code-block"><div class="code-header"><span>Verification Safe Attachments</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div><pre><span class="keyword">Get-SafeAttachmentPolicy</span> | <span class="keyword">Select-Object</span> Name,Enable,Action
+<span class="keyword">Get-SafeAttachmentRule</span> | <span class="keyword">Select-Object</span> Name,Priority,State,SafeAttachmentPolicy
+Get-AtpPolicyForO365 | <span class="keyword">Select-Object</span> EnableATPForSPOTeamsODB,EnableSafeDocs</pre></div>
+    <h3>Etat des lieux</h3>
+    <div class="checklist-item"><input type="checkbox"><label>Policy Safe Attachments active et priorisee</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Action DynamicDelivery ou Block selon population</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Protection SPO/OneDrive/Teams activee</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Exclusions revues et justifiees</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Rapports de verdict suivis hebdomadairement</label></div>
+</div>
+
+<div class="section" id="s4">
+    <div class="section-header orange"><div class="section-number orange">4</div><div><div class="section-title">Safe Links <span class="lic lic-addon">MDO Plan 1+</span></div><div class="section-desc">S4 - Criticite &#x1F7E0; : verification de l'adresse a la volee</div></div></div>
+    <div class="alert alert-error"><span class="alert-icon">&#x1F6A8;</span><div>Le lien peut devenir malveillant apres reception. Safe Links protege au clic (time-of-click), pas uniquement a la livraison.</div></div>
+    <div class="table-container"><table><thead><tr><th>Parametre</th><th>Defaut</th><th>&#x26A1;</th><th>&#x1F512;</th><th>&#x1F3AF;</th><th>Licence</th></tr></thead><tbody>
+        <tr class="row-ko"><td><strong>EnableSafeLinksForEmail</strong></td><td><span class="hl-red">Off/partiel</span></td><td><span class="hl-green">On</span></td><td>On</td><td>On tous users</td><td><span class="lic lic-addon">P1+</span></td></tr>
+        <tr class="row-ko"><td><strong>DoNotRewriteUrls</strong></td><td>Exceptions larges</td><td>Exceptions limitees</td><td>Exceptions minimisees</td><td>Exceptions justifiees uniquement</td><td><span class="lic lic-addon">P1+</span></td></tr>
+        <tr class="row-warn"><td><strong>TrackClicks</strong></td><td>Partiel</td><td>On</td><td>On</td><td>On + retention analyse</td><td><span class="lic lic-addon">P1+</span></td></tr>
+        <tr class="row-ko"><td><strong>ScanUrlsInOfficeApps</strong></td><td><span class="hl-red">Off</span></td><td><span class="hl-green">On</span></td><td>On</td><td>On + hardening macros</td><td><span class="lic lic-addon">P1+</span></td></tr>
+        <tr class="row-warn"><td><strong>Teams URL Protection</strong></td><td>Partiel</td><td>On</td><td>On</td><td>On + TABL URL feed</td><td><span class="lic lic-addon">P1+</span></td></tr>
+    </tbody></table></div>
+    <div class="alert alert-info"><span class="alert-icon">&#x1F4A1;</span><div>La valeur de Safe Links est temporelle : detection au clic. Les exceptions de reecriture sont le principal angle mort.</div></div>
+    <div class="alert alert-warn"><span class="alert-icon">&#x26A0;&#xFE0F;</span><div>Une whitelist URL permanente dans TABL peut neutraliser la protection Safe Links. Ajouter une date d'expiration systematique.</div></div>
+    <h3>Configuration</h3>
+    <div class="code-block"><div class="code-header"><span>PowerShell - Safe Links</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div><pre><span class="keyword">Connect-ExchangeOnline</span>
+
+<span class="keyword">New-SafeLinksPolicy</span> <span class="param">-Name</span> <span class="string">"MDO-SL-Strict"</span> <span class="param">-EnableSafeLinksForEmail</span> <span class="var">$true</span> <span class="param">-EnableSafeLinksForTeams</span> <span class="var">$true</span> <span class="param">-EnableSafeLinksForOffice</span> <span class="var">$true</span> <span class="param">-TrackClicks</span> <span class="var">$true</span> <span class="param">-ScanUrls</span> <span class="var">$true</span>
+<span class="keyword">New-SafeLinksRule</span> <span class="param">-Name</span> <span class="string">"MDO-SL-Strict-Rule"</span> <span class="param">-SafeLinksPolicy</span> <span class="string">"MDO-SL-Strict"</span> <span class="param">-RecipientDomainIs</span> contoso.com</pre></div>
+    <h3>Verification</h3>
+    <div class="code-block"><div class="code-header"><span>Verification Safe Links</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div><pre><span class="keyword">Get-SafeLinksPolicy</span> | <span class="keyword">Select-Object</span> Name,EnableSafeLinksForEmail,EnableSafeLinksForTeams,EnableSafeLinksForOffice,TrackClicks
+<span class="keyword">Get-SafeLinksRule</span> | <span class="keyword">Select-Object</span> Name,Priority,State,SafeLinksPolicy</pre></div>
+    <h3>Etat des lieux</h3>
+    <div class="checklist-item"><input type="checkbox"><label>Safe Links actif pour Email, Office, Teams</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Exceptions URL strictement justifiees</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Tracking des clics active</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Reporting clics malveillants actif</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Revue TABL URL mensuelle</label></div>
+</div>
+
+<div class="section" id="s5">
+    <div class="section-header orange"><div class="section-number orange">5</div><div><div class="section-title">Anti-Phishing (Impersonation Protection) <span class="lic lic-addon">MDO Plan 1+</span></div><div class="section-desc">S5 - Criticite &#x1F7E0; : detecteur de masques (VIP/domain impersonation)</div></div></div>
+    <div class="alert alert-error"><span class="alert-icon">&#x1F6A8;</span><div>Le BEC cible la confiance humaine. Sans impersonation protection, le faux PDG ressemble a un vrai expediteur interne.</div></div>
+    <div class="table-container"><table><thead><tr><th>Parametre</th><th>Defaut</th><th>&#x26A1;</th><th>&#x1F512;</th><th>&#x1F3AF;</th><th>Licence</th></tr></thead><tbody>
+        <tr class="row-ko"><td><strong>EnableTargetedUserProtection</strong></td><td><span class="hl-red">Off</span></td><td>On (VIP)</td><td>On (VIP+finance)</td><td>On + revue trimestrielle</td><td><span class="lic lic-addon">P1+</span></td></tr>
+        <tr class="row-ko"><td><strong>EnableTargetedDomainsProtection</strong></td><td><span class="hl-red">Off</span></td><td>On</td><td>On + partenaires</td><td>On + surveillance typosquatting</td><td><span class="lic lic-addon">P1+</span></td></tr>
+        <tr class="row-warn"><td><strong>MailboxIntelligenceProtectionAction</strong></td><td>MoveToJMF</td><td>Quarantine</td><td>Quarantine</td><td>Quarantine + analyst triage</td><td><span class="lic lic-addon">P1+</span></td></tr>
+        <tr class="row-ko"><td><strong>EnableFirstContactSafetyTips</strong></td><td><span class="hl-red">Off</span></td><td><span class="hl-green">On</span></td><td>On</td><td>On + sensibilisation user</td><td><span class="lic lic-addon">P1+</span></td></tr>
+        <tr class="row-warn"><td><strong>EnableUnusualCharactersSafetyTips</strong></td><td>Off</td><td>On</td><td>On</td><td>On + workflow signalement</td><td><span class="lic lic-addon">P1+</span></td></tr>
+    </tbody></table></div>
+    <div class="alert alert-info"><span class="alert-icon">&#x1F4A1;</span><div>La liste VIP est une surface critique : tout oubli d'identite ciblee cree une faille BEC directe.</div></div>
+    <div class="alert alert-warn"><span class="alert-icon">&#x26A0;&#xFE0F;</span><div>Les policies anti-phishing EOP seules sont insuffisantes pour l'usurpation contextuelle de personnes et domaines.</div></div>
+    <h3>Configuration</h3>
+    <div class="code-block"><div class="code-header"><span>PowerShell - Anti-Phishing avance</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div><pre><span class="keyword">Connect-ExchangeOnline</span>
+
+<span class="keyword">Set-AntiPhishPolicy</span> <span class="param">-Identity</span> <span class="string">"Office365 AntiPhish Default"</span> `
+  <span class="param">-EnableTargetedUserProtection</span> <span class="var">$true</span> `
+  <span class="param">-EnableTargetedDomainsProtection</span> <span class="var">$true</span> `
+  <span class="param">-EnableMailboxIntelligence</span> <span class="var">$true</span> `
+  <span class="param">-MailboxIntelligenceProtectionAction</span> Quarantine `
+  <span class="param">-EnableFirstContactSafetyTips</span> <span class="var">$true</span> `
+  <span class="param">-EnableUnusualCharactersSafetyTips</span> <span class="var">$true</span>
+
+# Exemple VIP
+<span class="var">$a</span> = <span class="keyword">Get-AntiPhishPolicy</span> <span class="param">-Identity</span> <span class="string">"Office365 AntiPhish Default"</span>
+<span class="var">$vip</span> = <span class="var">$a</span>.TargetedUsersToProtect + <span class="string">"CEO;ceo@contoso.com"</span>
+<span class="keyword">Set-AntiPhishPolicy</span> <span class="param">-Identity</span> <span class="string">"Office365 AntiPhish Default"</span> <span class="param">-TargetedUsersToProtect</span> <span class="var">$vip</span></pre></div>
+    <h3>Verification</h3>
+    <div class="code-block"><div class="code-header"><span>Verification Anti-Phishing</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div><pre><span class="keyword">Get-AntiPhishPolicy</span> <span class="param">-Identity</span> <span class="string">"Office365 AntiPhish Default"</span> | <span class="keyword">Format-List</span> EnableTargetedUserProtection,EnableTargetedDomainsProtection,EnableMailboxIntelligence,MailboxIntelligenceProtectionAction,EnableFirstContactSafetyTips</pre></div>
+    <h3>Etat des lieux</h3>
+    <div class="checklist-item"><input type="checkbox"><label>Protection impersonation user/domain active</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Liste VIP tenue a jour (DG, CFO, achats)</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Mailbox intelligence activee</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Actions phishing en quarantaine</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Safety tips visible cote utilisateur</label></div>
+</div>
+
+<div class="section" id="s6">
+    <div class="section-header orange"><div class="section-number orange">6</div><div><div class="section-title">Attack Simulation Training (AST) <span class="lic lic-m365-e5">MDO Plan 2</span></div><div class="section-desc">S6 - Criticite &#x1F7E0; : exercice incendie du phishing</div></div></div>
+    <div class="alert alert-error"><span class="alert-icon">&#x1F6A8;</span><div>Sans simulation recurrente, les utilisateurs restent le maillon faible face aux campagnes BEC et OAuth consent phishing.</div></div>
+    <div class="table-container"><table><thead><tr><th>Parametre</th><th>Defaut</th><th>&#x26A1;</th><th>&#x1F512;</th><th>&#x1F3AF;</th><th>Licence</th></tr></thead><tbody>
+        <tr class="row-ko"><td><strong>CampaignFrequency</strong></td><td><span class="hl-red">Aucune</span></td><td>Mensuelle</td><td>Bimensuelle</td><td>Continu + randomisation</td><td><span class="lic lic-m365-e5">P2</span></td></tr>
+        <tr class="row-ko"><td><strong>TechniqueCoverage</strong></td><td>Credential only</td><td>Credential+Link</td><td>Credential+Attachment+OAuth</td><td>Toutes techniques AST</td><td><span class="lic lic-m365-e5">P2</span></td></tr>
+        <tr class="row-warn"><td><strong>UserGrouping</strong></td><td>Global</td><td>Par BU</td><td>Par risque metier</td><td>Par persona et exposition</td><td><span class="lic lic-m365-e5">P2</span></td></tr>
+        <tr class="row-ko"><td><strong>TrainingAssignment</strong></td><td><span class="hl-red">Manuel ponctuel</span></td><td>Auto pour clickers</td><td>Auto + score progression</td><td>Auto + remediations managers</td><td><span class="lic lic-m365-e5">P2</span></td></tr>
+        <tr class="row-warn"><td><strong>KPI Governance</strong></td><td>Non suivi</td><td>Taux de clic</td><td>Clic + compromis</td><td>Clic + compromis + recurrence</td><td><span class="lic lic-m365-e5">P2</span></td></tr>
+    </tbody></table></div>
+    <div class="alert alert-info"><span class="alert-icon">&#x1F4A1;</span><div>AST mesure le risque humain reel et permet une boucle d'amelioration continue pilotee par des KPI.</div></div>
+    <div class="alert alert-warn"><span class="alert-icon">&#x26A0;&#xFE0F;</span><div>Eviter les campagnes trop previsibles (meme modele, meme jour, meme population), sinon le score devient artificiel.</div></div>
+    <h3>Script de campagne AST (Graph API)</h3>
+    <div class="code-block"><div class="code-header"><span>PowerShell - AST campaign via Microsoft Graph</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div><pre># Prerequis: App registration avec permissions AttackSimulation.ReadWrite.All
+# et module Microsoft.Graph
+
+<span class="keyword">Connect-MgGraph</span> <span class="param">-Scopes</span> <span class="string">"AttackSimulation.ReadWrite.All,User.Read.All"</span>
+# Microsoft.Graph 2.x : appel direct du endpoint /beta via Invoke-MgGraphRequest
+# (Select-MgProfile a ete supprime du module a partir de la v2)
+
+<span class="var">$payload</span> = @{
+  displayName = <span class="string">"AST-Phishing-Mensuel-Contoso"</span>
+  description = <span class="string">"Simulation credential harvest + training"</span>
+  payloadDeliveryPlatform = <span class="string">"email"</span>
+  attackType = <span class="string">"credentialHarvest"</span>
+  includedAccountTarget = @{
+    type = <span class="string">"addressBook"</span>
+    accountTargetEmails = @(<span class="string">"finance@contoso.com"</span>,<span class="string">"achats@contoso.com"</span>)
+  }
+  endUserNotificationSetting = @{
+    settingType = <span class="string">"training"</span>
+    positiveReinforcement = <span class="var">$true</span>
+  }
+  launchDateTime = (<span class="keyword">Get-Date</span>).AddDays(7).ToString(<span class="string">"o"</span>)
+} | <span class="keyword">ConvertTo-Json</span> <span class="param">-Depth</span> 6
+
+<span class="keyword">Invoke-MgGraphRequest</span> <span class="param">-Method</span> POST <span class="param">-Uri</span> <span class="string">"https://graph.microsoft.com/beta/security/attackSimulation/simulations"</span> <span class="param">-Body</span> <span class="var">$payload</span> <span class="param">-ContentType</span> <span class="string">"application/json"</span></pre></div>
+    <h3>Verification</h3>
+    <div class="code-block"><div class="code-header"><span>Verification AST</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div><pre><span class="keyword">Invoke-MgGraphRequest</span> <span class="param">-Method</span> GET <span class="param">-Uri</span> <span class="string">"https://graph.microsoft.com/beta/security/attackSimulation/simulations"</span> | <span class="keyword">ConvertTo-Json</span> <span class="param">-Depth</span> 5
+# verifier status, launchDateTime, attackType, taux de clic et compromis</pre></div>
+    <h3>Etat des lieux</h3>
+    <div class="checklist-item"><input type="checkbox"><label>Au moins 1 campagne AST planifiee par mois</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Techniques variees (credential, attachment, OAuth)</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Formation automatique des utilisateurs a risque</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>KPI de campagne suivis en comite securite</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Rapport CISO trimestriel publie</label></div>
+</div>
+
+<div class="section" id="s7">
+    <div class="section-header green"><div class="section-number green">7</div><div><div class="section-title">Threat Investigation (Threat Explorer &amp; Real-time detections) <span class="lic lic-addon">P1/P2</span></div><div class="section-desc">S7 - Criticite &#x1F7E1; : investigation et remediations email</div></div></div>
+    <div class="alert alert-error"><span class="alert-icon">&#x1F6A8;</span><div>Une attaque detectee mais non investiguee reste active dans les boites aux lettres des utilisateurs.</div></div>
+    <div class="table-container"><table><thead><tr><th>Parametre</th><th>Defaut</th><th>&#x26A1;</th><th>&#x1F512;</th><th>&#x1F3AF;</th><th>Licence</th></tr></thead><tbody>
+        <tr class="row-warn"><td><strong>Explorer Usage</strong></td><td>Occasionnel</td><td>Hebdo</td><td>Quotidien SOC</td><td>Playbook incident</td><td><span class="lic lic-m365-e5">P2</span></td></tr>
+        <tr class="row-ko"><td><strong>EmailEntityReview</strong></td><td>Non systematique</td><td>Oui</td><td>Oui + URL clicks</td><td>Oui + attachment verdict</td><td><span class="lic lic-addon">P1+</span></td></tr>
+        <tr class="row-ko"><td><strong>PurgeActions</strong></td><td>Manuel lent</td><td>Purge admin</td><td>Purge + trace</td><td>Purge + ticket auto</td><td><span class="lic lic-addon">P1+</span></td></tr>
+        <tr class="row-warn"><td><strong>CompromisedUserReport</strong></td><td>Non suivi</td><td>Hebdo</td><td>Hebdo + enrichissement Entra</td><td>Quotidien + XDR corr</td><td><span class="lic lic-m365-e5">P2</span></td></tr>
+        <tr class="row-warn"><td><strong>HuntingKQL</strong></td><td>Minimal</td><td>Pack baseline</td><td>Pack custom</td><td>Regles custom + alertes</td><td><span class="lic lic-m365-e5">P2</span></td></tr>
+    </tbody></table></div>
+    <div class="alert alert-info"><span class="alert-icon">&#x1F4A1;</span><div>La vitesse de triage conditionne le rayon d'impact : plus la purge est rapide, moins l'attaque se propage.</div></div>
+    <div class="alert alert-warn"><span class="alert-icon">&#x26A0;&#xFE0F;</span><div>Attention a la retention limitee des traces ; exporter les artefacts d'enquete dans le SIEM.</div></div>
+    <h3>Configuration</h3>
+    <div class="code-block"><div class="code-header"><span>PowerShell - actions d'investigation</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div><pre># Message trace
+<span class="keyword">Get-MessageTrace</span> <span class="param">-StartDate</span> (<span class="keyword">Get-Date</span>).AddDays(-2) <span class="param">-EndDate</span> (<span class="keyword">Get-Date</span>)
+
+# Recherche de contenus malveillants (Compliance)
+<span class="keyword">New-ComplianceSearch</span> <span class="param">-Name</span> <span class="string">"MDO-Incident-Search"</span> <span class="param">-ExchangeLocation</span> All <span class="param">-ContentMatchQuery</span> <span class="string">'(subject:"Invoice urgent") AND (from:"attacker@bad-domain.tld")'</span>
+<span class="keyword">Start-ComplianceSearch</span> <span class="param">-Identity</span> <span class="string">"MDO-Incident-Search"</span>
+
+# Purge
+<span class="keyword">New-ComplianceSearchAction</span> <span class="param">-SearchName</span> <span class="string">"MDO-Incident-Search"</span> <span class="param">-Purge</span> <span class="param">-PurgeType</span> SoftDelete</pre></div>
+    <h3>Verification</h3>
+    <div class="code-block"><div class="code-header"><span>Verification investigation</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div><pre><span class="keyword">Get-ComplianceSearch</span> <span class="param">-Identity</span> <span class="string">"MDO-Incident-Search"</span> | <span class="keyword">Select-Object</span> Name,Status,Items
+<span class="keyword">Get-ComplianceSearchAction</span> <span class="param">-SearchName</span> <span class="string">"MDO-Incident-Search"</span> | <span class="keyword">Select-Object</span> Name,Status,Results</pre></div>
+    <h3>Etat des lieux</h3>
+    <div class="checklist-item"><input type="checkbox"><label>Runbook investigation email formalise</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Actions purge testees en exercice</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Dashboard utilisateurs compromis supervise</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Hunting KQL MDO/XDR actif</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Preuves d'enquete archivees</label></div>
+</div>
+
+<div class="section" id="s8">
+    <div class="section-header green"><div class="section-number green">8</div><div><div class="section-title">Quarantine &amp; Tenant Allow/Block List <span class="lic lic-m365-e3">EOP</span> <span class="lic lic-addon">P1+</span></div><div class="section-desc">S8 - Criticite &#x1F7E1; : zone de retention douaniere et gouvernance des overrides</div></div></div>
+    <div class="alert alert-error"><span class="alert-icon">&#x1F6A8;</span><div>Sans politique claire de quarantaine/TABL, un faux negatif passe ou un faux positif bloque le metier sans trace.</div></div>
+    <div class="table-container"><table><thead><tr><th>Parametre</th><th>Defaut</th><th>&#x26A1;</th><th>&#x1F512;</th><th>&#x1F3AF;</th><th>Licence</th></tr></thead><tbody>
+        <tr class="row-ko"><td><strong>QuarantineAccess</strong></td><td>Flou</td><td>Admin only</td><td>Role-based</td><td>RBAC + journal</td><td><span class="lic lic-m365-e3">EOP</span></td></tr>
+        <tr class="row-warn"><td><strong>UserNotifications</strong></td><td>Off</td><td>On quotidien</td><td>On quotidien</td><td>On + campagne awareness</td><td><span class="lic lic-m365-e3">EOP</span></td></tr>
+        <tr class="row-ko"><td><strong>TABL URL/File/IP</strong></td><td>Entries permanentes</td><td>Expiration 30j</td><td>Expiration 14j</td><td>Expiration + justification ticket</td><td><span class="lic lic-addon">P1+</span></td></tr>
+        <tr class="row-warn"><td><strong>False Positive Workflow</strong></td><td>Ad hoc</td><td>Ticket SOC</td><td>Ticket + SLA</td><td>Ticket + RCA mensuel</td><td><span class="lic lic-m365-e3">EOP</span></td></tr>
+        <tr class="row-ko"><td><strong>Submission Process</strong></td><td>Absent</td><td>Report Message add-in</td><td>Add-in + SOP</td><td>Automatisation + KPI</td><td><span class="lic lic-m365-e3">EOP</span></td></tr>
+    </tbody></table></div>
+    <div class="alert alert-info"><span class="alert-icon">&#x1F4A1;</span><div>TABL doit etre temporaire et trace. Chaque allow-list est une dette de securite qui doit expirer.</div></div>
+    <div class="alert alert-warn"><span class="alert-icon">&#x26A0;&#xFE0F;</span><div>Une entree TABL sans expiration contourne durablement les protections MDO.</div></div>
+    <h3>Configuration</h3>
+    <div class="code-block"><div class="code-header"><span>PowerShell - quarantaine et TABL</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div><pre><span class="keyword">Connect-ExchangeOnline</span>
+
+<span class="keyword">Set-QuarantinePolicy</span> <span class="param">-Identity</span> <span class="string">"DefaultFullAccessPolicy"</span> <span class="param">-EndUserSpamNotificationFrequency</span> 1
+
+# Exemple TABL (URL) - expiration imperative
+<span class="keyword">New-TenantAllowBlockListItems</span> <span class="param">-ListType</span> Url <span class="param">-Block</span> <span class="param">-Entries</span> <span class="string">"http://malicious.example"</span> <span class="param">-ExpirationDate</span> (<span class="keyword">Get-Date</span>).AddDays(14)
+
+# Exemple TABL (Sender)
+<span class="keyword">New-TenantAllowBlockListItems</span> <span class="param">-ListType</span> Sender <span class="param">-Block</span> <span class="param">-Entries</span> <span class="string">"spoofed@bad-domain.tld"</span> <span class="param">-ExpirationDate</span> (<span class="keyword">Get-Date</span>).AddDays(30)</pre></div>
+    <h3>Verification</h3>
+    <div class="code-block"><div class="code-header"><span>Verification quarantaine/TABL</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div><pre><span class="keyword">Get-QuarantinePolicy</span> | <span class="keyword">Select-Object</span> Name,EndUserSpamNotificationFrequency
+<span class="keyword">Get-TenantAllowBlockListItems</span> <span class="param">-ListType</span> Url | <span class="keyword">Select-Object</span> Value,Action,ExpirationDate
+<span class="keyword">Get-TenantAllowBlockListItems</span> <span class="param">-ListType</span> Sender | <span class="keyword">Select-Object</span> Value,Action,ExpirationDate</pre></div>
+    <h3>Etat des lieux</h3>
+    <div class="checklist-item"><input type="checkbox"><label>Politique de quarantaine formalisee (roles, SLA, escalade)</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Notifications quarantaine activees</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Toutes les entrees TABL ont une expiration</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Workflow faux positifs/faux negatifs operationalise</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Add-in Report Message deploye</label></div>
+</div>
+
+<div class="section" id="s9">
+    <div class="section-header blue"><div class="section-number">9</div><div><div class="section-title">Integration Microsoft Defender XDR <span class="lic lic-m365-e5">E5 / P2</span></div><div class="section-desc">S9 - Criticite &#x1F535; : correlation email + endpoint + identite</div></div></div>
+    <div class="alert alert-error"><span class="alert-icon">&#x1F6A8;</span><div>Un incident email isole manque le contexte machine/utilisateur, ce qui retarde la containment.</div></div>
+    <div class="table-container"><table><thead><tr><th>Parametre</th><th>Defaut</th><th>&#x26A1;</th><th>&#x1F512;</th><th>&#x1F3AF;</th><th>Licence</th></tr></thead><tbody>
+        <tr class="row-warn"><td><strong>Unified Incidents</strong></td><td>Partiel</td><td>On</td><td>On + ownership SOC</td><td>On + SLA</td><td><span class="lic lic-m365-e5">E5</span></td></tr>
+        <tr class="row-warn"><td><strong>Advanced Hunting</strong></td><td>Minimal</td><td>Requetes baseline</td><td>Use cases dedies</td><td>Detections custom</td><td><span class="lic lic-m365-e5">E5</span></td></tr>
+        <tr class="row-ko"><td><strong>AIR</strong></td><td><span class="hl-red">Off</span></td><td>Pilot</td><td>Partiel prod</td><td>Prod complete</td><td><span class="lic lic-m365-e5">P2</span></td></tr>
+        <tr class="row-warn"><td><strong>Action Center Governance</strong></td><td>Ad hoc</td><td>Hebdo</td><td>Hebdo + approbation</td><td>Quotidien + KPI</td><td><span class="lic lic-m365-e5">E5</span></td></tr>
+        <tr class="row-warn"><td><strong>Secure Score Email</strong></td><td>Non pilote</td><td>Mensuel</td><td>Mensuel + objectifs</td><td>Mensuel + roadmap</td><td><span class="lic lic-m365-e5">E5</span></td></tr>
+    </tbody></table></div>
+    <div class="alert alert-info"><span class="alert-icon">&#x1F4A1;</span><div>La correlation XDR transforme des alertes ponctuelles en incident unique actionnable avec priorisation risque.</div></div>
+    <div class="alert alert-warn"><span class="alert-icon">&#x26A0;&#xFE0F;</span><div>AIR sans gouvernance d'approbation peut provoquer des actions non desirees en production.</div></div>
+    <h3>Configuration</h3>
+    <div class="code-block"><div class="code-header"><span>KQL exemple (Advanced Hunting)</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div><pre>EmailEvents
+| where Timestamp &gt; ago(7d)
+| where ThreatTypes has_any (<span class="string">"Phish"</span>,<span class="string">"Malware"</span>)
+| join kind=leftouter IdentityLogonEvents on <span class="var">$left</span>.RecipientEmailAddress == <span class="var">$right</span>.AccountUpn
+| summarize Count=count() by RecipientEmailAddress, ThreatTypes, bin(Timestamp, 1d)
+| order by Count desc</pre></div>
+    <h3>Verification</h3>
+    <div class="code-block"><div class="code-header"><span>Checklist portail XDR</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div><pre><span class="keyword"># Checklist XDR</span>
+<span class="comment"># Portail: security.microsoft.com</span>
+<span class="comment"># 1) Incidents: verifier incidents unifies (email+endpoint+identity)</span>
+<span class="comment"># 2) Action center: verifier actions AIR en attente/appliquees</span>
+<span class="comment"># 3) Secure Score: verifier progression des recommandations email</span></pre></div>
+    <h3>Etat des lieux</h3>
+    <div class="checklist-item"><input type="checkbox"><label>Incidents unifies utilises par le SOC</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Requetes hunting email+identity actives</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>AIR active en mode maitrise</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Action Center traite selon SLA</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Secure Score email suivi mensuellement</label></div>
+</div>
+
+<div class="section" id="s10">
+    <div class="section-header blue"><div class="section-number">10</div><div><div class="section-title">Conformite &amp; Reporting (Configuration Analyzer + Presets) <span class="lic lic-m365-e3">EOP</span> <span class="lic lic-m365-e5">P2</span></div><div class="section-desc">S10 - Criticite &#x1F535; : pilotage, preuves d'audit et migration Standard vers Strict</div></div></div>
+    <div class="alert alert-error"><span class="alert-icon">&#x1F6A8;</span><div>Sans reporting ni analyse de configuration, les ecarts de securite restent invisibles et la posture regresse avec le temps.</div></div>
+    <div class="table-container"><table><thead><tr><th>Parametre</th><th>Defaut</th><th>&#x26A1;</th><th>&#x1F512;</th><th>&#x1F3AF;</th><th>Licence</th></tr></thead><tbody>
+        <tr class="row-ko"><td><strong>Configuration Analyzer Review</strong></td><td><span class="hl-red">Non fait</span></td><td>Mensuel</td><td>Hebdo</td><td>Hebdo + backlog</td><td><span class="lic lic-m365-e3">EOP</span></td></tr>
+        <tr class="row-warn"><td><strong>Preset Security Policy</strong></td><td>Standard partiel</td><td>Standard global</td><td>Strict VIP</td><td>Strict etendu selon risque</td><td><span class="lic lic-addon">P1+</span></td></tr>
+        <tr class="row-warn"><td><strong>Top Malware/Phish Reports</strong></td><td>Occasionnel</td><td>Mensuel</td><td>Hebdo</td><td>Hebdo + CISO view</td><td><span class="lic lic-m365-e3">EOP</span></td></tr>
+        <tr class="row-warn"><td><strong>Audit Logs</strong></td><td>Sous-utilise</td><td>Export CSV</td><td>Export API</td><td>Ingestion SIEM</td><td><span class="lic lic-m365-e3">EOP</span></td></tr>
+        <tr class="row-warn"><td><strong>DMARC Aggregate Analytics</strong></td><td>Non integre</td><td>Tableau externe</td><td>Tableau + alertes</td><td>Tableau + gouvernance domaine</td><td><span class="lic lic-addon">Externe</span></td></tr>
+    </tbody></table></div>
+    <div class="alert alert-info"><span class="alert-icon">&#x1F4A1;</span><div>Configuration Analyzer donne l'ecart entre votre tenant et les baseline Microsoft ; les presets Standard/Strict accelerent la mise a niveau sans repartir de zero.</div></div>
+    <div class="alert alert-warn"><span class="alert-icon">&#x26A0;&#xFE0F;</span><div>Strict applique a tout le tenant sans pilote peut generer un pic de faux positifs ; deploiement par populations.</div></div>
+    <h3>Configuration Analyzer et migration vers Preset Security Policies</h3>
+    <div class="step"><div class="step-n">1</div><div>Portail : security.microsoft.com &gt; Email &amp; collaboration &gt; Policies &amp; rules &gt; Threat policies &gt; Preset security policies.</div></div>
+    <div class="step"><div class="step-n">2</div><div>Activer Standard Protection sur tous les utilisateurs puis mesurer 2-4 semaines.</div></div>
+    <div class="step"><div class="step-n">3</div><div>Activer Strict Protection pour VIP, finance, achats, IT admin.</div></div>
+    <div class="step"><div class="step-n">4</div><div>Ouvrir Configuration Analyzer, comparer recommandations, convertir les ecarts en backlog avec proprietaire et deadline.</div></div>
+    <div class="code-block"><div class="code-header"><span>PowerShell - verification policies et rapport</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div><pre><span class="keyword">Connect-ExchangeOnline</span>
+
+<span class="keyword">Get-AntiPhishPolicy</span> | <span class="keyword">Select-Object</span> Name,Enabled
+<span class="keyword">Get-SafeAttachmentPolicy</span> | <span class="keyword">Select-Object</span> Name,Enable,Action
+<span class="keyword">Get-SafeLinksPolicy</span> | <span class="keyword">Select-Object</span> Name,EnableSafeLinksForEmail,EnableSafeLinksForOffice
+<span class="keyword">Get-HostedContentFilterPolicy</span> | <span class="keyword">Select-Object</span> Name,BulkThreshold,SpamAction
+
+# Exports pour evidence audit
+<span class="keyword">Get-MessageTrace</span> <span class="param">-StartDate</span> (<span class="keyword">Get-Date</span>).AddDays(-30) <span class="param">-EndDate</span> (<span class="keyword">Get-Date</span>) | <span class="keyword">Export-Csv</span> .\mdo-message-trace.csv <span class="param">-NoTypeInformation</span>
+<span class="keyword">Get-QuarantineMessage</span> <span class="param">-PageSize</span> 100 | <span class="keyword">Export-Csv</span> .\mdo-quarantine.csv <span class="param">-NoTypeInformation</span></pre></div>
+    <h3>Verification</h3>
+    <div class="code-block"><div class="code-header"><span>Controles attendus</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div><pre><span class="keyword"># Controles attendus</span>
+<span class="comment"># 1) Preset Standard actif pour population globale</span>
+<span class="comment"># 2) Preset Strict actif pour population critique</span>
+<span class="comment"># 3) Configuration Analyzer sans ecart critique ouvert > 30 jours</span>
+<span class="comment"># 4) Rapports malware/phish partages en comite securite</span></pre></div>
+    <h3>Etat des lieux</h3>
+    <div class="checklist-item"><input type="checkbox"><label>Configuration Analyzer execute a frequence definie</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Migration Standard puis Strict documentee</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Rapports MDO exploites pour les decisions</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Journaux d'audit exportes et conserves</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Suivi DMARC aggregate integre au pilotage</label></div>
+</div>
+
+<div class="section" id="matrice">
+    <div class="section-header blue"><div class="section-number">&#x1F517;</div><div><div class="section-title">Matrice d'interactions entre sections</div><div class="section-desc">Dependances techniques entre S1-S10</div></div></div>
+    <div class="table-container"><table><thead><tr><th>Section source</th><th>Impacte</th><th>Interaction</th></tr></thead><tbody>
+        <tr><td><strong>S1 Auth email</strong></td><td>S2, S5, S10</td><td>SPF/DKIM/DMARC reduit spoofing et ameliore precision anti-phishing + reporting.</td></tr>
+        <tr><td><strong>S2 EOP</strong></td><td>S8, S10</td><td>Les actions anti-spam alimentent quarantaine et tableaux de bord.</td></tr>
+        <tr><td><strong>S3 Safe Attachments</strong></td><td>S7, S9</td><td>Les verdicts de fichiers enrichissent investigation et incidents XDR.</td></tr>
+        <tr><td><strong>S4 Safe Links</strong></td><td>S7, S9</td><td>Les clics URL malveillants alimentent hunting et triage incident.</td></tr>
+        <tr><td><strong>S5 Anti-Phishing</strong></td><td>S6, S7</td><td>Les themes d'usurpation guident les scenarios AST et l'investigation.</td></tr>
+        <tr><td><strong>S6 AST</strong></td><td>S10</td><td>Les KPI de simulation alimentent les rapports CISO et roadmap.</td></tr>
+        <tr><td><strong>S7 Investigation</strong></td><td>S8, S9</td><td>Les IOC decouverts poussent des blocages TABL et des actions XDR.</td></tr>
+        <tr><td><strong>S8 Quarantine/TABL</strong></td><td>S2, S4</td><td>Les overrides doivent rester alignes avec protections EOP/Safe Links.</td></tr>
+        <tr><td><strong>S9 XDR</strong></td><td>S10</td><td>La correlation multi-signal produit les indicateurs executifs.</td></tr>
+        <tr><td><strong>S10 Reporting</strong></td><td>Toutes</td><td>Les ecarts identifies pilotent les plans de correction sur chaque section.</td></tr>
+    </tbody></table></div>
+</div>
+
+<div class="section" id="glossaire">
+    <div class="section-header blue"><div class="section-number">&#x1F4DA;</div><div><div class="section-title">Glossaire</div><div class="section-desc">Acronymes utilises dans le guide MDO</div></div></div>
+    <div class="table-container"><table><thead><tr><th>Terme</th><th>Definition</th></tr></thead><tbody>
+        <tr><td><strong>EOP</strong></td><td>Exchange Online Protection, socle anti-spam/anti-malware de Microsoft 365.</td></tr>
+        <tr><td><strong>MDO</strong></td><td>Microsoft Defender for Office 365.</td></tr>
+        <tr><td><strong>SPF</strong></td><td>Sender Policy Framework, controle DNS des serveurs autorises a emettre pour un domaine.</td></tr>
+        <tr><td><strong>DKIM</strong></td><td>DomainKeys Identified Mail, signature cryptographique des emails.</td></tr>
+        <tr><td><strong>DMARC</strong></td><td>Domain-based Message Authentication, Reporting and Conformance.</td></tr>
+        <tr><td><strong>ARC</strong></td><td>Authenticated Received Chain, preservation de confiance lors des transferts.</td></tr>
+        <tr><td><strong>BIMI</strong></td><td>Brand Indicators for Message Identification, affichage logo base sur DMARC.</td></tr>
+        <tr><td><strong>BEC</strong></td><td>Business Email Compromise, fraude par usurpation de confiance.</td></tr>
+        <tr><td><strong>AST</strong></td><td>Attack Simulation Training, simulation phishing et formation.</td></tr>
+        <tr><td><strong>TABL</strong></td><td>Tenant Allow/Block List, liste d'autorisation/blocage tenant.</td></tr>
+        <tr><td><strong>AIR</strong></td><td>Automated Investigation and Response.</td></tr>
+        <tr><td><strong>SOC</strong></td><td>Security Operations Center.</td></tr>
+    </tbody></table></div>
+</div>
+
+<div class="section" id="routines">
+    <div class="section-header blue"><div class="section-number">&#x1F504;</div><div><div class="section-title">Routines de maintenance</div><div class="section-desc">Frequences d'exploitation recommandees</div></div></div>
+    <div class="table-container"><table><thead><tr><th>Frequence</th><th>Tache</th><th>Sections</th></tr></thead><tbody>
+        <tr><td><strong>Quotidien</strong></td><td>Tri quarantaine, revue alertes phishing critiques, incidents XDR.</td><td>S2, S5, S8, S9</td></tr>
+        <tr><td><strong>Hebdomadaire</strong></td><td>Revue Threat Explorer, suivi faux positifs, analyse clics Safe Links.</td><td>S4, S7, S8</td></tr>
+        <tr><td><strong>Mensuel</strong></td><td>Analyseur de configuration, rapport malware/phish, revue TABL expirations.</td><td>S10, S8</td></tr>
+        <tr><td><strong>Trimestriel</strong></td><td>Campagne AST globale + revue VIP impersonation.</td><td>S5, S6</td></tr>
+        <tr><td><strong>Semestriel</strong></td><td>Rotation DKIM, progression DMARC vers reject.</td><td>S1</td></tr>
+    </tbody></table></div>
+</div>
+
+<div class="section" id="cout">
+    <div class="section-header blue"><div class="section-number">&#x1F4B0;</div><div><div class="section-title">Analyse cout / benefice</div><div class="section-desc">Projection budget et reduction de risque</div></div></div>
+    <div class="table-container"><table><thead><tr><th>Couche</th><th>Licence</th><th>Cout indicatif</th><th>Sections couvertes</th></tr></thead><tbody>
+        <tr><td>Baseline email</td><td><span class="lic lic-m365-e3">EOP</span></td><td>Inclus</td><td>S1, S2, S8, S10</td></tr>
+        <tr><td>Protection avancee</td><td><span class="lic lic-addon">MDO Plan 1</span></td><td>~2 EUR/user/mois</td><td>S3, S4, S5</td></tr>
+        <tr><td>Detection &amp; training avance</td><td><span class="lic lic-m365-e5">MDO Plan 2</span></td><td>~5.20 EUR/user/mois</td><td>S6, S7, S9</td></tr>
+    </tbody></table></div>
+    <div class="alert alert-info"><span class="alert-icon">&#x1F4A1;</span><div>Pour 500 utilisateurs, Plan 1 represente ~12 000 EUR/an et Plan 2 ~31 200 EUR/an. Compare au cout moyen d'un incident majeur, le ROI est atteint des la prevention d'un seul BEC critique.</div></div>
+</div>
+
+<div class="section" id="scores">
+    <div class="section-header blue"><div class="section-number">&#x1F4CA;</div><div><div class="section-title">Recap des scores</div><div class="section-desc">Scoring global sur 100 points</div></div></div>
+    <div class="table-container"><table><thead><tr><th>Section</th><th>Poids</th><th>Defaut</th><th>Quick Win</th><th>Optimal</th></tr></thead><tbody>
+        <tr><td>S1 Auth email</td><td>15</td><td>5</td><td>10</td><td>15</td></tr>
+        <tr><td>S2 EOP baseline</td><td>15</td><td>8</td><td>12</td><td>15</td></tr>
+        <tr><td>S3 Safe Attachments</td><td>12</td><td>3</td><td>8</td><td>12</td></tr>
+        <tr><td>S4 Safe Links</td><td>10</td><td>3</td><td>7</td><td>10</td></tr>
+        <tr><td>S5 Anti-Phishing</td><td>10</td><td>4</td><td>7</td><td>10</td></tr>
+        <tr><td>S6 AST</td><td>8</td><td>0</td><td>3</td><td>8</td></tr>
+        <tr><td>S7 Investigation</td><td>8</td><td>4</td><td>5</td><td>8</td></tr>
+        <tr><td>S8 Quarantine/TABL</td><td>8</td><td>5</td><td>6</td><td>8</td></tr>
+        <tr><td>S9 Integration XDR</td><td>7</td><td>3</td><td>4</td><td>7</td></tr>
+        <tr><td>S10 Reporting</td><td>7</td><td>3</td><td>4</td><td>7</td></tr>
+        <tr class="row-ok"><td><strong>Total</strong></td><td><strong>100</strong></td><td><strong>38</strong></td><td><strong>66</strong></td><td><strong>100</strong></td></tr>
+    </tbody></table></div>
+    <div class="level-comparison">
+        <div class="level-card default"><h4>Defaut</h4><div class="level-score" style="color:#d13438;">38</div><div>Risque eleve</div></div>
+        <div class="level-card quick"><h4>Quick Win</h4><div class="level-score" style="color:#0078d4;">66</div><div>+28 pts / &lt;15 min</div></div>
+        <div class="level-card advanced"><h4>Avance</h4><div class="level-score" style="color:#ff8c00;">82</div><div>MDO P1/P2 pilote</div></div>
+        <div class="level-card optimal"><h4>Optimal</h4><div class="level-score" style="color:#107c10;">100</div><div>Posture cible</div></div>
+    </div>
+</div>
+
+<div class="section" id="script">
+    <div class="section-header blue"><div class="section-number">&#x1F4DC;</div><div><div class="section-title">Script All-in-One (MDO hardening)</div><div class="section-desc">Script idempotent aligne sur S1-S10</div></div></div>
+    <div class="code-block"><div class="code-header"><span>PowerShell - mdo-hardening.ps1</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div><pre># Variables
+<span class="var">$domain</span> = <span class="string">"contoso.com"</span>
+<span class="var">$socMail</span> = <span class="string">"soc@contoso.com"</span>
+<span class="var">$vipList</span> = @(<span class="string">"ceo@contoso.com"</span>,<span class="string">"cfo@contoso.com"</span>)
+
+<span class="keyword">Install-Module</span> ExchangeOnlineManagement <span class="param">-Scope</span> CurrentUser <span class="param">-Force</span>
+<span class="keyword">Connect-ExchangeOnline</span>
+
+<span class="keyword">Write-Host</span> <span class="string">"[1/10] S1 - DKIM"</span>
+<span class="keyword">New-DkimSigningConfig</span> <span class="param">-DomainName</span> <span class="var">$domain</span> <span class="param">-Enabled</span> <span class="var">$false</span> <span class="param">-ErrorAction</span> SilentlyContinue
+<span class="keyword">Set-DkimSigningConfig</span> <span class="param">-Identity</span> <span class="var">$domain</span> <span class="param">-Enabled</span> <span class="var">$true</span>
+
+<span class="keyword">Write-Host</span> <span class="string">"[2/10] S2 - EOP"</span>
+<span class="keyword">Set-HostedContentFilterPolicy</span> <span class="param">-Identity</span> <span class="string">"Default"</span> <span class="param">-BulkThreshold</span> 5 <span class="param">-SpamAction</span> Quarantine <span class="param">-HighConfidenceSpamAction</span> Quarantine
+<span class="keyword">Set-HostedOutboundSpamFilterPolicy</span> <span class="param">-Identity</span> <span class="string">"Default"</span> <span class="param">-NotifyOutboundSpam</span> <span class="var">$true</span> <span class="param">-NotifyOutboundSpamRecipients</span> <span class="var">$socMail</span>
+
+<span class="keyword">Write-Host</span> <span class="string">"[3/10] S3 - Safe Attachments"</span>
+if (-not (<span class="keyword">Get-SafeAttachmentPolicy</span> <span class="param">-ErrorAction</span> SilentlyContinue | <span class="keyword">Where-Object</span> Name -eq <span class="string">"MDO-SA-Strict"</span>)) {
+  <span class="keyword">New-SafeAttachmentPolicy</span> <span class="param">-Name</span> <span class="string">"MDO-SA-Strict"</span> <span class="param">-Enable</span> <span class="var">$true</span> <span class="param">-Action</span> DynamicDelivery
+}
+if (-not (<span class="keyword">Get-SafeAttachmentRule</span> <span class="param">-ErrorAction</span> SilentlyContinue | <span class="keyword">Where-Object</span> Name -eq <span class="string">"MDO-SA-Strict-Rule"</span>)) {
+  <span class="keyword">New-SafeAttachmentRule</span> <span class="param">-Name</span> <span class="string">"MDO-SA-Strict-Rule"</span> <span class="param">-SafeAttachmentPolicy</span> <span class="string">"MDO-SA-Strict"</span> <span class="param">-RecipientDomainIs</span> <span class="var">$domain</span>
+}
+Set-AtpPolicyForO365 <span class="param">-EnableATPForSPOTeamsODB</span> <span class="var">$true</span> <span class="param">-EnableSafeDocs</span> <span class="var">$true</span>
+
+<span class="keyword">Write-Host</span> <span class="string">"[4/10] S4 - Safe Links"</span>
+if (-not (<span class="keyword">Get-SafeLinksPolicy</span> <span class="param">-ErrorAction</span> SilentlyContinue | <span class="keyword">Where-Object</span> Name -eq <span class="string">"MDO-SL-Strict"</span>)) {
+  <span class="keyword">New-SafeLinksPolicy</span> <span class="param">-Name</span> <span class="string">"MDO-SL-Strict"</span> <span class="param">-EnableSafeLinksForEmail</span> <span class="var">$true</span> <span class="param">-EnableSafeLinksForTeams</span> <span class="var">$true</span> <span class="param">-EnableSafeLinksForOffice</span> <span class="var">$true</span> <span class="param">-TrackClicks</span> <span class="var">$true</span> <span class="param">-ScanUrls</span> <span class="var">$true</span>
+}
+if (-not (<span class="keyword">Get-SafeLinksRule</span> <span class="param">-ErrorAction</span> SilentlyContinue | <span class="keyword">Where-Object</span> Name -eq <span class="string">"MDO-SL-Strict-Rule"</span>)) {
+  <span class="keyword">New-SafeLinksRule</span> <span class="param">-Name</span> <span class="string">"MDO-SL-Strict-Rule"</span> <span class="param">-SafeLinksPolicy</span> <span class="string">"MDO-SL-Strict"</span> <span class="param">-RecipientDomainIs</span> <span class="var">$domain</span>
+}
+
+<span class="keyword">Write-Host</span> <span class="string">"[5/10] S5 - Anti-Phishing"</span>
+<span class="keyword">Set-AntiPhishPolicy</span> <span class="param">-Identity</span> <span class="string">"Office365 AntiPhish Default"</span> <span class="param">-EnableTargetedUserProtection</span> <span class="var">$true</span> <span class="param">-EnableTargetedDomainsProtection</span> <span class="var">$true</span> <span class="param">-EnableMailboxIntelligence</span> <span class="var">$true</span> <span class="param">-MailboxIntelligenceProtectionAction</span> Quarantine <span class="param">-EnableFirstContactSafetyTips</span> <span class="var">$true</span>
+<span class="var">$ap</span> = <span class="keyword">Get-AntiPhishPolicy</span> <span class="param">-Identity</span> <span class="string">"Office365 AntiPhish Default"</span>
+<span class="keyword">Set-AntiPhishPolicy</span> <span class="param">-Identity</span> <span class="string">"Office365 AntiPhish Default"</span> <span class="param">-TargetedUsersToProtect</span> (<span class="var">$ap</span>.TargetedUsersToProtect + <span class="var">$vipList</span> | <span class="keyword">Select-Object</span> <span class="param">-Unique</span>)
+
+<span class="keyword">Write-Host</span> <span class="string">"[6/10] S6 - AST (manuel via Graph)"</span>
+<span class="keyword">Write-Host</span> <span class="string">"Executer le bloc Graph AST de la section S6"</span>
+
+<span class="keyword">Write-Host</span> <span class="string">"[7/10] S7 - Investigation runbook"</span>
+<span class="keyword">Write-Host</span> <span class="string">"Runbook initialise (MessageTrace + ComplianceSearch)"</span>
+
+<span class="keyword">Write-Host</span> <span class="string">"[8/10] S8 - Quarantine/TABL"</span>
+<span class="keyword">Set-QuarantinePolicy</span> <span class="param">-Identity</span> <span class="string">"DefaultFullAccessPolicy"</span> <span class="param">-EndUserSpamNotificationFrequency</span> 1
+
+<span class="keyword">Write-Host</span> <span class="string">"[9/10] S9 - XDR"</span>
+<span class="keyword">Write-Host</span> <span class="string">"Activer la gouvernance AIR et les dashboards incidents"</span>
+
+<span class="keyword">Write-Host</span> <span class="string">"[10/10] S10 - Verification finale"</span>
+<span class="keyword">Get-DkimSigningConfig</span> | <span class="keyword">Select-Object</span> Domain,Enabled
+<span class="keyword">Get-HostedContentFilterPolicy</span> <span class="param">-Identity</span> <span class="string">"Default"</span> | <span class="keyword">Select-Object</span> Name,BulkThreshold,SpamAction
+<span class="keyword">Get-SafeAttachmentPolicy</span> | <span class="keyword">Select-Object</span> Name,Enable,Action
+<span class="keyword">Get-SafeLinksPolicy</span> | <span class="keyword">Select-Object</span> Name,EnableSafeLinksForEmail,EnableSafeLinksForOffice
+<span class="keyword">Get-AntiPhishPolicy</span> <span class="param">-Identity</span> <span class="string">"Office365 AntiPhish Default"</span> | <span class="keyword">Select-Object</span> EnableTargetedUserProtection,EnableMailboxIntelligence
+<span class="keyword">Get-QuarantinePolicy</span> | <span class="keyword">Select-Object</span> Name,EndUserSpamNotificationFrequency</pre></div>
+</div>
+
+<div class="section" id="checklist">
+    <div class="section-header blue"><div class="section-number">&#x2705;</div><div><div class="section-title">Checklist de deploiement</div><div class="section-desc">Execution terrain (Quick Win puis durcissement)</div></div></div>
+    <div class="checklist-item"><input type="checkbox"><label>Phase 1 : Activer DKIM + publier SPF/DMARC p=none (S1)</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Phase 1 : Basculer EOP en quarantaine + BulkThreshold 5 (S2)</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Phase 1 : Activer Safe Attachments + Safe Links (S3-S4)</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Phase 2 : Durcir Anti-Phishing et liste VIP (S5)</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Phase 2 : Configurer TABL avec expiration obligatoire (S8)</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Phase 3 : Lancer AST mensuel (S6)</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Phase 3 : Structurer Threat Explorer et purge (S7)</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Phase 3 : Integrer incidents email a Defender XDR (S9)</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Phase 4 : Executer Configuration Analyzer + migration Standard/Strict (S10)</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Phase 4 : Verification finale complete via script All-in-One</label></div>
+</div>
+
+<div class="section" id="links">
+    <div class="section-header blue"><div class="section-number">&#x1F4CE;</div><div><div class="section-title">Interactions avec les autres guides</div><div class="section-desc">Cross-references existantes dans le repository</div></div></div>
+    <div class="table-container"><table><thead><tr><th>Guide</th><th>Type de relation</th><th>Usage</th></tr></thead><tbody>
+        <tr><td><a href="purview-email-security.html">purview-email-security.html</a></td><td>Complementaire</td><td>EOP + MDO cote Exchange Online (transport, regles, hygiene).</td></tr>
+        <tr><td><a href="m365-exchange.html">m365-exchange.html</a></td><td>Prerequis</td><td>Administration Exchange Online generaliste (mailboxes, connectors).</td></tr>
+        <tr><td><a href="defender-endpoint.html">defender-endpoint.html</a></td><td>Complete</td><td>Correlation endpoint + email dans incidents.</td></tr>
+        <tr><td><a href="defender-identity.html">defender-identity.html</a></td><td>Interagit</td><td>Signal identite pour investigation phishing/BEC.</td></tr>
+        <tr><td><a href="defender-cloud-apps.html">defender-cloud-apps.html</a></td><td>Interagit</td><td>OAuth consent phishing et anomalies SaaS.</td></tr>
+        <tr><td><a href="defender-xdr.html">defender-xdr.html</a></td><td>Complete</td><td>Playbooks incident unifies Microsoft Defender XDR.</td></tr>
+        <tr><td><a href="sentinel.html">sentinel.html</a></td><td>Complete</td><td>Ingestion EmailEvents et detections SOAR.</td></tr>
+    </tbody></table></div>
+</div>
+
+</div>
+
+<footer>
+    Microsoft Defender for Office 365 - Guide de configuration &amp; audit | Version 1.0 | Avril 2026<br>
+    Portail principal : security.microsoft.com | Outils : ExchangeOnlineManagement, Microsoft Graph API
+</footer>
+
+<script>
+function copyCode(button) {
+    const pre = button.parentElement.nextElementSibling;
+    navigator.clipboard.writeText(pre.innerText).then(() => {
+        const original = button.textContent;
+        button.textContent = 'Copie';
+        setTimeout(() => { button.textContent = original; }, 1200);
+    });
+}
+</script>
+<script id="v1a-script">
+(function(){
+  const sidebar = document.querySelector('.v1a-sidebar');
+  if(!sidebar) return;
+  const accs = [...sidebar.querySelectorAll('details.acc')];
+  accs.forEach(a => a.addEventListener('toggle', () => {
+    if(a.open) accs.forEach(o => { if(o!==a) o.open = false; });
+  }));
+  const links = [...sidebar.querySelectorAll('.acc-body a[href^="#"]')];
+  const map = new Map(links.map(a => [a.getAttribute('href').slice(1), a]));
+  const sections = [...document.querySelectorAll('.section[id], section[id]')];
+  function onScroll(){
+    const y = window.scrollY + 120;
+    let cur = null;
+    for(const s of sections){ if(s.offsetTop <= y) cur = s; else break; }
+    links.forEach(a => a.classList.remove('active'));
+    if(cur){
+      const a = map.get(cur.id);
+      if(a){
+        a.classList.add('active');
+        const det = a.closest('details.acc');
+        if(det && !det.open){ accs.forEach(o=>o.open=false); det.open = true; }
+      }
+    }
+  }
+  document.addEventListener('scroll', onScroll, {passive:true});
+  onScroll();
+})();
+</script>
+</main>
+</div>
+</body>
+</html>

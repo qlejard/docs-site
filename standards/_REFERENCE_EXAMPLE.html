@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!--
+    ╔══════════════════════════════════════════════════════════════════════╗
+    ║  _REFERENCE_EXAMPLE.html — Exemple de référence qualité            ║
+    ║                                                                    ║
+    ║  Ce fichier montre UNE SECTION COMPLÈTE remplie + les ANNEXES.     ║
+    ║  Il sert de modèle concret pour le niveau de qualité attendu.      ║
+    ║                                                                    ║
+    ║  CONTENU :                                                         ║
+    ║  • 1 section technique complète (7 sub-blocs)                      ║
+    ║  • Toutes les annexes (Glossaire, Matrice, Routines, Coût, Scores) ║
+    ║  • Commentaires d'annotation sur chaque pattern                    ║
+    ║                                                                    ║
+    ║  USAGE :                                                           ║
+    ║  Ne pas modifier ce fichier. C'est une référence stable.           ║
+    ║  Pour le template vide → _SKELETON.html                            ║
+    ║  Pour les règles → QUALITY_STANDARDS.md §3.2, §8.4                 ║
+    ║  Pour les critères de rejet → CONSTRAINTS_CHECKLIST.md             ║
+    ╚══════════════════════════════════════════════════════════════════════╝
+    -->
+    <title>Exemple de R&eacute;f&eacute;rence &mdash; Section Compl&egrave;te + Annexes</title>
+    <style>
+        /* CSS identique au design system (_SKELETON.html) — version minimale pour cet exemple */
+        :root {
+            --azure-blue: #0078d4; --azure-dark: #004578; --azure-light: #deecf9;
+            --success-green: #107c10; --warning-orange: #ff8c00; --danger-red: #d13438;
+            --neutral-bg: #f3f2f1; --neutral-dark: #323130; --neutral-medium: #605e5c;
+            --white: #ffffff; --shadow: 0 2px 8px rgba(0,0,0,0.12); --radius: 8px;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--neutral-bg); color: var(--neutral-dark); line-height: 1.6; }
+        a { color: var(--azure-blue); text-decoration: none; }
+        code { font-family: 'Cascadia Code', Consolas, monospace; font-size: 0.88em; background: #e8e6e4; padding: 1px 6px; border-radius: 3px; }
+        .container { max-width: 1400px; margin: 0 auto; padding: 30px 40px; }
+        .section { background: var(--white); border-radius: var(--radius); box-shadow: var(--shadow); padding: 28px 32px; margin-bottom: 28px; }
+        .section-header { display: flex; align-items: center; gap: 15px; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid var(--neutral-bg); }
+        .section-header.red { border-bottom-color: var(--danger-red); }
+        .section-header.orange { border-bottom-color: var(--warning-orange); }
+        .section-header.green { border-bottom-color: var(--success-green); }
+        .section-header.blue { border-bottom-color: var(--azure-blue); }
+        .section-number { background: var(--azure-blue); color: white; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.1em; flex-shrink: 0; }
+        .section-number.red { background: var(--danger-red); }
+        .section-number.orange { background: var(--warning-orange); }
+        .section-number.green { background: var(--success-green); }
+        .section-title { font-size: 1.4em; color: var(--azure-dark); font-weight: 700; }
+        .section-desc { font-size: 0.92em; color: var(--neutral-medium); margin-top: 2px; }
+        h3 { font-size: 1.05em; font-weight: 600; margin: 24px 0 10px 0; padding-left: 12px; border-left: 3px solid var(--azure-blue); }
+        .lic { display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 0.72em; font-weight: 600; vertical-align: middle; margin-left: 4px; }
+        .lic-base { background: #e8e6e4; color: #605e5c; }
+        .lic-std { background: var(--azure-light); color: var(--azure-blue); }
+        .lic-prem { background: #e8d4f0; color: #6b2fa0; }
+        .alert { border-radius: var(--radius); padding: 16px 20px; margin: 15px 0; display: flex; gap: 12px; align-items: flex-start; font-size: 0.93em; line-height: 1.6; }
+        .alert-icon { font-size: 1.2em; flex-shrink: 0; margin-top: 2px; }
+        .alert-info { background: #e6f2ff; border: 1px solid #b3d7ff; color: #004578; }
+        .alert-warn { background: #fff8e1; border: 1px solid #ffe082; color: #6d4c00; }
+        .alert-error { background: #fde7e9; border: 1px solid #f5c6cb; color: #721c24; }
+        .alert-ok { background: #e8f5e9; border: 1px solid #a5d6a7; color: #1b5e20; }
+        .table-container { overflow-x: auto; border-radius: var(--radius); box-shadow: 0 1px 4px rgba(0,0,0,0.08); margin: 12px 0 18px 0; }
+        table { width: 100%; border-collapse: collapse; background: var(--white); font-size: 0.9em; }
+        thead th { background: var(--azure-dark); color: white; padding: 12px 14px; text-align: left; font-weight: 600; font-size: 0.85em; text-transform: uppercase; letter-spacing: .3px; }
+        tbody td { padding: 10px 14px; border-bottom: 1px solid #edebe9; vertical-align: top; }
+        tbody tr:hover { background: #f8f7f6; }
+        tr.row-ok { background: #f0fff0; }
+        tr.row-ko { background: #fff5f5; }
+        tr.row-warn { background: #fffdf0; }
+        .hl-red { background: #fde7e9; padding: 1px 6px; border-radius: 3px; font-weight: 600; color: var(--danger-red); }
+        .hl-green { background: #dff6dd; padding: 1px 6px; border-radius: 3px; font-weight: 600; color: var(--success-green); }
+        .hl-blue { background: var(--azure-light); padding: 1px 6px; border-radius: 3px; font-weight: 600; color: var(--azure-dark); }
+        .hl { background: #fff3cd; padding: 1px 6px; border-radius: 3px; font-weight: 600; }
+        .code-block { background: #1e1e1e; border-radius: var(--radius); overflow: hidden; margin: 12px 0 18px 0; }
+        .code-header { display: flex; justify-content: space-between; align-items: center; padding: 8px 14px; background: #2d2d2d; font-size: 0.78em; color: #a0a0a0; }
+        .copy-btn { background: var(--azure-blue); color: white; border: none; padding: 4px 12px; border-radius: 4px; cursor: pointer; font-size: 0.85em; }
+        .code-block pre { padding: 16px 18px; color: #d4d4d4; font-family: 'Cascadia Code', Consolas, monospace; font-size: 0.85em; overflow-x: auto; white-space: pre; line-height: 1.55; }
+        .code-block pre .comment { color: #6a9955; }
+        .code-block pre .keyword { color: #569cd6; }
+        .code-block pre .string { color: #ce9178; }
+        .code-block pre .param { color: #9cdcfe; }
+        .code-block pre .var { color: #4ec9b0; }
+        .checklist-item { display: flex; align-items: flex-start; gap: 10px; padding: 8px 0; border-bottom: 1px solid #f3f2f1; }
+        .checklist-item:last-child { border-bottom: none; }
+        .checklist-item input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--azure-blue); flex-shrink: 0; margin-top: 3px; }
+        .level-comparison { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin: 16px 0; }
+        .level-card { background: #faf9f8; border-radius: var(--radius); padding: 20px; text-align: center; border: 1px solid #e1dfdd; }
+        .level-score { font-size: 2.4em; font-weight: 800; margin: 8px 0; }
+        .level-desc { font-size: 0.82em; color: var(--neutral-medium); }
+    </style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════════════════════════════════
+     NOTICE : Ce fichier est un EXEMPLE DE RÉFÉRENCE QUALITÉ.
+     Il montre le niveau de détail, la structure et les patterns attendus
+     dans chaque guide technique. Contenu fictif/générique volontairement.
+     ════════════════════════════════════════════════════════════════════════ -->
+
+<div class="container">
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     SECTION TECHNIQUE COMPLÈTE — Les 7 sub-blocs obligatoires (§3.2)
+     ═════════════════════════════════════════════════════════════════════ -->
+
+<div class="section" id="s1">
+
+    <!-- ┌──────────────────────────────────────────────────────┐
+         │ SUB-BLOC 0 : HEADER                                  │
+         │ - Couleur selon criticité : red (🔴), orange (🟠),   │
+         │   green (🟡), blue (🔵)                               │
+         │ - Badge licence obligatoire dans le titre             │
+         │ - Description 1 ligne + ref CIS si applicable         │
+         └──────────────────────────────────────────────────────┘ -->
+    <div class="section-header red">
+        <div class="section-number red">1</div>
+        <div>
+            <div class="section-title">Titre de la Section <span class="lic lic-base">Inclus</span> <span class="lic lic-prem">Premium</span></div>
+            <div class="section-desc">Description courte du p&eacute;rim&egrave;tre de cette section
+                <br><small style="color:#888;">R&eacute;f. CIS Benchmark vX.X &sect;X.X.X (si applicable)</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- ┌──────────────────────────────────────────────────────┐
+         │ SUB-BLOC 1 : CONTEXTE (alert-info ou alert-error)    │
+         │ - Scénario d'attaque concret, pas une menace abstraite│
+         │ - Analogie vulgarisante obligatoire                   │
+         │ - ≥1 alerte par section                               │
+         └──────────────────────────────────────────────────────┘ -->
+    <div class="alert alert-error">
+        <span class="alert-icon">&#x1F6A8;</span>
+        <div>
+            <strong>Sc&eacute;nario concret :</strong> Sans [cette protection], un attaquant peut [action pr&eacute;cise].
+            <strong>Analogie :</strong> c'est comme [analogie du monde r&eacute;el] &mdash; [explication de l'analogie].
+        </div>
+    </div>
+
+    <!-- ┌──────────────────────────────────────────────────────┐
+         │ SUB-BLOC 2 : COMPARAISON (tableau multi-niveaux)      │
+         │ - ≥5 paramètres par tableau                           │
+         │ - Colonnes : Défaut / Niveau intermédiaire / Best     │
+         │ - Valeurs exactes (pas "activé" mais "$true")         │
+         │ - Licence par paramètre                               │
+         │ - row-ok (vert) / row-ko (rouge) / row-warn (jaune)  │
+         │ - hl-red si défaut dangereux, hl-green si corrigé     │
+         └──────────────────────────────────────────────────────┘ -->
+    <h3>1.1 &mdash; Tableau de configuration complet</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr><th>Param&egrave;tre</th><th>D&eacute;faut</th><th>&#x26A1; Recommand&eacute;</th><th>&#x1F3AF; Best Practice</th><th>Licence</th></tr></thead>
+        <tbody>
+            <tr class="row-ko">
+                <td><strong>ProtectionActivee</strong></td>
+                <td><span class="hl-red">False</span></td>
+                <td><span class="hl-green">True</span></td>
+                <td>True</td>
+                <td><span class="lic lic-base">Inclus</span></td>
+            </tr>
+            <tr class="row-ko">
+                <td><strong>NiveauDetection</strong></td>
+                <td><span class="hl-red">1</span></td>
+                <td><span class="hl-green">3</span></td>
+                <td><span class="hl-green">4</span></td>
+                <td><span class="lic lic-std">Standard</span></td>
+            </tr>
+            <tr class="row-warn">
+                <td><strong>ActionSurDetection</strong></td>
+                <td>NoAction</td>
+                <td><span class="hl-green">Quarantine</span></td>
+                <td>Quarantine</td>
+                <td><span class="lic lic-base">Inclus</span></td>
+            </tr>
+            <tr class="row-ok">
+                <td><strong>JournalisationActivee</strong></td>
+                <td><span class="hl-green">True</span></td>
+                <td>True</td>
+                <td>True</td>
+                <td><span class="lic lic-base">Inclus</span></td>
+            </tr>
+            <tr class="row-ko">
+                <td><strong>NotificationAdmin</strong></td>
+                <td><span class="hl-red">False</span></td>
+                <td><span class="hl-red">False</span></td>
+                <td><span class="hl-green">True + email admin</span></td>
+                <td><span class="lic lic-prem">Premium</span></td>
+            </tr>
+        </tbody>
+    </table>
+    </div>
+
+    <!-- ┌──────────────────────────────────────────────────────┐
+         │ SUB-BLOC 2b : POURQUOI CHAQUE PARAMÈTRE (alert-info) │
+         │ - Bloc 💡 avec liste détaillée                        │
+         │ - Pour chaque paramètre clé : risque SANS + impact   │
+         │ - Base légale si applicable (code commerce, RGPD)     │
+         │ - Destiné à l'architecte : rationnel irréfutable      │
+         └──────────────────────────────────────────────────────┘ -->
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x1F4A1;</span>
+        <div>
+            <strong>Pourquoi chaque param&egrave;tre compte :</strong>
+            <ul style="margin: 8px 0 0 20px;">
+                <li><strong>ProtectionActivee</strong> : sans activation, aucune d&eacute;tection n'est effectu&eacute;e &mdash; les menaces passent int&eacute;gralement.</li>
+                <li><strong>NiveauDetection (3-4)</strong> : le niveau 1 ne d&eacute;tecte que les menaces &eacute;videntes. Le niveau 3+ active les heuristiques ML qui couvrent les menaces 0-day. Le niveau 4 est plus agressif (plus de faux positifs mais moins de fuites).</li>
+                <li><strong>ActionSurDetection = Quarantine</strong> : sans action, la d&eacute;tection est inutile &mdash; l'&eacute;l&eacute;ment malveillant reste accessible &agrave; l'utilisateur.</li>
+                <li><strong>NotificationAdmin</strong> : les presets ne l'activent <strong>jamais</strong>. Sans notification, l'admin ne sait pas qu'une menace a &eacute;t&eacute; d&eacute;tect&eacute;e &rarr; pas d'investigation, pas de rem&eacute;diation proactive.</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- ┌──────────────────────────────────────────────────────┐
+         │ SUB-BLOC 4 : PIÈGE (alert-warn)                      │
+         │ - Ce que les presets/défauts ne couvrent PAS           │
+         │ - Configurations nécessitant une action MANUELLE       │
+         │ - Erreurs classiques                                  │
+         │ - Chaînes de mitigation si applicable                 │
+         └──────────────────────────────────────────────────────┘ -->
+    <div class="alert alert-warn">
+        <span class="alert-icon">&#x26A0;&#xFE0F;</span>
+        <div>
+            <strong>Pi&egrave;ge classique :</strong> Le param&egrave;tre <code>NotificationAdmin</code> n'est <strong>jamais activ&eacute; par les presets</strong>.
+            C'est le seul param&egrave;tre qui n&eacute;cessite une configuration manuelle via custom policy.
+            Sans lui, les d&eacute;tections passent inaperçues de l'&eacute;quipe IT.
+        </div>
+    </div>
+
+    <!-- ┌──────────────────────────────────────────────────────┐
+         │ SUB-BLOC 5 : APPLICATION (code config)                │
+         │ - Double chemin : portail GUI + CLI/PowerShell/Az CLI │
+         │ - Commande COMPLÈTE, pas un extrait                   │
+         │ - Commentaires en français                            │
+         │ - Variables pour les valeurs spécifiques              │
+         │ - Syntaxe colorée (.keyword, .param, .var, .string)   │
+         └──────────────────────────────────────────────────────┘ -->
+    <h3>1.2 &mdash; Configuration</h3>
+    <div class="code-block">
+        <div class="code-header"><span>PowerShell &mdash; Configuration de la protection</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div>
+<pre><span class="comment"># Configurer la protection avec les best practices</span>
+<span class="keyword">Set-ProtectionPolicy</span> <span class="param">-Identity</span> <span class="string">"Policy-Custom"</span> `
+    <span class="param">-ProtectionActivee</span> <span class="var">$true</span> `
+    <span class="param">-NiveauDetection</span> 3 `
+    <span class="param">-ActionSurDetection</span> Quarantine `
+    <span class="param">-NotificationAdmin</span> <span class="var">$true</span> `
+    <span class="param">-AdminEmail</span> <span class="string">"admin@$domain"</span>
+
+<span class="comment"># Alternative : Az CLI</span>
+<span class="keyword">az</span> protection policy update <span class="param">--name</span> <span class="string">"Policy-Custom"</span> `
+    <span class="param">--protection-enabled</span> true `
+    <span class="param">--detection-level</span> 3 `
+    <span class="param">--action</span> quarantine</pre>
+    </div>
+
+    <!-- ┌──────────────────────────────────────────────────────┐
+         │ SUB-BLOC 6 : VÉRIFICATION (code de contrôle)          │
+         │ - Get-* avec Format-List des propriétés clés          │
+         │ - Le lecteur compare visuellement avec le tableau     │
+         └──────────────────────────────────────────────────────┘ -->
+    <h3>1.3 &mdash; V&eacute;rification</h3>
+    <div class="code-block">
+        <div class="code-header"><span>PowerShell &mdash; V&eacute;rification</span><button class="copy-btn" onclick="copyCode(this)">Copier</button></div>
+<pre><span class="keyword">Get-ProtectionPolicy</span> | <span class="keyword">Format-List</span> Name, ProtectionActivee, `
+    NiveauDetection, ActionSurDetection, NotificationAdmin
+
+<span class="comment"># R&eacute;sultat attendu :</span>
+<span class="comment"># ProtectionActivee   : True</span>
+<span class="comment"># NiveauDetection     : 3</span>
+<span class="comment"># ActionSurDetection  : Quarantine</span>
+<span class="comment"># NotificationAdmin   : True</span></pre>
+    </div>
+
+    <!-- ┌──────────────────────────────────────────────────────┐
+         │ SUB-BLOC 7 : ÉTAT DES LIEUX (checklist vide)          │
+         │ - Cases à cocher ☐ pour l'auditeur/implémenteur       │
+         │ - Chaque point configurable = une ligne               │
+         │ - Transforme le guide en grille d'audit terrain        │
+         └──────────────────────────────────────────────────────┘ -->
+    <h3>1.4 &mdash; &Eacute;tat des lieux</h3>
+    <div class="checklist-item"><input type="checkbox"><label>Protection activ&eacute;e sur toutes les policies</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Niveau de d&eacute;tection &ge; 3</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Action = Quarantine (pas NoAction)</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Notification admin configur&eacute;e avec email valide</label></div>
+    <div class="checklist-item"><input type="checkbox"><label>Journalisation active et envoy&eacute;e vers Log Analytics</label></div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     ANNEXES — Structure attendue avec exemples
+     ═════════════════════════════════════════════════════════════════════ -->
+
+<!-- ═══════ GLOSSAIRE ═══════ -->
+<div class="section" id="glossaire">
+    <div class="section-header blue">
+        <div class="section-number">&#x1F4DA;</div>
+        <div>
+            <div class="section-title">Glossaire</div>
+            <div class="section-desc">Acronymes et termes techniques utilis&eacute;s dans ce guide</div>
+        </div>
+    </div>
+    <!-- Pattern : 1 ligne par acronyme/terme, définition complète, pas d'abréviations dans la définition -->
+    <table>
+        <thead><tr><th>Acronyme / Terme</th><th>D&eacute;finition</th></tr></thead>
+        <tbody>
+            <tr><td><strong>RPO</strong></td><td>Recovery Point Objective &mdash; quantit&eacute; maximale de donn&eacute;es qu'on accepte de perdre (mesur&eacute;e en temps)</td></tr>
+            <tr><td><strong>RTO</strong></td><td>Recovery Time Objective &mdash; dur&eacute;e maximale acceptable pour restaurer le service apr&egrave;s un incident</td></tr>
+            <tr><td><strong>RBAC</strong></td><td>Role-Based Access Control &mdash; mod&egrave;le d'autorisation bas&eacute; sur les r&ocirc;les attribu&eacute;s aux utilisateurs</td></tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- ═══════ MATRICE D'INTERACTIONS ═══════ -->
+<div class="section" id="matrice">
+    <div class="section-header blue">
+        <div class="section-number">&#x1F517;</div>
+        <div>
+            <div class="section-title">Matrice d'interactions entre sections</div>
+            <div class="section-desc">Comment les briques interagissent entre elles</div>
+        </div>
+    </div>
+    <!-- Pattern : source → cible + description de l'interaction. Couvre toutes les dépendances inter-sections -->
+    <table>
+        <thead><tr><th>Section source</th><th>Impacte</th><th>Interaction</th></tr></thead>
+        <tbody>
+            <tr><td><strong>S1</strong> Protection</td><td>S3 Monitoring</td><td>Les d&eacute;tections de S1 g&eacute;n&egrave;rent des alertes visibles dans le dashboard de S3</td></tr>
+            <tr><td><strong>S2</strong> Policies</td><td>S1 Protection</td><td>Les policies de S2 d&eacute;finissent les seuils appliqu&eacute;s par les moteurs de d&eacute;tection de S1</td></tr>
+            <tr><td><strong>S4</strong> S&eacute;curit&eacute;</td><td>S1, S2</td><td>Le chiffrement et les private endpoints s&eacute;curisent les flux de donn&eacute;es des sections pr&eacute;c&eacute;dentes</td></tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- ═══════ ROUTINES DE MAINTENANCE ═══════ -->
+<div class="section" id="routines">
+    <div class="section-header blue">
+        <div class="section-number">&#x1F504;</div>
+        <div>
+            <div class="section-title">Routines de maintenance</div>
+            <div class="section-desc">Fr&eacute;quence des t&acirc;ches d'exploitation</div>
+        </div>
+    </div>
+    <!-- Pattern : Quotidien > Hebdomadaire > Mensuel > Trimestriel > Annuel. Chaque tâche réfère sa section -->
+    <table>
+        <thead><tr><th>Fr&eacute;quence</th><th>T&acirc;che</th><th>Section(s)</th></tr></thead>
+        <tbody>
+            <tr><td><strong>Quotidien</strong></td><td>V&eacute;rifier les alertes et lib&eacute;rer les faux positifs en quarantaine</td><td>S1, S3</td></tr>
+            <tr><td><strong>Hebdomadaire</strong></td><td>Revoir les rapports de d&eacute;tection et tendances</td><td>S3</td></tr>
+            <tr><td><strong>Mensuel</strong></td><td>Auditer les exceptions et r&egrave;gles personnalis&eacute;es</td><td>S2</td></tr>
+            <tr><td><strong>Trimestriel</strong></td><td>Audit complet des policies vs benchmark de r&eacute;f&eacute;rence</td><td>S1&ndash;S5</td></tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- ═══════ ANALYSE COÛT / BÉNÉFICE ═══════ -->
+<div class="section" id="cout">
+    <div class="section-header blue">
+        <div class="section-number">&#x1F4B0;</div>
+        <div>
+            <div class="section-title">Analyse co&ucirc;t / b&eacute;n&eacute;fice</div>
+            <div class="section-desc">Impact financier du d&eacute;ploiement</div>
+        </div>
+    </div>
+
+    <!-- Pattern : 1 tableau licences/pricing + 1 bloc ROI avec chiffres sourcés -->
+    <h3>Licences requises par couche</h3>
+    <table>
+        <thead><tr><th>Couche</th><th>Licence</th><th>Co&ucirc;t estim&eacute; / user / mois</th><th>Sections couvertes</th></tr></thead>
+        <tbody>
+            <tr><td>Base</td><td>Inclus dans le plan standard</td><td>&mdash;</td><td>S1, S2, S3</td></tr>
+            <tr><td>Avanc&eacute;</td><td>Plan Premium / Add-on</td><td>~5 &euro;</td><td>S4, S5</td></tr>
+        </tbody>
+    </table>
+
+    <div class="alert alert-info">
+        <span class="alert-icon">&#x1F4A1;</span>
+        <div>
+            <strong>ROI :</strong> Pour 500 utilisateurs &rarr; ~30 000 &euro;/an en licences Premium.
+            Co&ucirc;t moyen d'un incident de s&eacute;curit&eacute; : 4,88 M$ (IBM Cost of a Data Breach 2024).
+            Un seul incident &eacute;vit&eacute; rembourse plus de 100 ans de licences.
+            Les couches Base (S1-S3) sont incluses = 0 &euro; suppl&eacute;mentaire.
+        </div>
+    </div>
+</div>
+
+<!-- ═══════ RÉCAP DES SCORES ═══════ -->
+<div class="section" id="scores">
+    <div class="section-header blue">
+        <div class="section-number">&#x1F4CA;</div>
+        <div>
+            <div class="section-title">R&eacute;cap des scores</div>
+            <div class="section-desc">Score de s&eacute;curit&eacute; estim&eacute; selon le niveau de configuration</div>
+        </div>
+    </div>
+
+    <!-- Pattern : grille 4 niveaux (Défaut → Quick Win → Intermédiaire → Complet) -->
+    <div class="level-comparison">
+        <div class="level-card">
+            <h4>&#x1F6E1; D&eacute;faut</h4>
+            <div class="level-score" style="color: var(--danger-red);">25</div>
+            <div class="level-desc">Out-of-the-box</div>
+        </div>
+        <div class="level-card">
+            <h4>&#x26A1; Quick Win</h4>
+            <div class="level-score" style="color: var(--azure-blue);">55</div>
+            <div class="level-desc">5-15 min</div>
+        </div>
+        <div class="level-card">
+            <h4>&#x1F512; Avanc&eacute;</h4>
+            <div class="level-score" style="color: var(--warning-orange);">80</div>
+            <div class="level-desc">+ Custom</div>
+        </div>
+        <div class="level-card">
+            <h4>&#x1F3AF; Complet</h4>
+            <div class="level-score" style="color: var(--success-green);">100</div>
+            <div class="level-desc">Best Practice</div>
+        </div>
+    </div>
+
+    <!-- Pattern : tableau détaillé points par section + ligne TOTAL -->
+    <h3>D&eacute;tail par section</h3>
+    <div class="table-container">
+    <table>
+        <thead><tr><th>Section</th><th>Points max</th><th>D&eacute;faut</th><th>&#x26A1; Quick Win</th><th>&#x1F3AF; Complet</th></tr></thead>
+        <tbody>
+            <tr>
+                <td>S1 &mdash; Protection</td><td>40</td>
+                <td><span class="hl-red">10</span></td>
+                <td><span class="hl-green">30</span></td>
+                <td><span class="hl-green">40</span></td>
+            </tr>
+            <tr>
+                <td>S2 &mdash; Policies</td><td>30</td>
+                <td><span class="hl-red">8</span></td>
+                <td><span class="hl">15</span></td>
+                <td><span class="hl-green">30</span></td>
+            </tr>
+            <tr>
+                <td>S3 &mdash; Monitoring</td><td>30</td>
+                <td><span class="hl-red">7</span></td>
+                <td><span class="hl">10</span></td>
+                <td><span class="hl-green">30</span></td>
+            </tr>
+            <tr style="font-weight:700; background: #e6f2ff;">
+                <td>TOTAL</td><td>100</td>
+                <td><span class="hl-red">25</span></td>
+                <td><span class="hl-blue">55</span></td>
+                <td><span class="hl-green">100</span></td>
+            </tr>
+        </tbody>
+    </table>
+    </div>
+</div>
+
+</div><!-- /container -->
+
+<script>
+function copyCode(btn) {
+    const pre = btn.closest('.code-block').querySelector('pre');
+    navigator.clipboard.writeText(pre.innerText);
+    btn.textContent = '\u2713 Copi\u00e9';
+    setTimeout(() => btn.textContent = 'Copier', 2000);
+}
+</script>
+
+</body>
+</html>
